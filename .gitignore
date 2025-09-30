@@ -1,0 +1,17 @@
+# Map met jouw persoonlijke instellingen (project venster, thema, editor voorkeuren).
+.idea/
+# Project/module configuratiebestanden van IntelliJ.
+*.iml
+
+# Hier zet IntelliJ automatisch de gecompileerde .class bestanden.
+out/
+# Voor de zekerheid, als er elders .class files verschijnen (komt soms voor).
+*.class
+
+# Tijdelijke logbestanden (bijvoorbeeld foutmeldingen).
+*.log
+
+# Verborgen bestandje dat de Finder gebruikt voor icon-posities. Pure rommel.
+.DS_Store
+# Verborgen bestand dat Windows gebruikt voor thumbnail-caches. Ook rommel.
+Thumbs.db
