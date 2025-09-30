@@ -77,8 +77,8 @@ CREATE TABLE `user` (
     `user_id` int NOT NULL,
     `user_name` varchar(150) NOT NULL,
     `email` varchar(320) NOT NULL,
-    `passwordHash` varchar(120) NOT NULL,
-    `profilePicture` varchar(200) DEFAULT NULL
+    `password_hash` varchar(120) NOT NULL,
+    `profile_picture` varchar(200) DEFAULT NULL
 );
 
 -- pictures
@@ -110,5 +110,5 @@ CREATE TABLE `notifications`
     `notifications_id` UUID NOT NULL, -- klopt dit?
     `user_id` int NOT NULL,
     `content` text NOT NULL,
-    `Read` BIT(1) NOT NULL DEFAULT b'0',
+    `read` BIT(1) NOT NULL DEFAULT b'0',
 );
