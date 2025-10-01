@@ -101,7 +101,6 @@ CREATE TABLE `friends`
 (
     `user_id` int NOT NULL,
     `friend_id` int NOT NULL,
-    `friend_status` int NOT NULL
 );
 
 -- notifications
