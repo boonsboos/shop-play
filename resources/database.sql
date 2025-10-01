@@ -12,8 +12,8 @@ USE `shop_play`;
 ------------------------------------------------
 -- Create Tables
 ------------------------------------------------
--- game
-CREATE TABLE `game`
+-- games
+CREATE TABLE `games`
 (
     `game_id` int PRIMARY KEY AUTO_INCREMENT,
     `scoring_method_id` int NOT NULL,
@@ -27,8 +27,8 @@ CREATE TABLE `game`
     `release_date` date DEFAULT NULL
 );
 
--- scoring_method
-CREATE TABLE `scoring_method`
+-- scoring_methods
+CREATE TABLE `scoring_methods`
 (
     `scoring_method_id` int PRIMARY KEY AUTOINCREMENT,
     `name` text NOT NULL
@@ -48,8 +48,8 @@ CREATE TABLE `game_followers`
     `user_id` int NOT NULL,
 );
 
--- session
-CREATE TABLE `session`
+-- sessions
+CREATE TABLE `sessions`
 (
     `session_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
     `game_id` int NOT NULL,
@@ -72,8 +72,8 @@ CREATE TABLE `scores`
     `achieved_on` date DEFAULT
 );
 
--- user
-CREATE TABLE `user` (
+-- users
+CREATE TABLE `users` (
     `user_id` int PRIMARY KEY AUTO_INCREMENT,
     `user_name` varchar(150) NOT NULL,
     `email` varchar(320) NOT NULL,
@@ -88,8 +88,8 @@ CREATE TABLE `pictures`
     `picture_url` varchar(2048) NOT NULL
 );
 
--- session_player
-CREATE TABLE `session_player`
+-- session_players
+CREATE TABLE `session_players`
 (
     `session_player_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
     `user_id` int NOT NULL,
