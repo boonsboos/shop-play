@@ -30,7 +30,7 @@ CREATE TABLE `games`
 -- scoring_methods
 CREATE TABLE `scoring_methods`
 (
-    `scoring_method_id` int PRIMARY KEY AUTOINCREMENT,
+    `scoring_method_id` int PRIMARY KEY AUTO_INCREMENT,
     `name` text NOT NULL
 );
 
@@ -45,7 +45,7 @@ CREATE TABLE `game_pictures`
 CREATE TABLE `game_followers`
 (
     `game_id` int NOT NULL,
-    `user_id` int NOT NULL,
+    `user_id` int NOT NULL
 );
 
 -- sessions
@@ -69,16 +69,16 @@ CREATE TABLE `scores`
     `game_id` int(11) NOT NULL,
     `score` decimal(10, 2) NOT NULL,
     `turn` int DEFAULT NULL,
-    `achieved_on` date DEFAULT
+    `achieved_on` date DEFAULT CURRENT_DATE()
 );
 
 -- users
 CREATE TABLE `users` (
-    `user_id` int PRIMARY KEY AUTO_INCREMENT,
-    `user_name` varchar(150) NOT NULL,
-    `email` varchar(320) NOT NULL,
-    `password_hash` varchar(120) NOT NULL,
-    `profile_picture` varchar(200) DEFAULT NULL
+                         `user_id` int PRIMARY KEY AUTO_INCREMENT,
+                         `user_name` varchar(150) NOT NULL,
+                         `email` varchar(320) NOT NULL,
+                         `password_hash` varchar(120) NOT NULL,
+                         `profile_picture` varchar(200) DEFAULT NULL
 );
 
 -- pictures
@@ -100,7 +100,7 @@ CREATE TABLE `session_players`
 CREATE TABLE `friends`
 (
     `user_id` int NOT NULL,
-    `friend_id` int NOT NULL,
+    `friend_id` int NOT NULL
 );
 
 -- notifications
@@ -109,5 +109,5 @@ CREATE TABLE `notifications`
     `notification_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
     `user_id` int NOT NULL,
     `content` text NOT NULL,
-    `read` BIT(1) NOT NULL DEFAULT b'0',
+    `read` BIT(1) NOT NULL DEFAULT b'0'
 );
