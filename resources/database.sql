@@ -2,16 +2,16 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-------------------------------------------------
+-- ----------------------------------------------
 -- Database: shop_play
-------------------------------------------------
-DROP DATABASE IF EXISTS `shop_play`;
-CREATE DATABASE IF NOT EXISTS `shop_play` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE `shop_play`;
+-- ----------------------------------------------
+DROP DATABASE IF EXISTS `score_play`;
+CREATE DATABASE IF NOT EXISTS `score_play` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `score_play`;
 
-------------------------------------------------
+-- ----------------------------------------------
 -- Create Tables
-------------------------------------------------
+-- ----------------------------------------------
 -- games
 CREATE TABLE `games`
 (
