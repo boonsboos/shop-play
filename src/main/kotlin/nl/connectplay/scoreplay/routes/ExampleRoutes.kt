@@ -1,4 +1,4 @@
-package nl.connectplay.shopplay.routes
+package nl.connectplay.scoreplay.routes
 
 import io.ktor.server.application.Application
 import io.ktor.server.response.respond
