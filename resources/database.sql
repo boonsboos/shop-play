@@ -38,7 +38,7 @@ CREATE TABLE `scoring_method`
 CREATE TABLE `game_pictures`
 (
     `game_id` int NOT NULL,
-    `picture_id` char(36) NOT NULL
+    `picture_id` UUID NOT NULL
 );
 
 -- game_followers
@@ -51,7 +51,7 @@ CREATE TABLE `game_followers`
 -- session
 CREATE TABLE `session`
 (
-    `session_id` char(36) PRIMARY KEY DEFAULT UUID(),
+    `session_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
     `game_id` int NOT NULL,
     `host_user_id` int NOT NULL,
     `start_time` timestamp NOT NULL,
@@ -63,9 +63,9 @@ CREATE TABLE `session`
 -- scores
 CREATE TABLE `scores`
 (
-    `score_id` char(36) PRIMARY KEY DEFAULT UUID(),
-    `session_id` char(36) NOT NULL,
-    `session_player_id` char(36) NOT NULL,
+    `score_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
+    `session_id` UUID NOT NULL,
+    `session_player_id` UUID NOT NULL,
     `game_id` int(11) NOT NULL,
     `score` decimal(10, 2) NOT NULL,
     `turn` int DEFAULT NULL,
@@ -84,14 +84,14 @@ CREATE TABLE `user` (
 -- pictures
 CREATE TABLE `pictures`
 (
-    `picture_id` char(36) PRIMARY KEY DEFAULT UUID(),
+    `picture_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
     `picture_url` varchar(2048) NOT NULL
 );
 
 -- session_player
 CREATE TABLE `session_player`
 (
-    `session_player_id` char(36) PRIMARY KEY DEFAULT UUID( ,
+    `session_player_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
     `user_id` int NOT NULL,
     `guest_name` varchar(255) DEFAULT NULL
 );
@@ -107,7 +107,7 @@ CREATE TABLE `friends`
 -- notifications
 CREATE TABLE `notifications`
 (
-    `notification_id` char(36) PRIMARY KEY DEFAULT UUID(),
+    `notification_id` UUID PRIMARY KEY DEFAULT UUID_v7(),
     `user_id` int NOT NULL,
     `content` text NOT NULL,
     `read` BIT(1) NOT NULL DEFAULT b'0',
