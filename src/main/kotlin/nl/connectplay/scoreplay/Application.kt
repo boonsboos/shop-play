@@ -1,4 +1,4 @@
-package nl.connectplay.shopplay
+package nl.connectplay.scoreplay
 
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
