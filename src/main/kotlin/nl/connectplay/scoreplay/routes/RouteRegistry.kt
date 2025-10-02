@@ -21,7 +21,10 @@ fun Application.registerApplicationRoutes() {
 
 private const val routesPackage: String = "nl.connectplay.scoreplay.routes"
 
-// Adapated from https://stackoverflow.com/a/69215277
+// Adapted from https://stackoverflow.com/a/69215277
+/**
+ * @return List of functions that return routes
+ */
 private fun getRouteAnnotatedFunctions(): List<KFunction<*>> {
     val annotation = ApiRoute::class.java
     val annotationName = annotation.canonicalName
