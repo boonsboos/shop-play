@@ -5,9 +5,8 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.plugins.openapi.openAPI
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import nl.connectplay.scoreplay.routes.registerApplicationRoutes
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -29,6 +28,6 @@ fun Application.module() {
     }
 
     routing {
-        get("/hello") { call.respond("Hello! world") }
+        registerApplicationRoutes()
     }
 }

@@ -26,7 +26,12 @@ dependencies {
     implementation("io.ktor:ktor-server-netty")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-config-yaml")
+<<<<<<< Updated upstream
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+=======
+    implementation("io.github.classgraph:classgraph:4.8.181")
+
+>>>>>>> Stashed changes
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
