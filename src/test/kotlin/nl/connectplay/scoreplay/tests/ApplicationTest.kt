@@ -1,10 +1,9 @@
-package nl.connect
+package nl.connectplay.scoreplay.tests.nl.connectplay.scoreplay.tests
 
--en-play
-
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.server.testing.*
+import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.testing.testApplication
+import nl.connectplay.scoreplay.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
