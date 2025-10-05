@@ -2,6 +2,9 @@ package nl.connectplay.scoreplay.models
 
 import kotlinx.datetime.LocalDate
 
+/**
+ * This is the Game Model
+ */
 open class Game(
     val id: Int,
     val name: String,
