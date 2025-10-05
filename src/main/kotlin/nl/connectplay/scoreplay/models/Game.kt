@@ -3,7 +3,8 @@ package nl.connectplay.scoreplay.models
 import kotlinx.datetime.LocalDate
 
 /**
- * This is the Game Model
+ * This model represents a game entity from the database.
+ * It contains the basic information about a game.
  */
 open class Game(
     val id: Int,
