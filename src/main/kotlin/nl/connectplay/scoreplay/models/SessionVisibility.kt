@@ -25,5 +25,12 @@ enum class SessionVisibility : EnumAction {
         override fun handle() {
             println("Public")
         }
+    };
+
+    fun toInt() = when (this) {
+        PRIVATE -> 0
+        FRIENDS_ONLY -> 1
+        ANONYMISED -> 2
+        PUBLIC -> 3
     }
 }
