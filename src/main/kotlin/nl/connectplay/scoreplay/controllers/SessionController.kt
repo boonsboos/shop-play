@@ -4,7 +4,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.response.respond
-import io.ktor.util.logging.error
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.data.DatabaseSessionRepository
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
@@ -25,7 +24,7 @@ class SessionController() {
         }
 
         try {
-            val uuid: UUID? = repository.createSession(body)
+            val uuid: UUID? = repository.createSessionAsync(body)
             if (uuid == null) {
                 return call.respond(HttpStatusCode.InternalServerError)
             }

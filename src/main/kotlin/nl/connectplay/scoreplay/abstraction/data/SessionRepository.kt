@@ -14,5 +14,5 @@ interface SessionRepository {
      * @param createDto the required data for making a new session
      * @return the ID of the newly created session
      */
-    suspend fun createSession(createDto: CreateSessionDto): UUID?
+    suspend fun createSessionAsync(createDto: CreateSessionDto): UUID?
 }

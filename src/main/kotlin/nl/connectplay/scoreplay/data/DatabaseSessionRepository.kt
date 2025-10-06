@@ -26,7 +26,7 @@ class DatabaseSessionRepository : SessionRepository {
      * @return the ID of the newly created session
      * @throws java.sql.SQLException if data incorrect
      */
-    override suspend fun createSession(createDto: CreateSessionDto): UUID? {
+    override suspend fun createSessionAsync(createDto: CreateSessionDto): UUID? {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
