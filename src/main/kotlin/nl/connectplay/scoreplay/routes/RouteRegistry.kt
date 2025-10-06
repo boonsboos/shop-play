@@ -10,8 +10,6 @@ fun Application.registerApplicationRoutes() {
 
     val existingRoutes = getRouteAnnotatedFunctions()
 
-    println(existingRoutes)
-
     routing {
         existingRoutes.forEach {
             it.call(this) // call

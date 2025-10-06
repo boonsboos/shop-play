@@ -28,6 +28,7 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
     implementation("io.github.classgraph:classgraph:4.8.181")
+    implementation("org.mariadb.jdbc:mariadb-java-client:3.5.6")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
