@@ -6,12 +6,16 @@ import nl.connectplay.scoreplay.data.ExampleRepository
 
 class ExampleController {
 
-    suspend fun handleExample(call: ApplicationCall) {
+    /**
+     * Handles the example endpoint asynchronously
+     */
+    suspend fun handleExampleAsync(call: ApplicationCall) {
         val exampleRepository = ExampleRepository()
 
+        // respond to the call to our application
         call.respond(
-            exampleRepository.getExample(),
-            typeInfo<Boolean?>()
+            exampleRepository.getExampleAsync(),
+            typeInfo<Boolean?>() // tell ktor that yes, we want to return a nullable object
         )
     }
 

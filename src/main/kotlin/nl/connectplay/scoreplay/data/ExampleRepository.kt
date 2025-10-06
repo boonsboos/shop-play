@@ -1,13 +1,27 @@
 package nl.connectplay.scoreplay.data
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+
 class ExampleRepository {
 
     val connection = Database().connection
 
-    fun getExample(): Boolean? {
-        val statement = connection?.prepareStatement("SELECT user_id FROM users")
-        val result = statement?.executeQuery()
+    /**
+     * Runs an example database query asynchronously
+     */
+    suspend fun getExampleAsync(): Boolean? {
+        // if you want to get a result back, you need to start a new coroutine
+        return coroutineScope {
+            // run your query asynchronously (without blocking the current thread)
+            val databaseResult = async {
+                val statement = connection?.prepareStatement("SELECT user_id FROM users")
+                val resultSet = statement?.executeQuery()
 
-        return result?.last()
+                resultSet?.last() // we want to know if we are on the last row of the result set
+            }
+            // await and return the result from the coroutine
+            databaseResult.await()
+        }
     }
 }

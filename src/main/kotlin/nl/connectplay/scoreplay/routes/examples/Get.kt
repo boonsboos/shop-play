@@ -10,6 +10,7 @@ fun Route.exampleRoute() {
     val exampleController = ExampleController()
 
     get("/example") {
-        exampleController.handleExample(call)
+        // delegate handling this call to the ExampleController
+        exampleController.handleExampleAsync(call) // call is an implicit variable referring to the HTTP call
     }
 }
