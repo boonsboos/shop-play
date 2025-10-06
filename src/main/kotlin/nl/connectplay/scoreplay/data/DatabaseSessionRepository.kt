@@ -4,10 +4,12 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
-import java.sql.Connection
 import java.util.UUID
 
-
+/**
+ * Repository for managing sessions that connects to our database.
+ * Implements [SessionRepository]
+ */
 class DatabaseSessionRepository : SessionRepository {
 
     private val database = Database()
@@ -19,8 +21,10 @@ class DatabaseSessionRepository : SessionRepository {
     """.trimIndent()
 
     /**
-     * Creates a new session for the user
-     * @param createDto the data to make a new session
+     * Creates a new session for a user
+     * @param createDto the required data for making a new session
+     * @return the ID of the newly created session
+     * @throws java.sql.SQLException if data incorrect
      */
     override suspend fun createSession(createDto: CreateSessionDto): UUID? {
         return coroutineScope {

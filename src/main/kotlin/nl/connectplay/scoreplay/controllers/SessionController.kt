@@ -11,6 +11,9 @@ import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import java.sql.SQLException
 import java.util.UUID
 
+/**
+ * Controller for managing CRUD operations on sessions
+ */
 class SessionController() {
 
     val repository: SessionRepository = DatabaseSessionRepository()
