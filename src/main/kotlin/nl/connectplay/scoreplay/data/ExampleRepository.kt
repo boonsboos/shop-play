@@ -1,8 +1,5 @@
 package nl.connectplay.scoreplay.data
 
-import io.ktor.server.response.respond
-import javax.xml.crypto.Data
-
 class ExampleRepository {
 
     val connection = Database().connection
