@@ -29,7 +29,7 @@ class SessionController() {
                 return call.respond(HttpStatusCode.InternalServerError)
             }
 
-            call.respond(HttpStatusCode.Created, uuid);
+            call.respond(HttpStatusCode.Created, uuid)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while creating session", e)
             call.respond(HttpStatusCode.InternalServerError)
