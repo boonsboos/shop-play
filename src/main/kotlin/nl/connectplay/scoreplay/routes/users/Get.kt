@@ -10,8 +10,7 @@ fun Route.usersRoute() {
     val userController = UserController()
 
     get("/users") {
-        // delegate handling this call to the ExampleController
-        userController.handleAsync(call) // call is an implicit variable referring to the HTTP call
+        userController.handleListAsync(call)
     }
 
     get("/users/{id}") {

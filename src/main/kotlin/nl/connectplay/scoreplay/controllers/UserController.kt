@@ -12,33 +12,40 @@ import java.sql.SQLException
 class UserController {
     val userRepository = DatabaseUserRepository()
 
-    suspend fun handleAsync(call: ApplicationCall) {
+    suspend fun handleListAsync(call: ApplicationCall) {
+        // These are optional query parameters:
+        // "limit" controls how many users to return (`/users?limit=10` returns up to 10 users)
         val limit = call.request.queryParameters["limit"]?.toIntOrNull()
+        // "offset" controls how many users to skip before starting to return results (`/users?offset=10` skips the first 10 users)
         val offset = call.request.queryParameters["offset"]?.toIntOrNull()
+        // "query" is used for searching usernames (`/users?query=em` will match 'emma' and 'emre')
         val query = call.request.queryParameters["query"]
 
         try {
+            // Get the users from the repository.
+            // If no users are found (repository returns null), respond with 204 No Content.
             val users: List<UserDto> =
                 userRepository.getUsersAsync(limit, offset, query) ?: return call.respond(HttpStatusCode.NoContent)
 
+            // If users are found, respond with 200 OK and the list of users as JSON.
             call.respond(HttpStatusCode.OK, users)
         } catch (e: SQLException) {
-            call.application.environment.log.error("DB error while creating session", e)
+            // Log the SQL error and respond with 500 Internal Server Error.
+            call.application.environment.log.error("DB error while getting users", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
     suspend fun handleOneAsync(call: ApplicationCall) {
-        // get userid from /users/{id}
+        // Try to read the "id" path parameter from the route (e.g. /users/5 → id = 5)
+        // If it's missing or not a valid number, immediately respond with 400 Bad Request.
         val userId = call.parameters["id"]?.toIntOrNull() ?: return call.respond(
-            HttpStatusCode.BadRequest,
-            "User Id must be a number"
+            HttpStatusCode.BadRequest, "{'message': 'User Id must be a number'}"
         )
 
         try {
             val user = userRepository.getUserByIdAsync(userId) ?: return call.respond(
-                HttpStatusCode.NotFound,
-                "User not found"
+                HttpStatusCode.NotFound, "User not found"
             )
 
             call.respond(HttpStatusCode.OK, user)
