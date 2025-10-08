@@ -7,10 +7,14 @@ import nl.connectplay.scoreplay.routes.ApiRoute
 
 @ApiRoute
 fun Route.usersRoute() {
-    val usersController = UserController()
+    val userController = UserController()
 
     get("/users") {
         // delegate handling this call to the ExampleController
-        usersController.handleAsync(call) // call is an implicit variable referring to the HTTP call
+        userController.handleAsync(call) // call is an implicit variable referring to the HTTP call
+    }
+
+    get("/users/{id}") {
+        userController.handleOneAsync(call)
     }
 }

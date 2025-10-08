@@ -18,18 +18,31 @@ class UserController {
         val query = call.request.queryParameters["query"]
 
         try {
-            val users:List<UserDto>? = userRepository.getUsersAsync(limit, offset, query)
-            if (users == null) {
-                return call.respond(HttpStatusCode.NoContent)
-            }
+            val users: List<UserDto> =
+                userRepository.getUsersAsync(limit, offset, query) ?: return call.respond(HttpStatusCode.NoContent)
 
-            call.respond(
-                HttpStatusCode.OK,
-                users,
-            )
+            call.respond(HttpStatusCode.OK, users)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while creating session", e)
             call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleOneAsync(call: ApplicationCall) {
+        // get userid from /users/{id}
+        val userId = call.parameters["id"]?.toIntOrNull() ?: return call.respond(
+            HttpStatusCode.BadRequest,
+            "User Id must be a number"
+        )
+
+        try {
+            val user = userRepository.getUserByIdAsync(userId) ?: return call.respond(
+                HttpStatusCode.NotFound,
+                "User not found"
+            )
+
+            call.respond(HttpStatusCode.OK, user)
+        } catch (e: NullPointerException) {
         }
     }
 
