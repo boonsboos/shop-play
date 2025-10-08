@@ -4,11 +4,12 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.di.dependencies
 import io.ktor.server.plugins.openapi.openAPI
 import io.ktor.server.routing.routing
 import nl.connectplay.scoreplay.routes.registerApplicationRoutes
 import org.slf4j.event.Level
+import org.koin.ktor.plugin.Koin
+import org.koin.logger.slf4jLogger
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -24,8 +25,10 @@ fun Application.module() {
         level = Level.INFO
     }
 
-    dependencies {
-        // define database connection providers/repositories here
+    // Use Koin dependency injection
+    install(Koin) {
+        slf4jLogger()
+        modules(repositories(), database(), controllers())
     }
 
     // Show API documentation on this path

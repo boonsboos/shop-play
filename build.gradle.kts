@@ -1,5 +1,6 @@
 val kotlin_version: String by project
 val logback_version: String by project
+val koin_version: String by project
 
 plugins {
     kotlin("jvm") version "2.2.20"
@@ -28,8 +29,14 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logback_version")
     implementation("io.ktor:ktor-server-config-yaml")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
+    // reflection library used for route discovery
     implementation("io.github.classgraph:classgraph:4.8.181")
+    // database
     implementation("org.mariadb.jdbc:mariadb-java-client:3.5.6")
+    // dependency injection
+    implementation("io.insert-koin:koin-ktor:$koin_version")
+    implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
+    // bcrypt
     implementation("org.mindrot:jbcrypt:0.4")
 
     testImplementation("io.ktor:ktor-server-test-host")

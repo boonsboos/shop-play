@@ -4,10 +4,11 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import nl.connectplay.scoreplay.controllers.UserController
 import nl.connectplay.scoreplay.routes.ApiRoute
+import org.koin.ktor.ext.inject
 
 @ApiRoute
 fun Route.usersRoute() {
-    val usersController = UserController()
+    val usersController by inject<UserController>()
 
     get("/users") {
         // delegate handling this call to the ExampleController

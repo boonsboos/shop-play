@@ -8,9 +8,7 @@ import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
 import java.sql.SQLException // to handel the database errors
 
-class DatabaseUserRepository : UserRepository {
-    private val database = Database()
-
+class DatabaseUserRepository(private val database: Database) : UserRepository {
     override suspend fun getUsersAsync(
         limit: Int?, offset: Int?, query: String?
     ): List<UserDto>? {

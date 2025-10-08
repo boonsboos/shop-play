@@ -10,9 +10,7 @@ import java.util.UUID
  * Repository for managing sessions that connects to our database.
  * Implements [SessionRepository]
  */
-class DatabaseSessionRepository : SessionRepository {
-
-    private val database = Database()
+class DatabaseSessionRepository(private val database: Database) : SessionRepository {
 
     val createSessionQuery: String = """
         INSERT INTO `sessions` (`game_id`, `host_user_id`, `session_visibility`)
