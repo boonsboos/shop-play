@@ -1,8 +1,0 @@
-POST http://localhost:8080/sessions
-Content-Type: application/json
-
-{
-  "gameId": 1,
-  "userId": 1,
-  "visibility": 1
-}

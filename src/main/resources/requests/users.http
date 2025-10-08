@@ -2,14 +2,11 @@
 GET http://localhost:8080/users
 
 ### get a list of all users with query-params
-GET http://localhost:8080/users?limit=10&offset=0&query=min
+GET http://localhost:8080/users?limit=10&offset=5&query=
 
 ### get user with id '1'
 @id = 1
 GET http://localhost:8080/users/{{id}}
-
-###
-GET http://localhost:8080/users/s
 
 ### register new user
 POST http://localhost:8080/register

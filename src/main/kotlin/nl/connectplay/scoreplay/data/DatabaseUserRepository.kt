@@ -20,7 +20,7 @@ class DatabaseUserRepository : UserRepository {
 
                     var sql = """
                         SELECT u.user_name, p.picture_url FROM users AS u
-                        JOIN pictures AS p on u.profile_picture = p.picture_id
+                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
                         WHERE u.user_name LIKE ?
                         LIMIT ? OFFSET ?
                     """.trimIndent()
@@ -55,7 +55,7 @@ class DatabaseUserRepository : UserRepository {
                 database.connection?.use { connection ->
                     var sql = """
                         SELECT u.user_name, p.picture_url FROM users AS u
-                        JOIN pictures AS p on u.profile_picture = p.picture_id
+                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
                         WHERE u.user_id = ?
                     """.trimIndent()
 
