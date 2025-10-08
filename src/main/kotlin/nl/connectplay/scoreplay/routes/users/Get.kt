@@ -8,10 +8,13 @@ import org.koin.ktor.ext.inject
 
 @ApiRoute
 fun Route.usersRoute() {
-    val usersController by inject<UserController>()
+    val userController by inject<UserController>()
 
     get("/users") {
-        // delegate handling this call to the ExampleController
-        usersController.handleAsync(call) // call is an implicit variable referring to the HTTP call
+        userController.handleListAsync(call)
+    }
+
+    get("/users/{id}") {
+        userController.handleOneAsync(call)
     }
 }

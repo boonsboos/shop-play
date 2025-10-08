@@ -6,39 +6,45 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
-import java.sql.SQLException // to handel the database errors
 
 class DatabaseUserRepository(private val database: Database) : UserRepository {
+
+    /**
+     * Asynchronously retrieves a list of users from the database.
+     *
+     * @param limit the maximum number of users to return
+     * @param offset the number of users to skip before starting to collect results
+     * @param query optional search string to filter users by username
+     * @return a list of [UserDto] objects matching the criteria, or null if no users are found
+     * @throws java.sql.SQLException if a database error occurs
+     */
     override suspend fun getUsersAsync(
         limit: Int?, offset: Int?, query: String?
     ): List<UserDto>? {
+        // coroutineScope ensures that any child coroutine (like async)
+        // will complete before this function returns, and exceptions are properly propagated.
         return coroutineScope {
+            // async launches the database operation in a separate coroutine,
+            // allowing for potential parallelism with other async tasks (if any).
             async {
+                // `use` ensures the connection is automatically closed after the block,
+                // even if an exception occurs.
                 database.connection?.use { connection ->
-                    val users = mutableListOf<UserDto>()
-
                     var sql = """
                         SELECT u.user_name, p.picture_url FROM users AS u
-                        JOIN pictures AS p on u.profile_picture = p.picture_id
+                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
+                        WHERE u.user_name LIKE ?
+                        LIMIT ? OFFSET ?
                     """.trimIndent()
 
-                    if (limit != null) {
-                        sql += " LIMIT $limit"
-                    }
+                    val stmt = connection.prepareStatement(sql)
+                    stmt.setString(1, "%${query ?: ""}%")
+                    stmt.setInt(2, limit ?: 25)
+                    stmt.setInt(3, offset ?: 0)
 
-                    if (offset != null) {
-                        sql += " OFFSET=$offset"
-                    }
+                    val resultSet = stmt?.executeQuery()
 
-//                    if(query != null) {
-//                        sql += " LIKE
-//                    }
-
-                    println(sql)
-
-                    val statement =
-                        connection.prepareStatement(sql)
-                    val resultSet = statement?.executeQuery()
+                    val users = mutableListOf<UserDto>()
 
                     while (resultSet?.next() == true) {
                         val user = UserDto(
@@ -48,17 +54,53 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                         users.add(user)
                     }
 
+                    // Always close JDBC resources explicitly (though .use would handle the connection).
+                    stmt?.close()
                     resultSet?.close()
-                    statement?.close()
 
+                    // Return the list (converted to an immutable list for safety).
                     users.toList()
                 }
             }.await()
         }
     }
 
-    override suspend fun getUserByIdAsync(userId: String): UserDto? {
-        TODO("TODO")
+    /**
+     * Asynchronously retrieves a single user from the database by their ID.
+     *
+     * @param userId the unique ID of the user to retrieve
+     * @return a [UserDto] object matching the ID, or null if no user is found
+     * @throws java.sql.SQLException if a database error occurs
+     */
+    override suspend fun getUserByIdAsync(userId: Int): UserDto? {
+        return coroutineScope {
+            async {
+                database.connection?.use { connection ->
+                    var sql = """
+                        SELECT u.user_name, p.picture_url FROM users AS u
+                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
+                        WHERE u.user_id = ?
+                    """.trimIndent()
+
+                    val stmt = connection.prepareStatement(sql)
+                    stmt.setInt(1, userId)
+
+                    val resultSet = stmt?.executeQuery()
+                    var user: UserDto? = null;
+                    if (resultSet?.next() == true) {
+                        user = UserDto(
+                            username = resultSet.getString("user_name"),
+                            profilePicture = resultSet.getString("picture_url"),
+                        )
+                    }
+
+                    stmt?.close()
+                    resultSet?.close()
+
+                    user
+                }
+            }.await()
+        }
     }
 
     override suspend fun addUser(user: CreateUserDto) {
