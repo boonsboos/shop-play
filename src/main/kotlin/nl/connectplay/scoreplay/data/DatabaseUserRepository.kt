@@ -4,6 +4,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import org.mindrot.jbcrypt.BCrypt
+import java.sql.SQLException // to handel the database errors
 
 class DatabaseUserRepository : UserRepository {
     private val database = Database()
@@ -58,5 +61,20 @@ class DatabaseUserRepository : UserRepository {
 
     override suspend fun getUserByIdAsync(userId: String): UserDto? {
         TODO("TODO")
+    }
+
+    override suspend fun addUser(user: CreateUserDto) {
+        database.connection?.use { connection -> // open the connection to the database
+            val sql =
+                "INSERT INTO users (user_name, email, password_hash) VALUES (?, ?, ?)" // sql with placeholders to prevent SQL injection
+            val stmt = connection.prepareStatement(sql)
+
+            stmt.setString(1, user.username)
+            stmt.setString(2, user.email)
+            // BCrypt hashed the password and extra text to password with gensalt()
+            stmt.setString(3, BCrypt.hashpw(user.password, BCrypt.gensalt()))
+            stmt.executeUpdate() // execute the sql insert command
+            stmt.close()
+        }
     }
 }
