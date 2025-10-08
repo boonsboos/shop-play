@@ -43,14 +43,11 @@ class UserController {
             HttpStatusCode.BadRequest, "{'message': 'User Id must be a number'}"
         )
 
-        try {
-            val user = userRepository.getUserByIdAsync(userId) ?: return call.respond(
-                HttpStatusCode.NotFound, "User not found"
-            )
+        val user = userRepository.getUserByIdAsync(userId) ?: return call.respond(
+            HttpStatusCode.NotFound, "User not found"
+        )
 
-            call.respond(HttpStatusCode.OK, user)
-        } catch (e: NullPointerException) {
-        }
+        call.respond(HttpStatusCode.OK, user)
     }
 
     suspend fun handleRegisterAsync(call: ApplicationCall) {
