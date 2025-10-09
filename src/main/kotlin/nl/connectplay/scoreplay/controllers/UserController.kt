@@ -4,13 +4,13 @@ import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
+import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.data.DatabaseUserRepository
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import java.sql.SQLException
 
-class UserController {
-    val userRepository = DatabaseUserRepository()
+class UserController(private val userRepository: UserRepository) {
 
     suspend fun handleListAsync(call: ApplicationCall) {
         // These are optional query parameters:

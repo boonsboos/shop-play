@@ -5,7 +5,6 @@ import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.response.respond
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
-import nl.connectplay.scoreplay.data.DatabaseSessionRepository
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import java.sql.SQLException
 import java.util.UUID
@@ -13,9 +12,7 @@ import java.util.UUID
 /**
  * Controller for managing CRUD operations on sessions
  */
-class SessionController() {
-
-    val repository: SessionRepository = DatabaseSessionRepository()
+class SessionController(private val repository: SessionRepository) {
 
     suspend fun handleSessionCreation(call: ApplicationCall) {
         val body: CreateSessionDto? = call.receiveNullable<CreateSessionDto>()

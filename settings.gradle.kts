@@ -1,4 +1,4 @@
-rootProject.name = "shop-play"
+rootProject.name = "score-play"
 
 dependencyResolutionManagement {
     repositories {

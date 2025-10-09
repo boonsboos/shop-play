@@ -7,8 +7,7 @@ import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
 
-class DatabaseUserRepository : UserRepository {
-    private val database = Database()
+class DatabaseUserRepository(private val database: Database) : UserRepository {
 
     /**
      * Asynchronously retrieves a list of users from the database.
