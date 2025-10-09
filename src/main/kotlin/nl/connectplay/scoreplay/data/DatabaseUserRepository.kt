@@ -6,6 +6,7 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
+import kotlin.coroutines.coroutineContext
 
 class DatabaseUserRepository(private val database: Database) : UserRepository {
 
@@ -104,17 +105,21 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
     }
 
     override suspend fun addUser(user: CreateUserDto) {
-        database.connection?.use { connection -> // open the connection to the database
-            val sql =
-                "INSERT INTO users (user_name, email, password_hash) VALUES (?, ?, ?)" // sql with placeholders to prevent SQL injection
-            val stmt = connection.prepareStatement(sql)
+        return coroutineScope {
+            async {
+                database.connection?.use { connection -> // open the connection to the database
+                    val sql =
+                        "INSERT INTO users (user_name, email, password_hash) VALUES (?, ?, ?)" // sql with placeholders to prevent SQL injection
+                    val stmt = connection.prepareStatement(sql)
 
-            stmt.setString(1, user.username)
-            stmt.setString(2, user.email)
-            // BCrypt hashed the password and extra text to password with gensalt()
-            stmt.setString(3, BCrypt.hashpw(user.password, BCrypt.gensalt()))
-            stmt.executeUpdate() // execute the sql insert command
-            stmt.close()
+                    stmt.setString(1, user.username)
+                    stmt.setString(2, user.email)
+                    // BCrypt hashed the password and extra text to password with gensalt()
+                    stmt.setString(3, BCrypt.hashpw(user.password, BCrypt.gensalt()))
+                    stmt.executeUpdate() // execute the sql insert command
+                    stmt.close()
+                }
+            }.await()
         }
     }
 }
