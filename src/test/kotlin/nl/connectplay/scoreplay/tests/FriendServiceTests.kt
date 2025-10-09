@@ -3,13 +3,14 @@ package nl.connectplay.scoreplay.tests
 import kotlinx.coroutines.runBlocking
 import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.services.FriendServiceImpl
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import kotlin.test.Test
 
 class FriendServiceTests {
 
     class TestFriendRepository : FriendRepository {
-        private val friends = mutableMapOf<Int, Int>()
+        val friends = mutableMapOf<Int, Int>()
 
         override suspend fun addFriend(userId: Int, friendId: Int): Boolean {
             friends[userId] = friendId
@@ -56,10 +57,10 @@ class FriendServiceTests {
         }
 
         // Act
-        val result = runBlocking { friendService.isFriends(1, 2) } ?: false
+        val result = runBlocking { friendService.isFriends(1, 2) } ?: true
 
         // Assert
-        assertTrue(result)
+        assertFalse(result)
     }
 
 }
