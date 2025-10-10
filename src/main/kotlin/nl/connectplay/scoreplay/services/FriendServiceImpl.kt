@@ -21,24 +21,18 @@ class FriendServiceImpl(private val friendRepository: FriendRepository) : Friend
     }
 
     /**
-     * Checks if user has already a request out to the friend
-     *
-     * @param [userId] user id of the user to check request of
-     * @param [friendId] user id of the friend request was made for
-     */
-    override suspend fun isAlreadyRequested(userId: Int, friendId: Int?): Boolean? {
-        val requested = friendRepository.getFriends(userId)?.contains(friendId)
-        return requested
-    }
-
-    /**
      * Requests a user to be the user's friend
      *
      * @param userId the id of the user making a new friend
      * @param newFriendId the id of the user being requested to be their friend
      */
-    override suspend fun requestFriend(userId: Int, newFriendId: Int) {
-        friendRepository.addFriend(userId, newFriendId)
+    override suspend fun requestFriend(userId: Int, newFriendId: Int): Boolean {
+        // if the user already has a pending friend request, we cannot let the user become friends
+        if (friendRepository.getFriends(userId)?.contains(newFriendId) ?: false) {
+            return false
+        }
+        return friendRepository.addFriend(userId, newFriendId)
+
     }
 
     /**
@@ -48,26 +42,29 @@ class FriendServiceImpl(private val friendRepository: FriendRepository) : Friend
      * @param friendId the id of the user no longer a friend
      */
     override suspend fun removeFriend(userId: Int, friendId: Int) {
+        // remove both the friend entries to reset friend request status fully
         friendRepository.deleteFriend(userId, friendId)
+        friendRepository.deleteFriend(friendId, userId)
     }
 
     /**
      * Rejects a friend request from a user
      *
      * @param userId the id of the user rejecting the friendship
-     * @param newFriendId the id of the user who requested the friendship
+     * @param requesterUserId the id of the user who requested the friendship
      */
-    override suspend fun rejectFriend(userId: Int, newFriendId: Int) {
-        friendRepository.deleteFriend(userId, newFriendId)
+    override suspend fun rejectFriend(userId: Int, requesterUserId: Int) {
+        // the user who requests the friendship creates an entry, so we need to remove it in reverse
+        friendRepository.deleteFriend(requesterUserId, userId)
     }
 
     /**
      * Accepts a friend request from a user
      *
      * @param userId the id of the user accepting the friendship
-     * @param newFriendId the id of the user who requested the friendship
+     * @param requesterUserId the id of the user who requested the friendship
      */
-    override suspend fun acceptFriend(userId: Int, newFriendId: Int) {
-        friendRepository.addFriend(userId, newFriendId)
+    override suspend fun acceptFriend(userId: Int, requesterUserId: Int) {
+        friendRepository.addFriend(userId, requesterUserId)
     }
 }

@@ -5,6 +5,7 @@ import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import java.sql.SQLException
 import kotlin.test.Test
 
 class FriendServiceTests {
@@ -13,6 +14,7 @@ class FriendServiceTests {
         val friends = mutableMapOf<Int, Int>()
 
         override suspend fun addFriend(userId: Int, friendId: Int): Boolean {
+            if (friends.containsKey(userId)) { return false }
             friends[userId] = friendId
             return true
         }
@@ -63,4 +65,20 @@ class FriendServiceTests {
         assertFalse(result)
     }
 
+    @Test
+    fun testFriendsCannotBeDuplicate() {
+        // Arrange
+        val friendRepository: FriendRepository = TestFriendRepository()
+        val friendService = FriendServiceImpl(friendRepository)
+
+        runBlocking {
+            friendRepository.addFriend(1, 2)
+        }
+
+        // Act
+        val addingResult = runBlocking { friendService.requestFriend(1, 2) }
+
+        // Assert
+        assertFalse(addingResult)
+    }
 }
