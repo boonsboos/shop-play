@@ -3,6 +3,7 @@ package nl.connectplay.scoreplay.data
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.FriendRepository
+import java.sql.PreparedStatement
 import java.sql.SQLIntegrityConstraintViolationException
 
 class DatabaseFriendRepository(private val database: Database) : FriendRepository {
@@ -12,7 +13,7 @@ class DatabaseFriendRepository(private val database: Database) : FriendRepositor
         VALUES (?, ?);
     """.trimIndent()
 
-    override suspend fun addFriend(userId: Int, friendId: Int): Boolean = coroutineScope {
+    override suspend fun addFriendAsync(userId: Int, friendId: Int): Boolean = coroutineScope {
         async {
             database.connection?.use { connection ->
                 try {
@@ -34,7 +35,7 @@ class DatabaseFriendRepository(private val database: Database) : FriendRepositor
         WHERE user_id = ? AND friend_id = ?;
     """.trimIndent()
 
-    override suspend fun deleteFriend(userId: Int, friendId: Int): Boolean = coroutineScope {
+    override suspend fun deleteFriendAsync(userId: Int, friendId: Int): Boolean = coroutineScope {
         async {
             database.connection?.use { connection ->
                 val statement = connection.prepareStatement(deleteFriendSql)
@@ -55,30 +56,58 @@ class DatabaseFriendRepository(private val database: Database) : FriendRepositor
         WHERE user_id = ?;
     """.trimIndent()
 
-    override suspend fun getFriends(userId: Int): List<Int>? = coroutineScope {
+    override suspend fun getFriendsAsync(userId: Int): List<Int>? = coroutineScope {
         async {
             // autoclose connection after leaving scope
             database.connection?.use { connection ->
                 val statement = connection.prepareStatement(getFriendsSql)
                 statement.setInt(1, userId)
 
-                val resultSet = statement.executeQuery()
-
-                val friendIds = mutableListOf<Int>()
-
-                // get all friend ids
-                while (resultSet.next()) {
-                    friendIds.add(
-                        resultSet.getInt("friend_id")
-                    )
-                }
-
-                // close open resources
-                resultSet.close()
-                statement.close()
-
-                friendIds.toList()
+                executeGetFriendIdsQuery(statement)
             }
         }.await()
+    }
+
+    private val getFriendsWithOffsetSql = """
+        SELECT friend_id FROM friends
+        WHERE user_id = ?
+        LIMIT ? OFFSET ?;
+    """.trimIndent()
+
+    override suspend fun getFriendsAsync(userId: Int, limit: Int, offset: Int): List<Int>? = coroutineScope {
+        async {
+            // autoclose connection after leaving scope
+            database.connection?.use { connection ->
+                val statement = connection.prepareStatement(getFriendsWithOffsetSql)
+                statement.setInt(1, userId)
+                statement.setInt(2, limit)
+                statement.setInt(3, offset)
+
+                executeGetFriendIdsQuery(statement)
+            }
+        }.await()
+    }
+
+    /**
+     * Utility function to reduce code duplication in [getFriendsAsync].
+     * This should only ever be called from a coroutine.
+     */
+    private suspend fun executeGetFriendIdsQuery(statement: PreparedStatement): List<Int> {
+        val resultSet = statement.executeQuery()
+
+        val friendIds = mutableListOf<Int>()
+
+        // get all friend ids
+        while (resultSet.next()) {
+            friendIds.add(
+                resultSet.getInt("friend_id")
+            )
+        }
+
+        // close open resources
+        resultSet.close()
+        statement.close()
+
+        return friendIds.toList()
     }
 }

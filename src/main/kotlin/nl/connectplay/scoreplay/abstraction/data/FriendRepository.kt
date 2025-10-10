@@ -9,7 +9,7 @@ interface FriendRepository {
      *
      * @return true on success, false on failure
      */
-    suspend fun addFriend(userId: Int, friendId: Int): Boolean
+    suspend fun addFriendAsync(userId: Int, friendId: Int): Boolean
 
     /**
      * Deletes a friend entry for the user
@@ -18,13 +18,23 @@ interface FriendRepository {
      * @param friendId the user id of the friend for which the entry will be deleted
      * @return true if success, false on failure
      */
-    suspend fun deleteFriend(userId: Int, friendId: Int): Boolean
+    suspend fun deleteFriendAsync(userId: Int, friendId: Int): Boolean
+
+    /**
+     * Gets the full list of user ids of friends the user has
+     *
+     * @param userId the user to get the friend user ids for
+     * @return list of user Ids
+     */
+    suspend fun getFriendsAsync(userId: Int): List<Int>?
 
     /**
      * Gets the user ids of friends the user has
      *
      * @param userId the user to get the friend user ids for
+     * @param limit standard limit parameter
+     * @param offset standard offset parameter
      * @return list of user Ids
      */
-    suspend fun getFriends(userId: Int): List<Int>?
+    suspend fun getFriendsAsync(userId: Int, limit: Int, offset: Int): List<Int>?
 }
