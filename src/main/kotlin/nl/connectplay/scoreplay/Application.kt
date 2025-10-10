@@ -28,7 +28,7 @@ fun Application.module() {
     // Use Koin dependency injection
     install(Koin) {
         slf4jLogger()
-        modules(repositories(), database(), controllers())
+        modules(repositories(), database(), controllers(), services())
     }
 
     // Show API documentation on this path

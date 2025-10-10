@@ -5,12 +5,14 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
-import nl.connectplay.scoreplay.data.DatabaseUserRepository
+import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
+import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
 import java.sql.SQLException
 
-class UserController(private val userRepository: UserRepository) {
+class UserController(private val userRepository: UserRepository, private val friendService: FriendService) {
 
     suspend fun handleListAsync(call: ApplicationCall) {
         // These are optional query parameters:
@@ -68,5 +70,26 @@ class UserController(private val userRepository: UserRepository) {
             call.application.environment.log.error("DB error while adding user", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
+    }
+
+    suspend fun handleNewFriendRequestAsync(call: ApplicationCall) {
+        val request = call.receiveNullable<NewFriendRequestDto>() ?: return call.respond(HttpStatusCode.BadRequest)
+        val userId = call.parameters["id"]?.toIntOrNull() ?: return call.respond(HttpStatusCode.BadRequest)
+
+        // are the users friends already?
+        val areFriends =
+            friendService.isFriends(userId, request.friendId) ?: return call.respond(HttpStatusCode.InternalServerError)
+        if (areFriends) {
+            return call.respond(HttpStatusCode.Conflict, "Already friends") // users are already friends
+        }
+
+        // create a friend request
+        val requestActive = friendService.requestFriend(userId, request.friendId) ?: return call.respond(HttpStatusCode.InternalServerError)
+        if (!requestActive) {
+            return call.respond(HttpStatusCode.Conflict, "Request already sent") // user already requested a friendship
+        }
+
+        // default friendship status is pending
+        call.respond(HttpStatusCode.Created, FriendRequestResponseDto(request.friendId))
     }
 }
