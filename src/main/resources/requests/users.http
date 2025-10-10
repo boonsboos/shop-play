@@ -29,3 +29,24 @@ Content-Type: application/json
 ### get friends request
 GET http://localhost:8080/users/{{id}}/friends
 Content-Type: application/json
+
+### accept friend request
+@friendId = 1
+PATCH http://localhost:8080/users/{{id}}/friends/{{friendId}}
+Content-Type: application/json
+
+{
+  "accept": true
+}
+
+### deny friend request
+PATCH http://localhost:8080/users/{{id}}/friends/{{friendId}}
+Content-Type: application/json
+
+{
+  "accept": false
+}
+
+### remove user as friend
+DELETE http://localhost:8080/users/{{id}}/friends/{{friendId}}
+Content-Type: application/json

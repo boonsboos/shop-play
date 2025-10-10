@@ -19,4 +19,4 @@ fun ApplicationRequest.getOffsetQueryParameter(): Int = this.queryParameters["of
 /**
  * Gets the query string
  */
-fun ApplicationRequest.getQueryString(): String? = this.queryParameters["query"]
+fun ApplicationRequest.getSearchQueryParameter(): String? = this.queryParameters["query"]
