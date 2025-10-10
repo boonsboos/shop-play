@@ -13,11 +13,22 @@ class FriendServiceImpl(private val friendRepository: FriendRepository) : Friend
      */
     override suspend fun isFriends(userId: Int, friendId: Int): Boolean? {
         // we return null if something went wrong
-        val userHasFriendEntry = friendRepository.getFriends(userId)?.contains(friendId)?: return null
+        val userHasFriendEntry = friendRepository.getFriends(userId)?.contains(friendId) ?: return null
         val friendHasFriendEntry = friendRepository.getFriends(friendId)?.contains(userId) ?: return null
 
         // users are friends if there is a friend entry from both users
-        return userHasFriendEntry == friendHasFriendEntry
+        return userHasFriendEntry && friendHasFriendEntry
+    }
+
+    /**
+     * Checks if user has already a request out to the friend
+     *
+     * @param [userId] user id of the user to check request of
+     * @param [friendId] user id of the friend request was made for
+     */
+    override suspend fun isAlreadyRequested(userId: Int, friendId: Int?): Boolean? {
+        val requested = friendRepository.getFriends(userId)?.contains(friendId)
+        return requested
     }
 
     /**

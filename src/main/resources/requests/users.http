@@ -17,3 +17,11 @@ Content-Type: application/json
   "email": "bob@connect-play.nl",
   "password": "Pass1234"
 }
+
+### friend request
+POST http://localhost:8080/users/{{id}}/friends
+Content-Type: application/json
+
+{
+  "friendId": 2
+}

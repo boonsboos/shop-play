@@ -1,6 +1,7 @@
 package nl.connectplay.scoreplay
 
 import nl.connectplay.scoreplay.abstraction.data.ExampleRepository
+import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
@@ -9,6 +10,7 @@ import nl.connectplay.scoreplay.controllers.SessionController
 import nl.connectplay.scoreplay.controllers.UserController
 import nl.connectplay.scoreplay.data.Database
 import nl.connectplay.scoreplay.data.DatabaseExampleRepository
+import nl.connectplay.scoreplay.data.DatabaseFriendRepository
 import nl.connectplay.scoreplay.data.DatabaseSessionRepository
 import nl.connectplay.scoreplay.data.DatabaseUserRepository
 import nl.connectplay.scoreplay.services.FriendServiceImpl
@@ -25,6 +27,7 @@ fun repositories() = module {
     singleOf(::DatabaseSessionRepository) { bind<SessionRepository>() }
     singleOf(::DatabaseExampleRepository) { bind<ExampleRepository>() }
     singleOf(::DatabaseUserRepository) { bind<UserRepository>() }
+    singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
 }
 
 /**

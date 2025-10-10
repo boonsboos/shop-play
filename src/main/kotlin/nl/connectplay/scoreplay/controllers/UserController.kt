@@ -77,9 +77,17 @@ class UserController(private val userRepository: UserRepository, private val fri
         val userId = call.parameters["id"]?.toIntOrNull() ?: return call.respond(HttpStatusCode.BadRequest)
 
         // are the users friends already?
-        val areFriends = friendService.isFriends(userId, request.friendId) ?: return call.respond(HttpStatusCode.InternalServerError)
+        val areFriends =
+            friendService.isFriends(userId, request.friendId) ?: return call.respond(HttpStatusCode.InternalServerError)
         if (areFriends) {
-            call.respond(HttpStatusCode.Conflict) // users are already friends
+            return call.respond(HttpStatusCode.Conflict, "Already friends") // users are already friends
+        }
+
+        val alreadyRequested = friendService.isAlreadyRequested(userId, request.friendId) ?: return call.respond(
+            HttpStatusCode.InternalServerError
+        )
+        if (alreadyRequested) {
+            return call.respond(HttpStatusCode.Conflict, "Request already sent") // user already requested a friendship
         }
 
         // create a friend request

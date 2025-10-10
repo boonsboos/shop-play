@@ -10,7 +10,7 @@ import org.koin.ktor.ext.inject
 fun Route.addFriend() {
     val userController by inject<UserController>()
 
-    post("/users/{userId}/friends") {
+    post("/users/{id}/friends") {
         userController.handleNewFriendRequestAsync(call)
     }
 }
