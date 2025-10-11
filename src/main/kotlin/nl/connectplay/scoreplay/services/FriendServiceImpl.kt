@@ -116,17 +116,12 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
             val user = userRepository.getUserByIdAsync(friendId)
                 ?: return null // we failed to fetch every user, stop executing
 
-            val friendshipStatus = if (isFriendsAsync(userId, friendId) ?: false) {
-                FriendshipStatus.FRIENDS
-            } else {
-                FriendshipStatus.PENDING
-            }
-
+            // add users to list with friendship status
             userList.add(
                 UserFriendDto(
                     user.username,
                     user.profilePicture,
-                    friendshipStatus
+                    FriendshipStatus.FRIENDS // we only have friends in this list
                 )
             )
         }

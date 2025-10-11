@@ -21,10 +21,10 @@ Content-Type: application/json
   "password": "Pass1234"
 }
 
-### friend request
+### send friend request
 < {%
-    request.variables.set("userId", 1)
-    request.variables.set("friendId", 2)
+    request.variables.set("userId", 1) // as user 1
+    request.variables.set("friendId", 2) // send a friend request to user 2
 %}
 POST http://localhost:8080/users/{{userId}}/friends
 Content-Type: application/json
@@ -33,17 +33,17 @@ Content-Type: application/json
   "friendId": {{friendId}}
 }
 
-### get friends request
+### get friends
 < {%
-    request.variables.set("userId", 1)
+    request.variables.set("userId", 1) // gets friends for user 1
 %}
 GET http://localhost:8080/users/{{userId}}/friends
 Content-Type: application/json
 
 ### accept friend request
 < {%
-    request.variables.set("userId", 1)
-    request.variables.set("friendId", 2)
+    request.variables.set("userId", 2) // as user 2
+    request.variables.set("friendId", 1) // accept friend request from user 1
 %}
 PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
@@ -54,8 +54,8 @@ Content-Type: application/json
 
 ### deny friend request
 < {%
-    request.variables.set("userId", 1)
-    request.variables.set("friendId", 2)
+    request.variables.set("userId", 2) // as user 2
+    request.variables.set("friendId", 1) // deny friend request from user 1
 %}
 PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
@@ -66,8 +66,8 @@ Content-Type: application/json
 
 ### remove user as friend
 < {%
-    request.variables.set("userId", 1)
-    request.variables.set("friendId", 2)
+    request.variables.set("userId", 2) // as user 2
+    request.variables.set("friendId", 1) // remove friendship from user 1
 %}
 DELETE http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
