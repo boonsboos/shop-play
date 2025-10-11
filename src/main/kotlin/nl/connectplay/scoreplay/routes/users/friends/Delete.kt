@@ -1,16 +1,17 @@
 package nl.connectplay.scoreplay.routes.users.friends
 
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
+import io.ktor.server.routing.delete
 import nl.connectplay.scoreplay.controllers.UserController
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
+import kotlin.getValue
 
 @ApiRoute
-fun Route.getFriends() {
+fun Route.removeFriend() {
     val userController by inject<UserController>()
 
-    get("/users/{id}/friends") {
-        userController.handleGetFriendsForUserAsync(call)
+    delete("/users/{id}/friends/{friendId}") {
+        userController.handleDeleteFriend(call)
     }
 }
