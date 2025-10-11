@@ -2,11 +2,14 @@
 GET http://localhost:8080/users
 
 ### get a list of all users with query-params
-GET http://localhost:8080/users?limit=10&offset=5&query=
+GET http://localhost:8080/users?limit=10&offset=5
 
 ### get user with id '1'
-@id = 1
-GET http://localhost:8080/users/{{id}}
+# this is a pre-request script
+< {%
+    request.variables.set("userId", 1) // this is a per-request variable
+%}
+GET http://localhost:8080/users/{{userId}}
 
 ### register new user
 POST http://localhost:8080/register
@@ -19,20 +22,30 @@ Content-Type: application/json
 }
 
 ### friend request
-POST http://localhost:8080/users/{{id}}/friends
+< {%
+    request.variables.set("userId", 1)
+    request.variables.set("friendId", 2)
+%}
+POST http://localhost:8080/users/{{userId}}/friends
 Content-Type: application/json
 
 {
-  "friendId": 2
+  "friendId": {{friendId}}
 }
 
 ### get friends request
-GET http://localhost:8080/users/{{id}}/friends
+< {%
+    request.variables.set("userId", 1)
+%}
+GET http://localhost:8080/users/{{userId}}/friends
 Content-Type: application/json
 
 ### accept friend request
-@friendId = 1
-PATCH http://localhost:8080/users/{{id}}/friends/{{friendId}}
+< {%
+    request.variables.set("userId", 1)
+    request.variables.set("friendId", 2)
+%}
+PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
 
 {
@@ -40,7 +53,11 @@ Content-Type: application/json
 }
 
 ### deny friend request
-PATCH http://localhost:8080/users/{{id}}/friends/{{friendId}}
+< {%
+    request.variables.set("userId", 1)
+    request.variables.set("friendId", 2)
+%}
+PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
 
 {
@@ -48,5 +65,9 @@ Content-Type: application/json
 }
 
 ### remove user as friend
-DELETE http://localhost:8080/users/{{id}}/friends/{{friendId}}
+< {%
+    request.variables.set("userId", 1)
+    request.variables.set("friendId", 2)
+%}
+DELETE http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
