@@ -12,6 +12,6 @@ fun Route.removeFriend() {
     val userController by inject<UserController>()
 
     delete("/users/{id}/friends/{friendId}") {
-        userController.handlePatchFriendRequest(call)
+        userController.handleDeleteFriend(call)
     }
 }

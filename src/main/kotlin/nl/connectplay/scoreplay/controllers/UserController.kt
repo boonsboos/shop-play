@@ -8,11 +8,11 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
-import nl.connectplay.scoreplay.utilities.getSearchQueryParameter
 import java.sql.SQLException
 
 class UserController(private val userRepository: UserRepository, private val friendService: FriendService) {
@@ -132,10 +132,10 @@ class UserController(private val userRepository: UserRepository, private val fri
 
         // if the user calls the endpoint without specifying the parameter
         // we assume they do not want to accept
-        val accepts = call.request.queryParameters["accept"]
+        val reply = call.receive<FriendRequestReplyDto>()
 
         try {
-            when(accepts != null) {
+            when(reply.accept) {
                 true -> friendService.acceptFriendAsync(userId, friendId)
                 false -> friendService.rejectFriendAsync(userId, friendId)
             }
