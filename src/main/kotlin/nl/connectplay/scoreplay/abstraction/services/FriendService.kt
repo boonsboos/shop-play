@@ -1,7 +1,7 @@
 package nl.connectplay.scoreplay.abstraction.services
 
 import nl.connectplay.scoreplay.models.FriendshipStatus
-import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.dto.friend.UserFriendDto
 
 interface FriendService {
     suspend fun isFriendsAsync(userId: Int, friendId: Int): Boolean?
@@ -9,5 +9,5 @@ interface FriendService {
     suspend fun removeFriendAsync(userId: Int, friendId: Int)
     suspend fun rejectFriendAsync(userId: Int, requesterUserId: Int)
     suspend fun acceptFriendAsync(userId: Int, requesterUserId: Int)
-    suspend fun getFriendsAsync(userId: Int, limit: Int, offset: Int): List<UserDto>?
+    suspend fun getFriendsAsync(userId: Int, limit: Int, offset: Int): List<UserFriendDto>?
 }

@@ -8,6 +8,7 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.models.FriendshipStatus
 import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.dto.friend.UserFriendDto
 
 class FriendServiceImpl(private val friendRepository: FriendRepository, private val userRepository: UserRepository) : FriendService {
 
@@ -107,15 +108,27 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
         userId: Int,
         limit: Int,
         offset: Int
-    ): List<UserDto>?  {
+    ): List<UserFriendDto>?  {
         val friendIds = friendRepository.getFriendsAsync(userId, limit, offset) ?: return null
 
-        val userList = mutableListOf<UserDto>()
+        val userList = mutableListOf<UserFriendDto>()
         for (friendId in friendIds) {
             val user = userRepository.getUserByIdAsync(friendId)
                 ?: return null // we failed to fetch every user, stop executing
 
-            userList.add(user)
+            val friendshipStatus = if (isFriendsAsync(userId, friendId) ?: false) {
+                FriendshipStatus.FRIENDS
+            } else {
+                FriendshipStatus.PENDING
+            }
+
+            userList.add(
+                UserFriendDto(
+                    user.username,
+                    user.profilePicture,
+                    friendshipStatus
+                )
+            )
         }
 
         return userList.toList()
