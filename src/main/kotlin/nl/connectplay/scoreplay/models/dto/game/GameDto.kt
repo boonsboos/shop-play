@@ -15,7 +15,7 @@ data class GameDto(
     val releaseDate: LocalDate? = null
 )
 
-// simpele mapper
+// simple mapper
 fun Game.toDto() = GameDto(
     id, name, description, publisher, minPlayers, maxPlayers, duration, minAge, releaseDate
 )

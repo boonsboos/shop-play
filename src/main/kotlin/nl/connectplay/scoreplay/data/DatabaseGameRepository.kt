@@ -11,14 +11,14 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
 
     override suspend fun getGamesAsync(limit: Int?, offset: Int?, query: String?): List<GameDto>? = coroutineScope {
         async {
-            // sql statement to db
+            // SQL Statement to db
             database.connection?.use { conn ->
                 val sql = """
                     SELECT 
                         g.game_id, g.name, g.description, g.publisher,
                         g.min_players, g.max_players, g.duration_minutes, g.min_age, g.release_date
                     FROM games g
-                    WHERE (? IS NULL OR g.name LIKE ? OR g.publisher LIKE ?)
+                    WHERE (? IS NULL OR g.name LIKE ? OR g.publisher LIKE ? OR g.description LIKE ?)
                     ORDER BY g.game_id
                     LIMIT ? OFFSET ?
                 """.trimIndent()
@@ -26,10 +26,11 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                 conn.prepareStatement(sql).use { stmt ->
                     stmt.setString(1, query)
                     val like = "%${query ?: ""}%"
-                    stmt.setString(2, like)
-                    stmt.setString(3, like)
-                    stmt.setInt(4, limit ?: 25)
-                    stmt.setInt(5, offset ?: 0)
+                    stmt.setString(2, like) // game
+                    stmt.setString(3, like) // publisher
+                    stmt.setString(4, like) // description
+                    stmt.setInt(5, limit ?: 25)
+                    stmt.setInt(6, offset ?: 0)
 
                     // Creates mutable list of Games using GameDto
                     stmt.executeQuery().use { rs ->
@@ -49,7 +50,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                 )
                             )
                         }
-                        list.toList() // kan leeg zijn
+                        list.toList() // can be empty
                     }
                 }
             }
