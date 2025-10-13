@@ -41,11 +41,11 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     name = rs.getString("name"),
                                     description = rs.getString("description"),
                                     publisher = rs.getString("publisher"),
-                                    minPlayers = rs.getInt("min_players").let { if (rs.wasNull()) null else it },
-                                    maxPlayers = rs.getInt("max_players").let { if (rs.wasNull()) null else it },
-                                    duration = rs.getInt("duration_minutes").let { if (rs.wasNull()) null else it },
-                                    minAge = rs.getInt("min_age").let { if (rs.wasNull()) null else it },
-                                    releaseDate = rs.getDate("release_date")?.let { kotlinx.datetime.LocalDate.parse(it.toLocalDate().toString()) }
+                                    minPlayers = rs.getInt("min_players") ?: null,
+                                    maxPlayers = rs.getInt("max_players")?: null,
+                                    duration = rs.getInt("duration_minutes") ?: null,
+                                    minAge = rs.getInt("min_age") ?: null,
+                                    releaseDate = rs.getDate("release_date") ?: null,
                                 )
                             )
                         }

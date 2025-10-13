@@ -8,11 +8,11 @@ data class GameDto(
     val name: String,
     val description: String,
     val publisher: String,
-    val minPlayers: Int?,
-    val maxPlayers: Int?,
-    val duration: Int?,
-    val minAge: Int?,
-    val releaseDate: LocalDate?
+    val minPlayers: Int? = null,
+    val maxPlayers: Int? = null,
+    val duration: Int? = null,
+    val minAge: Int? = null,
+    val releaseDate: LocalDate? = null
 )
 
 // simpele mapper
