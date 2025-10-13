@@ -3,6 +3,7 @@ package nl.connectplay.scoreplay
 import io.ktor.server.config.ApplicationConfig
 import nl.connectplay.scoreplay.abstraction.data.ExampleRepository
 import nl.connectplay.scoreplay.abstraction.data.FriendRepository
+import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
@@ -34,7 +35,6 @@ fun repositories() = module {
     singleOf(::DatabaseExampleRepository) { bind<ExampleRepository>() }
     singleOf(::DatabaseUserRepository) { bind<UserRepository>() }
     singleOf(::DatabaseGameRepository) { bind<GameRepository>() }
-
     singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
 }
 

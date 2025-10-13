@@ -2,10 +2,9 @@ package nl.connectplay.scoreplay.data
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.models.dto.GameDto
-import java.sql.Date
 
 class DatabaseGameRepository(private val database: Database) : GameRepository {
 
@@ -46,7 +45,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     maxPlayers = rs.getInt("max_players") ?: null,
                                     duration = rs.getInt("duration_minutes") ?: null,
                                     minAge = rs.getInt("min_age") ?: null,
-                                    releaseDate = rs.getDate("release_date") ?: null,
+                                    releaseDate = rs.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
                                 )
                             )
                         }
