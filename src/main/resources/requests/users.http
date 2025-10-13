@@ -2,11 +2,14 @@
 GET http://localhost:8080/users
 
 ### get a list of all users with query-params
-GET http://localhost:8080/users?limit=10&offset=5&query=
+GET http://localhost:8080/users?limit=10&offset=5
 
 ### get user with id '1'
-@id = 1
-GET http://localhost:8080/users/{{id}}
+# this is a pre-request script
+< {%
+    request.variables.set("userId", 1) // this is a per-request variable
+%}
+GET http://localhost:8080/users/{{userId}}
 
 ### register new user
 POST http://localhost:8080/register
@@ -17,3 +20,54 @@ Content-Type: application/json
   "email": "bob@connect-play.nl",
   "password": "Pass1234"
 }
+
+### send friend request
+< {%
+    request.variables.set("userId", 1) // as user 1
+    request.variables.set("friendId", 2) // send a friend request to user 2
+%}
+POST http://localhost:8080/users/{{userId}}/friends
+Content-Type: application/json
+
+{
+  "friendId": {{friendId}}
+}
+
+### get friends
+< {%
+    request.variables.set("userId", 1) // gets friends for user 1
+%}
+GET http://localhost:8080/users/{{userId}}/friends
+Content-Type: application/json
+
+### accept friend request
+< {%
+    request.variables.set("userId", 2) // as user 2
+    request.variables.set("friendId", 1) // accept friend request from user 1
+%}
+PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
+Content-Type: application/json
+
+{
+  "accept": true
+}
+
+### deny friend request
+< {%
+    request.variables.set("userId", 2) // as user 2
+    request.variables.set("friendId", 1) // deny friend request from user 1
+%}
+PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
+Content-Type: application/json
+
+{
+  "accept": false
+}
+
+### remove user as friend
+< {%
+    request.variables.set("userId", 2) // as user 2
+    request.variables.set("friendId", 1) // remove friendship from user 1
+%}
+DELETE http://localhost:8080/users/{{userId}}/friends/{{friendId}}
+Content-Type: application/json

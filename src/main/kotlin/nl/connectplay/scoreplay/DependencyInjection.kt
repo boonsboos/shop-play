@@ -1,17 +1,21 @@
 package nl.connectplay.scoreplay
 
 import nl.connectplay.scoreplay.abstraction.data.ExampleRepository
+import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.controllers.ExampleController
 import nl.connectplay.scoreplay.controllers.SessionController
 import nl.connectplay.scoreplay.controllers.UserController
 import nl.connectplay.scoreplay.controllers.GameController
 import nl.connectplay.scoreplay.data.Database
 import nl.connectplay.scoreplay.data.DatabaseExampleRepository
+import nl.connectplay.scoreplay.data.DatabaseFriendRepository
 import nl.connectplay.scoreplay.data.DatabaseSessionRepository
 import nl.connectplay.scoreplay.data.DatabaseUserRepository
 import nl.connectplay.scoreplay.data.DatabaseGameRepository
+import nl.connectplay.scoreplay.services.FriendServiceImpl
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.onClose
@@ -27,6 +31,7 @@ fun repositories() = module {
     singleOf(::DatabaseUserRepository) { bind<UserRepository>() }
     singleOf(::DatabaseGameRepository) { bind<GameRepository>() }
 
+    singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
 }
 
 /**
@@ -37,6 +42,13 @@ fun controllers() = module {
     singleOf(::SessionController)
     singleOf(::UserController)
     singleOf(::GameController)
+}
+
+/**
+ * Register services
+ */
+fun services() = module {
+    singleOf(::FriendServiceImpl) { bind<FriendService>() }
 }
 
 fun database() = module {

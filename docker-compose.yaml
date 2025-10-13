@@ -16,3 +16,13 @@ services:
       - mariadb
     environment:
       PMA_HOST: mariadb # dit geeft aan dat dit de container is waarop de database runt.
+
+  # host onze afbeeldingen
+  image-server:
+    image: "image-server"
+    build:
+      dockerfile: resources/go-fast-cdn.Dockerfile
+      tags:
+        - "image-server"
+    ports:
+      - "8082:8080"

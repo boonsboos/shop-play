@@ -5,12 +5,17 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
-import nl.connectplay.scoreplay.data.DatabaseUserRepository
+import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
+import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
+import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
+import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
+import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
 import java.sql.SQLException
 
-class UserController(private val userRepository: UserRepository) {
+class UserController(private val userRepository: UserRepository, private val friendService: FriendService) {
 
     suspend fun handleListAsync(call: ApplicationCall) {
         // These are optional query parameters:
@@ -66,6 +71,94 @@ class UserController(private val userRepository: UserRepository) {
         } catch (e: SQLException) {
             // handle unexpected database errors
             call.application.environment.log.error("DB error while adding user", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleNewFriendRequestAsync(call: ApplicationCall) {
+        val requestBody = call.receiveNullable<NewFriendRequestDto>() ?: return call.respond(HttpStatusCode.BadRequest)
+        val userId = call.parameters["id"]?.toIntOrNull() ?: return call.respond(HttpStatusCode.BadRequest)
+
+        try {
+            // are the users friends already?
+            val areFriends = friendService.isFriendsAsync(userId, requestBody.friendId)
+                    ?: return call.respond(HttpStatusCode.InternalServerError) // we failed to do a very important check
+            if (areFriends) {
+                return call.respond(HttpStatusCode.Conflict, "Already friends")
+            }
+
+            // create a friend request
+            val friendRequestStatus = friendService.requestFriendAsync(userId, requestBody.friendId)
+                ?: return call.respond(HttpStatusCode.InternalServerError) // we failed to create the request because of other errors
+
+            // we respond with either friends
+            call.respond(HttpStatusCode.Created, FriendRequestResponseDto(requestBody.friendId, friendRequestStatus))
+        } catch (exception: IllegalStateException) {
+            return call.respond(HttpStatusCode.Conflict, "Request already sent")
+        } catch (exception: SQLException) {
+            call.application.environment.log.error("DB error while adding friend request to ${requestBody.friendId} for user $userId", exception)
+            return call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleGetFriendsForUserAsync(call: ApplicationCall) {
+        val userId = call.parameters["id"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest) // we can't continue without the user ID
+
+        // use custom extension functions to get the query parameters to reduce code duplication
+        val limit = call.request.getLimitQueryParameter()
+        val offset = call.request.getOffsetQueryParameter()
+
+        // TODO: we should check if the user is a friend,
+        //  we want only friends of users to be able to see a user's friend
+
+        // get all friends of the user
+        try {
+            val friendsAsUsers = friendService.getFriendsAsync(userId, limit, offset)
+                ?: return call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
+
+            call.respond(HttpStatusCode.OK, friendsAsUsers)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while getting friends for user $userId", e)
+            call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
+        }
+    }
+
+    suspend fun handlePatchFriendRequest(call: ApplicationCall) {
+        val userId = call.parameters["id"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest) // user ID is required
+        val friendId = call.parameters["friendId"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest) // friend ID is required
+
+        // if the user calls the endpoint without specifying the parameter
+        // we assume they do not want to accept
+        val reply = call.receive<FriendRequestReplyDto>()
+
+        try {
+            when(reply.accept) {
+                true -> friendService.acceptFriendAsync(userId, friendId)
+                false -> friendService.rejectFriendAsync(userId, friendId)
+            }
+
+            return call.respond(HttpStatusCode.OK)
+        } catch (sqlException: SQLException) {
+            call.application.environment.log.error("DB error while user $userId was replying to friend request from user $friendId", sqlException)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleDeleteFriend(call: ApplicationCall) {
+        val userId = call.parameters["id"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest) // user ID is required
+        val friendId = call.parameters["friendId"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest) // friend ID is required
+
+        try {
+            friendService.removeFriendAsync(userId, friendId)
+
+            return call.respond(HttpStatusCode.NoContent)
+        } catch (sqlException: SQLException) {
+            call.application.environment.log.error("DB error while user $userId was unfriending user $friendId", sqlException)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
