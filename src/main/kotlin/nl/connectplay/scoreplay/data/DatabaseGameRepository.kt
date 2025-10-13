@@ -45,7 +45,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     maxPlayers = rs.getInt("max_players").let { if (rs.wasNull()) null else it },
                                     duration = rs.getInt("duration_minutes").let { if (rs.wasNull()) null else it },
                                     minAge = rs.getInt("min_age").let { if (rs.wasNull()) null else it },
-                                    releaseDate = rs.getDate("release_date")?.toLocalDate()
+                                    releaseDate = rs.getDate("release_date")?.let { kotlinx.datetime.LocalDate.parse(it.toLocalDate().toString()) }
                                 )
                             )
                         }
@@ -56,6 +56,3 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
         }.await()
     }
 }
-
-// helper voor java.sql.Date -> kotlinx.datetime.LocalDate
-private fun Date.toLocalDate(): LocalDate = LocalDate.parse(toLocalDate().toString())
