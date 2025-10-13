@@ -11,6 +11,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
 
     override suspend fun getGamesAsync(limit: Int?, offset: Int?, query: String?): List<GameDto>? = coroutineScope {
         async {
+            // sql statement to db
             database.connection?.use { conn ->
                 val sql = """
                     SELECT 
@@ -23,15 +24,14 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                 """.trimIndent()
 
                 conn.prepareStatement(sql).use { stmt ->
-                    // param 1 voor IS NULL check
                     stmt.setString(1, query)
-                    // LIKE params
                     val like = "%${query ?: ""}%"
                     stmt.setString(2, like)
                     stmt.setString(3, like)
                     stmt.setInt(4, limit ?: 25)
                     stmt.setInt(5, offset ?: 0)
 
+                    // Creates mutable list of Games using GameDto
                     stmt.executeQuery().use { rs ->
                         val list = mutableListOf<GameDto>()
                         while (rs.next()) {

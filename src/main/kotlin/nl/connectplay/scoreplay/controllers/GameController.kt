@@ -13,7 +13,7 @@ class GameController(private val gameRepository: GameRepository) {
         val limit = call.request.queryParameters["limit"]?.toIntOrNull()
         val offset = call.request.queryParameters["offset"]?.toIntOrNull()
         val query = call.request.queryParameters["query"]
-
+        // Try getting all games from db shows NoContent if empty or InternalServerError if something went wrong in catch
         try {
             val games = gameRepository.getGamesAsync(limit, offset, query)
                 ?: return call.respond(HttpStatusCode.NoContent)
