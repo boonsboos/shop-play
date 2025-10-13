@@ -42,7 +42,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     description = rs.getString("description"),
                                     publisher = rs.getString("publisher"),
                                     minPlayers = rs.getInt("min_players") ?: null,
-                                    maxPlayers = rs.getInt("max_players")?: null,
+                                    maxPlayers = rs.getInt("max_players") ?: null,
                                     duration = rs.getInt("duration_minutes") ?: null,
                                     minAge = rs.getInt("min_age") ?: null,
                                     releaseDate = rs.getDate("release_date") ?: null,
