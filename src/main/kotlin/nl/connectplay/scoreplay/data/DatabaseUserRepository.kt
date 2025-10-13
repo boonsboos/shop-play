@@ -1,6 +1,5 @@
 package nl.connectplay.scoreplay.data
 
-import io.ktor.http.parameters
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
@@ -9,7 +8,6 @@ import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
-import kotlin.coroutines.coroutineContext
 
 class DatabaseUserRepository(private val database: Database) : UserRepository {
 
