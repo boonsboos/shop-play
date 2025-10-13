@@ -10,12 +10,14 @@ import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.controllers.ExampleController
 import nl.connectplay.scoreplay.controllers.SessionController
 import nl.connectplay.scoreplay.controllers.UserController
+import nl.connectplay.scoreplay.controllers.GameController
 import nl.connectplay.scoreplay.data.Database
 import nl.connectplay.scoreplay.data.DatabaseExampleRepository
 import nl.connectplay.scoreplay.data.DatabaseFriendRepository
 import nl.connectplay.scoreplay.data.DatabaseSessionRepository
 import nl.connectplay.scoreplay.data.DatabaseUserRepository
 import nl.connectplay.scoreplay.options.JWTOptions
+import nl.connectplay.scoreplay.data.DatabaseGameRepository
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.services.UserAccountServiceImpl
 import org.koin.core.module.dsl.bind
@@ -31,6 +33,8 @@ fun repositories() = module {
     singleOf(::DatabaseSessionRepository) { bind<SessionRepository>() }
     singleOf(::DatabaseExampleRepository) { bind<ExampleRepository>() }
     singleOf(::DatabaseUserRepository) { bind<UserRepository>() }
+    singleOf(::DatabaseGameRepository) { bind<GameRepository>() }
+
     singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
 }
 
@@ -41,6 +45,7 @@ fun controllers() = module {
     singleOf(::ExampleController)
     singleOf(::SessionController)
     singleOf(::UserController)
+    singleOf(::GameController)
 }
 
 /**
