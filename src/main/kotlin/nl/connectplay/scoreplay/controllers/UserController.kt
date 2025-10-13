@@ -1,13 +1,19 @@
 package nl.connectplay.scoreplay.controllers
 
+import com.auth0.jwt.exceptions.JWTCreationException
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.response.*
 import io.ktor.server.request.*
+import io.ktor.util.logging.error
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
+import nl.connectplay.scoreplay.abstraction.services.UserAccountService
+import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.LoginUserDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
@@ -15,7 +21,11 @@ import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
 import java.sql.SQLException
 
-class UserController(private val userRepository: UserRepository, private val friendService: FriendService) {
+class UserController(
+    private val userRepository: UserRepository,
+    private val friendService: FriendService,
+    private val userAccountService: UserAccountService
+) {
 
     suspend fun handleListAsync(call: ApplicationCall) {
         // These are optional query parameters:
@@ -71,6 +81,29 @@ class UserController(private val userRepository: UserRepository, private val fri
         } catch (e: SQLException) {
             // handle unexpected database errors
             call.application.environment.log.error("DB error while adding user", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleLoginAsync(call: ApplicationCall) {
+        val loginDto = call.receiveNullable<LoginUserDto>()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Missing login")
+
+        try {
+            val token = userAccountService.loginAsync(loginDto)
+            // respond with token in json
+            call.respond(HttpStatusCode.OK, hashMapOf("token" to token))
+        } catch (e: NotFoundException) {
+            call.application.environment.log.error(e)
+            call.respond(HttpStatusCode.Unauthorized) // we can pretend login fails if the user does not exist
+        } catch (e: UnauthorizedException) {
+            call.application.environment.log.error(e)
+            call.respond(HttpStatusCode.Unauthorized) // user is not allowed if the passwords do not match
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while logging in user '${loginDto.username ?: loginDto.email}'", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        } catch (e: JWTCreationException) {
+            call.application.environment.log.error("Failed to create JWT", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }

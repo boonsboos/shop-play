@@ -71,3 +71,13 @@ Content-Type: application/json
 %}
 DELETE http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
+
+### log in
+POST http://localhost:8080/login
+Content-Type: application/json
+
+{
+  "username": "Bob",
+  "email": "bob@connect-play.nl",
+  "password": "Pass1234"
+}
