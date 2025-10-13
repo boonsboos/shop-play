@@ -13,6 +13,6 @@ fun ApplicationCall.getUserIdFromJWT(): Int {
     val principal = this.principal<JWTPrincipal>()
         ?: throw IllegalStateException("JWT Principal is invalid")
 
-    // if the claim cannot be converted to an int, the function also returns null and we throw an exception
+    // we already validated the user id is present
     return principal.payload.getClaim(UserIdJWTClaim).asInt()
 }
