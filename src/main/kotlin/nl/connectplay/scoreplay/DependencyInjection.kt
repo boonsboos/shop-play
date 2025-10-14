@@ -1,24 +1,19 @@
 package nl.connectplay.scoreplay
 
-import io.ktor.server.config.ApplicationConfig
-import nl.connectplay.scoreplay.abstraction.data.ExampleRepository
-import nl.connectplay.scoreplay.abstraction.data.FriendRepository
-import nl.connectplay.scoreplay.abstraction.data.GameRepository
-import nl.connectplay.scoreplay.abstraction.data.SessionRepository
-import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import io.ktor.server.config.*
+import nl.connectplay.scoreplay.abstraction.data.*
+import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
+import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.controllers.ExampleController
+import nl.connectplay.scoreplay.controllers.GameController
 import nl.connectplay.scoreplay.controllers.SessionController
 import nl.connectplay.scoreplay.controllers.UserController
-import nl.connectplay.scoreplay.controllers.GameController
-import nl.connectplay.scoreplay.data.Database
-import nl.connectplay.scoreplay.data.DatabaseExampleRepository
-import nl.connectplay.scoreplay.data.DatabaseFriendRepository
-import nl.connectplay.scoreplay.data.DatabaseSessionRepository
-import nl.connectplay.scoreplay.data.DatabaseUserRepository
+import nl.connectplay.scoreplay.data.*
+import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
+import nl.connectplay.scoreplay.events.EventRouter
 import nl.connectplay.scoreplay.options.JWTOptions
-import nl.connectplay.scoreplay.data.DatabaseGameRepository
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.services.UserAccountServiceImpl
 import org.koin.core.module.dsl.bind
@@ -54,6 +49,9 @@ fun controllers() = module {
 fun services() = module {
     singleOf(::FriendServiceImpl) { bind<FriendService>() }
     singleOf(::UserAccountServiceImpl) { bind<UserAccountService>() }
+    // events
+    singleOf(::EventRouter) { bind<EventRoutingService>() }
+    singleOf(::EventQueueManagerServiceImpl) { bind<EventQueueManagerService>() }
 }
 
 /**

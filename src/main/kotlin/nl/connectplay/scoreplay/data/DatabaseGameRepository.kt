@@ -4,7 +4,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.toKotlinLocalDate
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
-import nl.connectplay.scoreplay.models.dto.GameDto
+import nl.connectplay.scoreplay.models.dto.game.GameDto
 
 class DatabaseGameRepository(private val database: Database) : GameRepository {
 

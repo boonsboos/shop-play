@@ -1,8 +1,10 @@
-package nl.connectplay.scoreplay.models.dto
+package nl.connectplay.scoreplay.models.dto.game
 
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 import nl.connectplay.scoreplay.models.Game
 
+@Serializable
 data class GameDto(
     val id: Int,
     val name: String,
