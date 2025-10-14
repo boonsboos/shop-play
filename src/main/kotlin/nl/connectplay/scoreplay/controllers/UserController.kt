@@ -11,7 +11,8 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import nl.connectplay.scoreplay.models.dto.LoginUserDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
@@ -192,6 +193,34 @@ class UserController(
             return call.respond(HttpStatusCode.NoContent)
         } catch (sqlException: SQLException) {
             call.application.environment.log.error("DB error while user $userId was unfriending user $friendId", sqlException)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleUpdateUserAsync(call: ApplicationCall) { // the call: Application is a small package that holeds the request and respons
+        val userId = call.parameters["id"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "User ID is not a number")// read the id and cover it to int if possible if null badrequest
+        val updateDto = call.receiveNullable<UserUpdateDto>()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid or no update date") // receiveNullable checks if the UserUpdateDto is valid
+
+        try {
+            userRepository.updateUserAsync(userId, updateDto) // send the update to the UserRepository
+            // if there is no user found trow NotFound message 404
+            // null is not allowed for JSON respond
+            val updatedUser = userRepository.getUserByIdAsync(userId)
+                ?: return call.respond(HttpStatusCode.NotFound, "No user found after update")
+            call.respond(HttpStatusCode.OK, updatedUser) // send a HTTP Ok response back to the client with the updated user data
+        } catch (e: SQLException) {
+            // check if the error message is about UNIQUE or duplicate values in the database
+            // UNIQUE and duplicate are errors coming directly from the database itself
+            if (e.message?.contains("UNIQUE", ignoreCase = true) == true ||
+                e.message?.contains("duplicate", ignoreCase = true) == true) {
+                // handle duplicate username or email if the username or email already exists
+                call.respond(HttpStatusCode.Conflict, "Username or email already exists")
+                return
+            }
+            // handle unexpected database errors
+            call.application.environment.log.error("DB error while updating userprofile", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }

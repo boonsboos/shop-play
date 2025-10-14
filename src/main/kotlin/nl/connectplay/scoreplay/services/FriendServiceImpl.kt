@@ -7,7 +7,7 @@ import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.models.FriendshipStatus
-import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.friend.UserFriendDto
 
 class FriendServiceImpl(private val friendRepository: FriendRepository, private val userRepository: UserRepository) : FriendService {

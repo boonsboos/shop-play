@@ -4,7 +4,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.User
-import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
@@ -33,8 +34,8 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                 // even if an exception occurs.
                 database.connection?.use { connection ->
                     var sql = """
-                        SELECT u.user_name, p.picture_url FROM users AS u
-                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
+                        SELECT u.user_name, u.email, p.picture_url FROM users AS u
+                        LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
                         WHERE u.user_name LIKE ?
                         LIMIT ? OFFSET ?
                     """.trimIndent()
@@ -51,6 +52,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                     while (resultSet?.next() == true) {
                         val user = UserDto(
                             username = resultSet.getString("user_name"),
+                            email = resultSet.getString("email"),
                             profilePicture = resultSet.getString("picture_url"),
                         )
                         users.add(user)
@@ -79,8 +81,8 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
             async {
                 database.connection?.use { connection ->
                     var sql = """
-                        SELECT u.user_name, p.picture_url FROM users AS u
-                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
+                        SELECT u.user_name, u.email, p.picture_url FROM users AS u
+                        LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
                         WHERE u.user_id = ?
                     """.trimIndent()
 
@@ -92,6 +94,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                     if (resultSet?.next() == true) {
                         user = UserDto(
                             username = resultSet.getString("user_name"),
+                            email = resultSet.getString("email"),
                             profilePicture = resultSet.getString("picture_url"),
                         )
                     }
@@ -152,6 +155,50 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                     stmt.setString(3, BCrypt.hashpw(user.password, BCrypt.gensalt()))
                     stmt.executeUpdate() // execute the sql insert command
                     stmt.close()
+                }
+            }.await()
+        }
+    }
+
+    override suspend fun updateUserAsync(userId: Int, updateDto: UserUpdateDto) {
+        return coroutineScope {
+            async {
+                database.connection?.use { connection ->
+                    val checkUserStmt = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE user_id = ?") // the query expects one row zou the value should be 1 or 0
+                    checkUserStmt.setInt(1, userId)
+                    val resultSet = checkUserStmt.executeQuery() // executeQuery execute the SELECT-query
+                    resultSet.next() // to get to the first and only row
+                    // get the int from the first column, this must be the id so it is a integer
+                    val userExists = resultSet.getInt(1) > 0 // if het value is bigger than 0 userExists
+
+                    if(!userExists) {
+                        throw IllegalArgumentException("User with id $userId is not found")
+                    }
+
+                    resultSet.close()
+                    checkUserStmt.close()
+
+                    // only update the fields that are changed
+                    // use the COALESCE for the new value that is not null, else leave old data untouched
+                    val updateStmt = connection.prepareStatement("UPDATE users SET " +
+                            "user_name = COALESCE(?, user_name), " +
+                            "email = COALESCE(?, email), " +
+                            "password_hash = COALESCE(?, password_hash) " +
+                            "WHERE user_id = ?")
+
+                    // the password wil only be hased if password is NOT null, else keep it null.
+                    val hashedPassword = if (updateDto.password != null)
+                        BCrypt.hashpw(updateDto.password, BCrypt.gensalt())
+                    else null
+
+                    updateStmt.setString(1, updateDto.username)
+                    updateStmt.setString(2, updateDto.email)
+                    updateStmt.setString(3, hashedPassword)
+                    updateStmt.setInt(4, userId)
+
+                    updateStmt.executeUpdate()
+
+                    updateStmt.close()
                 }
             }.await()
         }
