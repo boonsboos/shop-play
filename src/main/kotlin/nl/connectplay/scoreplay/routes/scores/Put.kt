@@ -6,16 +6,11 @@ import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 
 @ApiRoute
-fun Route.getScoresRoute() {
+fun Route.putScoresRoute() {
     val scoreController by inject<ScoreController>()
 
-    // GET /scores — List of scores
-    get("/scores") {
-        scoreController.handleListAsync(call)
-    }
-
-    // GET /scores/{id} — Give score by ID
-    get("/scores/{id}") {
-        scoreController.handleOneAsync(call)
+    // PUT /scores/Id — Updating score
+    put("/scores/{id}") {
+        scoreController.handleUpdateAsync(call)
     }
 }
