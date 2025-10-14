@@ -1,5 +1,7 @@
 package nl.connectplay.scoreplay
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import io.ktor.server.plugins.calllogging.CallLogging
@@ -28,8 +30,16 @@ fun Application.module() {
     // Use Koin dependency injection
     install(Koin) {
         slf4jLogger()
-        modules(repositories(), database(), controllers(), services())
+        modules(
+            repositories(),
+            database(),
+            controllers(),
+            services(),
+            jwtOptions(this@module.environment.config) // pass in application configuration
+        )
     }
+
+    configureAuthentication()
 
     // Show API documentation on this path
     routing {

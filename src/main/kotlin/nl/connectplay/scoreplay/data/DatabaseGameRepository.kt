@@ -2,10 +2,9 @@ package nl.connectplay.scoreplay.data
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.datetime.LocalDate
+import kotlinx.datetime.toKotlinLocalDate
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.models.dto.GameDto
-import java.sql.Date
 
 class DatabaseGameRepository(private val database: Database) : GameRepository {
 
@@ -42,11 +41,12 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     name = rs.getString("name"),
                                     description = rs.getString("description"),
                                     publisher = rs.getString("publisher"),
-                                    minPlayers = rs.getInt("min_players") ?: null,
-                                    maxPlayers = rs.getInt("max_players") ?: null,
-                                    duration = rs.getInt("duration_minutes") ?: null,
-                                    minAge = rs.getInt("min_age") ?: null,
-                                    releaseDate = rs.getDate("release_date") ?: null,
+                                    // getInt() returns 0 if value is SQL NULL, so we need to make sure it's mapped back to null
+                                    minPlayers = rs.getInt("min_players").let { if (it > 0 ) it else null },
+                                    maxPlayers = rs.getInt("max_players").let { if (it > 0 ) it else null },
+                                    duration = rs.getInt("duration_minutes") .let { if (it > 0 ) it else null },
+                                    minAge = rs.getInt("min_age").let { if (it > 0 ) it else null },
+                                    releaseDate = rs.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
                                 )
                             )
                         }

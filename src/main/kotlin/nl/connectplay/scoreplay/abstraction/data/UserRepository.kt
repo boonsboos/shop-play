@@ -8,5 +8,6 @@ interface UserRepository {
     // because of 'suspend', the function will run asynchronously
     suspend fun getUsersAsync(limit: Int?, offset: Int?, query: String?): List<UserDto>?
     suspend fun getUserByIdAsync(userId: Int): UserDto?
+    suspend fun getUserByNameOrEmail(username: String?, email: String?): User?
     suspend fun addUser(user: CreateUserDto)
 }

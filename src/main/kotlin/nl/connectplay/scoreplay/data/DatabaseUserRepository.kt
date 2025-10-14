@@ -3,10 +3,11 @@ package nl.connectplay.scoreplay.data
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.models.User
 import nl.connectplay.scoreplay.models.dto.UserDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
-import kotlin.coroutines.coroutineContext
+import java.util.UUID
 
 class DatabaseUserRepository(private val database: Database) : UserRepository {
 
@@ -102,6 +103,39 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                 }
             }.await()
         }
+    }
+
+    val getUserByNameOrEmailSql = """
+        SELECT user_id, user_name, email, password_hash, profile_picture
+        FROM users
+        WHERE user_name = ? OR email = ?
+    """.trimIndent()
+
+    override suspend fun getUserByNameOrEmail(username: String?, email: String?): User? = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val statement = connection.prepareStatement(getUserByNameOrEmailSql)
+                statement.setString(1, username)
+                statement.setString(2, email)
+
+                val resultSet = statement.executeQuery()
+                var user: User? = null
+                if (resultSet.next()) {
+                    user = User(
+                        resultSet.getInt("user_id"),
+                        resultSet.getString("user_name"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password_hash"),
+                        resultSet.getString("profile_picture")?.let { UUID.fromString(it) }
+                    )
+                }
+
+                resultSet.close()
+                statement.close()
+
+                user
+            }
+        }.await()
     }
 
     override suspend fun addUser(user: CreateUserDto) {

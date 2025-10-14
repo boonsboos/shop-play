@@ -5,6 +5,7 @@ ktor:
   deployment:
     port: 8080
 jwt:
-  domain: "https://jwt-provider-domain/"
-  audience: "jwt-audience"
-  realm: "ktor sample app"
+  issuer: "https://api.connect-en-play.nl"
+  audience: "score-play-users"
+  realm: "score-play"
+  secret: "unsafeLocalSecret"
