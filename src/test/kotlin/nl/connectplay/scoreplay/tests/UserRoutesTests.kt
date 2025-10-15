@@ -52,4 +52,23 @@ class UserRoutesTests {
             assertTrue(responseBody.contains("luigi@connect-play.nl"))
         }
     }
+
+    @Test
+    fun testDeleteUser() {
+        testApplication {
+            application { module() }
+            client.post("/register")  {
+                setBody("""{"username":"Mario","email":"mario@connect-play.nl", "password":"Welkom01"}""")
+                header(HttpHeaders.ContentType, ContentType.Application.Json)
+            }
+
+            val deleteResponse = client.delete("/users/1")
+            assertEquals(HttpStatusCode.OK, deleteResponse.status) // check if the user was deleted
+
+            val responseBody = deleteResponse.bodyAsText()
+            assertTrue(responseBody.contains("Account deleted successfully"))
+        }
+    }
+
+
 }
