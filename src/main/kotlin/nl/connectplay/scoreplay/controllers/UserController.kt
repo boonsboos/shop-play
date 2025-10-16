@@ -21,6 +21,7 @@ import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
 import java.sql.SQLException
+import java.sql.SQLIntegrityConstraintViolationException
 
 class UserController(
     private val userRepository: UserRepository,
@@ -210,15 +211,12 @@ class UserController(
             val updatedUser = userRepository.getUserByIdAsync(userId)
                 ?: return call.respond(HttpStatusCode.NotFound, "No user found after update")
             call.respond(HttpStatusCode.OK, updatedUser) // send a HTTP Ok response back to the client with the updated user data
-        } catch (e: SQLException) {
+        } catch (e: SQLIntegrityConstraintViolationException) {
             // check if the error message is about UNIQUE or duplicate values in the database
-            // UNIQUE and duplicate are errors coming directly from the database itself
-            if (e.message?.contains("UNIQUE", ignoreCase = true) == true ||
-                e.message?.contains("duplicate", ignoreCase = true) == true) {
-                // handle duplicate username or email if the username or email already exists
-                call.respond(HttpStatusCode.Conflict, "Username or email already exists")
-                return
-            }
+            call.respond(HttpStatusCode.Conflict, "Username or email already exists")
+        } catch (e: IllegalArgumentException) {
+            call.respond(HttpStatusCode.NotFound, e.message ?: "User not found")
+        } catch (e: SQLException) {
             // handle unexpected database errors
             call.application.environment.log.error("DB error while updating userprofile", e)
             call.respond(HttpStatusCode.InternalServerError)
