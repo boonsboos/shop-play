@@ -22,10 +22,7 @@ fun Application.module() {
         json()
     }
 
-    // configure proto for Server Sent Events
-    install(SSE) {
-
-    }
+    install(SSE)
 
     install(CallLogging) {
         level = Level.INFO
