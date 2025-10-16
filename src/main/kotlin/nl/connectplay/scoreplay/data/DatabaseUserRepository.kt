@@ -145,9 +145,9 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
         return coroutineScope {
             async {
                 database.connection?.use { connection -> // open the connection to the database
-                    val sql =
+                    val stmt = connection.prepareStatement(
                         "INSERT INTO users (user_name, email, password_hash) VALUES (?, ?, ?)" // sql with placeholders to prevent SQL injection
-                    val stmt = connection.prepareStatement(sql)
+                    )
 
                     stmt.setString(1, user.username)
                     stmt.setString(2, user.email)
@@ -190,6 +190,21 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
 
                     updateStmt.close()
                 }
+            }.await()
+        }
+    }
+
+    override suspend fun deleteUser(userId: Int): Boolean {
+        return coroutineScope { // coroutinescope is to manage async operations safely
+            async {
+                database.connection?.use { connection -> // opens a safe connection with the database
+                    val stmt = connection.prepareStatement("DELETE FROM users WHERE user_id = ?")
+                    stmt.setInt(1, userId)
+
+                    val userDeleted = stmt.executeUpdate() // execute the delete and returns the number of deleted rows
+                    stmt.close()
+                    userDeleted == 1 // if userDeleted hase more than one delete was successful
+                } ?: false // return false if no user was deleted
             }.await()
         }
     }

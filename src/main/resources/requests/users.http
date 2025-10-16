@@ -30,6 +30,10 @@ Content-Type: application/json
   "email": "luigi@connect-play.nl"
 }
 
+### delete user
+DELETE http://localhost:8080/users/2
+Accept: application/json // the accept tells the server that the client expects the response in JSON format
+
 ### send friend request
 < {%
     request.variables.set("userId", 1) // as user 1

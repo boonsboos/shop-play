@@ -12,4 +12,5 @@ interface UserRepository {
     suspend fun getUserByNameOrEmail(username: String?, email: String?): User?
     suspend fun addUser(user: CreateUserDto)
     suspend fun updateUserAsync(userId: Int, updateDto: UserUpdateDto)
+    suspend fun deleteUser(userId: Int): Boolean
 }
