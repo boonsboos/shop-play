@@ -164,20 +164,6 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
-                    val checkUserStmt = connection.prepareStatement("SELECT COUNT(*) FROM users WHERE user_id = ?") // the query expects one row zou the value should be 1 or 0
-                    checkUserStmt.setInt(1, userId)
-                    val resultSet = checkUserStmt.executeQuery() // executeQuery execute the SELECT-query
-                    resultSet.next() // to get to the first and only row
-                    // get the int from the first column, this must be the id so it is a integer
-                    val userExists = resultSet.getInt(1) > 0 // if het value is bigger than 0 userExists
-
-                    if(!userExists) {
-                        throw IllegalArgumentException("User with id $userId is not found")
-                    }
-
-                    resultSet.close()
-                    checkUserStmt.close()
-
                     // only update the fields that are changed
                     // use the COALESCE for the new value that is not null, else leave old data untouched
                     val updateStmt = connection.prepareStatement("UPDATE users SET " +
@@ -196,7 +182,11 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                     updateStmt.setString(3, hashedPassword)
                     updateStmt.setInt(4, userId)
 
-                    updateStmt.executeUpdate()
+                    val rowsUpdated = updateStmt.executeUpdate() // execute the update and get row count
+
+                    if (rowsUpdated == 0) { // if no rows were updated the user does not exist
+                        throw IllegalArgumentException("User with id $userId not found")
+                    }
 
                     updateStmt.close()
                 }
