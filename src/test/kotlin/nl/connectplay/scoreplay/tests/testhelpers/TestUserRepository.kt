@@ -3,7 +3,7 @@ package nl.connectplay.scoreplay.tests.testhelpers
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.User
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
-import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserDto
 import java.util.UUID
 
 class TestUserRepository : UserRepository {

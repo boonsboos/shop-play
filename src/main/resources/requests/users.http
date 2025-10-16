@@ -21,6 +21,15 @@ Content-Type: application/json
   "password": "Pass1234"
 }
 
+### update existing user
+PATCH http://localhost:8080/users/1
+Content-Type: application/json
+
+{
+  "username": "Luigi",
+  "email": "luigi@connect-play.nl"
+}
+
 ### send friend request
 < {%
     request.variables.set("userId", 1) // as user 1
