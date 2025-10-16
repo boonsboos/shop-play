@@ -17,12 +17,12 @@ class TestUserRepository : UserRepository {
     ): List<UserDto> = users.values.toList()
 
     override suspend fun getUserByIdAsync(userId: Int): UserDto? = users[userId]
-    override suspend fun getUserByNameOrEmail(
+    override suspend fun getUserByNameOrEmailAsync(
         username: String?,
         email: String?
     ): User = User(1, username ?: "" , email ?: "", "", UUID.randomUUID())
 
-    override suspend fun addUser(user: CreateUserDto) {
+    override suspend fun addUserAsync(user: CreateUserDto) {
         this.users[this.users.size] = UserDto(user.username, user.email, "")
     }
 
@@ -31,5 +31,5 @@ class TestUserRepository : UserRepository {
         updateDto: UserUpdateDto
     ) = run {  }
 
-    override suspend fun deleteUser(userId: Int): Boolean = true
+    override suspend fun deleteUserAsync(userId: Int): Boolean = true
 }

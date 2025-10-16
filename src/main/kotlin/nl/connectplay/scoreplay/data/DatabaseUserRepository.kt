@@ -114,7 +114,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
         WHERE user_name = ? OR email = ?
     """.trimIndent()
 
-    override suspend fun getUserByNameOrEmail(username: String?, email: String?): User? = coroutineScope {
+    override suspend fun getUserByNameOrEmailAsync(username: String?, email: String?): User? = coroutineScope {
         async {
             database.connection?.use { connection ->
                 val statement = connection.prepareStatement(getUserByNameOrEmailSql)
@@ -141,7 +141,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
         }.await()
     }
 
-    override suspend fun addUser(user: CreateUserDto) {
+    override suspend fun addUserAsync(user: CreateUserDto) {
         return coroutineScope {
             async {
                 database.connection?.use { connection -> // open the connection to the database
@@ -194,7 +194,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
         }
     }
 
-    override suspend fun deleteUser(userId: Int): Boolean {
+    override suspend fun deleteUserAsync(userId: Int): Boolean {
         return coroutineScope { // coroutinescope is to manage async operations safely
             async {
                 database.connection?.use { connection -> // opens a safe connection with the database

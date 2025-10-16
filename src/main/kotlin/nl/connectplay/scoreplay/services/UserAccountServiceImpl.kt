@@ -21,7 +21,7 @@ class UserAccountServiceImpl(private val userRepository: UserRepository, private
      * @throws UnauthorizedException when passwords do not match
      */
     override suspend fun loginAsync(loginUserDto: LoginUserDto): String {
-        val user = userRepository.getUserByNameOrEmail(loginUserDto.username, loginUserDto.email)
+        val user = userRepository.getUserByNameOrEmailAsync(loginUserDto.username, loginUserDto.email)
             ?: throw NotFoundException("No user account found with username ${loginUserDto.username} or email ${loginUserDto.email}")
 
         if(!BCrypt.checkpw(loginUserDto.password, user.passwordHash)) {

@@ -75,7 +75,7 @@ class UserController(
         val user = CreateUserDto(username, email, password) // create new User object
 
         try {
-            userRepository.addUser(user) // try to save new user
+            userRepository.addUserAsync(user) // try to save new user
             call.respond(HttpStatusCode.Created, user) // send the 201 code as text and the data of the user
         } catch (e: IllegalArgumentException) { // catch the Exception from the UserRepository
             // handle duplicate or invalid user data
@@ -229,7 +229,7 @@ class UserController(
 
         try {
             val isDeleted =
-                userRepository.deleteUser(userId) // call the repository to start fun deleteUser and return boolean
+                userRepository.deleteUserAsync(userId) // call the repository to start fun deleteUser and return boolean
 
             if (!isDeleted) {
                 return call.respond(HttpStatusCode.NotFound, "User not found") // 404 code, return wil stop the action, so it will not continue
