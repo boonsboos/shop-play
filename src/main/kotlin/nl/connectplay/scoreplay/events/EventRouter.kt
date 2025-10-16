@@ -6,7 +6,6 @@ import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
 import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.models.dto.notifications.NewNotificationDto
 import nl.connectplay.scoreplay.models.events.BaseEvent
-import nl.connectplay.scoreplay.models.events.ExampleEvent
 import org.slf4j.LoggerFactory
 
 class EventRouter(
