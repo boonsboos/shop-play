@@ -6,11 +6,13 @@ import io.ktor.http.*
 import io.ktor.server.testing.* // provides Ktor’s built-in test engine
 import kotlin.test.* // provides Kotlin test functions (assert, @Test, etc.)
 import io.ktor.client.statement.bodyAsText
+import io.ktor.server.config.ApplicationConfig
 
 class UserRoutesTests {
     @Test // marks this function as a test
     fun testRegisterUser() {
         testApplication { // runs the Ktor test environment
+            environment { config = ApplicationConfig("application.yaml") } // provide the test configuration
             application { module() } // boot the real app: JSON + routes via annotation scanner
 
             // ARRANGE
@@ -39,6 +41,7 @@ class UserRoutesTests {
     @Test
     fun testUpdateUser() {
         testApplication {
+            environment { config = ApplicationConfig("application.yaml") } // provide the test configuration
             application { module() }
 
             // ARRANGE
@@ -67,6 +70,7 @@ class UserRoutesTests {
     @Test
     fun testDeleteUser() {
         testApplication {
+            environment { config = ApplicationConfig("application.yaml") } // provide the test configuration
             application { module() }
             client.post("/register")  {
                 setBody("""{"username":"Mario","email":"mario@connect-play.nl", "password":"Welkom01"}""")

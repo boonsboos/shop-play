@@ -31,6 +31,7 @@ fun repositories() = module {
     singleOf(::DatabaseUserRepository) { bind<UserRepository>() }
     singleOf(::DatabaseGameRepository) { bind<GameRepository>() }
     singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
+    singleOf(::DatabaseNotificationRepository) { bind<NotificationRepository>() }
 }
 
 /**

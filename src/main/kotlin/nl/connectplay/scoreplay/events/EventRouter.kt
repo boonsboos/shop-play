@@ -25,8 +25,6 @@ class EventRouter(
 
         // get the user IDs that correspond with the connected users
         val connectedRelevantUsers = (relevantUsers intersect connectedUsers)
-        // get the user IDs that do not correspond with the connected users
-        val otherRelevantUsers = (relevantUsers subtract connectedUsers)
 
         // 2a. if they are connected, enqueue the event
         for (userId in connectedRelevantUsers) {
@@ -36,8 +34,8 @@ class EventRouter(
             }
         }
 
-        // 2b. if they are not connected, save the notification for later retrieval
-        for (userId in otherRelevantUsers) {
+        // 2b. save the notification for later retrieval and for users that are not connected
+        for (userId in relevantUsers) {
             notificationRepository.saveNotificationAsync(NewNotificationDto(userId, event))
         }
     }

@@ -18,7 +18,7 @@ interface EventQueueManagerService {
     /**
      * Gets the event queue for the user.
      */
-    fun getQueue(userId: Int): Channel<BaseEvent>
+    fun provisionQueue(userId: Int): Channel<BaseEvent>
 
     /**
      * Removes and closes a queue. Use when a user disconnects.

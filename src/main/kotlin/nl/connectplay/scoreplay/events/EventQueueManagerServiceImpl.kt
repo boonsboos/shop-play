@@ -4,6 +4,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
 import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
 import nl.connectplay.scoreplay.models.events.BaseEvent
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * A service to manage event queues.
@@ -11,27 +12,33 @@ import nl.connectplay.scoreplay.models.events.BaseEvent
  * Used to keep track of which users are connected for receiving events.
  */
 class EventQueueManagerServiceImpl : EventQueueManagerService {
-    // ideally we'd use some kind of locking on the channel
-    // as well as the map itself to guarantee safe modifications
-    // and allow only a single connection to have access to the channel
-    private val queues: MutableMap<Int, Channel<BaseEvent>> = mutableMapOf()
+    private val queues: ConcurrentHashMap<Int, Channel<BaseEvent>> = ConcurrentHashMap()
+
+    /**
+     * Use this empty variable to prevent other threads from accessing a method
+     */
+    private val lock = Any()
+
 
     /**
      * Gets a list of connected user Ids
+     * This call gets connected users on a snapshot basis.
      */
-    override fun getConnectedUserIds(): Set<Int> = queues.keys.toSet()
+    override fun getConnectedUserIds(): Set<Int> =
+        queues.keys.toSet()
 
     /**
-     * Writes an event to a queue
+     * Writes an event to a queue. Uses synchronisation to guarantee event order.
      * @see Channel.trySend
      */
-    override fun enqueueEvent(userId: Int, event: BaseEvent): ChannelResult<Unit>? =
+    override fun enqueueEvent(userId: Int, event: BaseEvent): ChannelResult<Unit>? = synchronized(lock) {
         queues[userId]?.trySend(event)
+    }
 
     /**
-     * Gets a queue for the user.
+     * Provisions and returns a queue for a user. Only use from SSE handler.
      */
-    override fun getQueue(userId: Int): Channel<BaseEvent> {
+    override fun provisionQueue(userId: Int): Channel<BaseEvent> = synchronized(lock) {
         // if there is no queue yet, create one
         if (!queues.containsKey(userId)) {
             queues[userId] = Channel(Channel.BUFFERED)
@@ -44,12 +51,14 @@ class EventQueueManagerServiceImpl : EventQueueManagerService {
     /**
      * Removes a queue from the registry
      */
-    override fun removeQueue(userId: Int): Boolean {
-        if (queues.containsKey(userId)) {
-            queues[userId]?.close()
-            queues.remove(userId)
-            return true
+    override fun removeQueue(userId: Int): Boolean =
+        // only one coroutine can call this method at a time
+        synchronized(lock) {
+            if (queues.containsKey(userId)) {
+                queues[userId]?.close()
+                queues.remove(userId)
+                return true
+            }
+            return false
         }
-        return false
-    }
 }
