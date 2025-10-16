@@ -1,0 +1,8 @@
+ktor:
+  deployment:
+    port: 8080
+jwt:
+  issuer: "test"
+  audience: "test"
+  realm: "test"
+  secret: "test"
