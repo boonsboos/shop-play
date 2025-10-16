@@ -35,7 +35,8 @@ fun Application.module() {
             database(),
             controllers(),
             services(),
-            jwtOptions(this@module.environment.config) // pass in application configuration
+            jwtOptions(this@module.environment.config), // pass in application configuration
+            cdnOptions(this@module.environment.config)
         )
     }
 

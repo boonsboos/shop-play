@@ -9,3 +9,7 @@ jwt:
   audience: "score-play-users"
   realm: "score-play"
   secret: "unsafeLocalSecret"
+cdn:
+  base-url: "http://localhost:8082"
+  base-path: "/api"
+

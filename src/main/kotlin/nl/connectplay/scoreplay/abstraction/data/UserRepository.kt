@@ -3,6 +3,7 @@ package nl.connectplay.scoreplay.abstraction.data
 import nl.connectplay.scoreplay.models.User
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import nl.connectplay.scoreplay.models.dto.UserDto
+import java.util.UUID
 
 interface UserRepository {
     // because of 'suspend', the function will run asynchronously
@@ -10,4 +11,5 @@ interface UserRepository {
     suspend fun getUserByIdAsync(userId: Int): UserDto?
     suspend fun getUserByNameOrEmail(username: String?, email: String?): User?
     suspend fun addUser(user: CreateUserDto)
+    suspend fun setProfilePictureAsync(userId: Int, pictureId: UUID): Boolean
 }
