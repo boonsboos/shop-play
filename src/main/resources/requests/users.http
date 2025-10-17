@@ -94,3 +94,7 @@ Content-Type: application/json
   "email": "bob@connect-play.nl",
   "password": "Pass1234"
 }
+
+### Get followd gameslist
+GET http://localhost:8080/users/1/followed?offset=0&limit=10
+Accept: application/json
