@@ -38,7 +38,6 @@ dependencies {
     implementation("io.insert-koin:koin-logger-slf4j:$koin_version")
     // bcrypt
     implementation("org.mindrot:jbcrypt:0.4")
-    implementation("io.ktor:ktor-server-websockets:3.3.0")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
