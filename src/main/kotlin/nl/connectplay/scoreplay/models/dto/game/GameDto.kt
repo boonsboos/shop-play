@@ -5,6 +5,7 @@ import nl.connectplay.scoreplay.models.Game
 
 data class GameDto(
     val id: Int,
+    val scoringMethodId: Int? = null,
     val name: String,
     val description: String,
     val publisher: String,
@@ -17,5 +18,5 @@ data class GameDto(
 
 // simple mapper
 fun Game.toDto() = GameDto(
-    id, name, description, publisher, minPlayers, maxPlayers, duration, minAge, releaseDate
+    id, null, name, description, publisher, minPlayers, maxPlayers, duration, minAge, releaseDate
 )
