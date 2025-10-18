@@ -9,8 +9,8 @@ import org.koin.ktor.ext.inject
 fun Route.putScoresRoute() {
     val scoreController by inject<ScoreController>()
 
-    // PATCH /scores/Id — Updating score
-    patch("/scores/{id}") {
+    // PATCH /Id — Updating score
+    patch("/sessions/{id}/scores/{scoreId}") {
         scoreController.handleUpdateAsync(call)
     }
 }

@@ -10,7 +10,7 @@ fun Route.postScoresRoute() {
     val scoreController by inject<ScoreController>()
 
     // POST /scores — Creating score
-    post("/scores") {
+    post("/sessions/{id}/scores") {
         scoreController.handleCreateAsync(call)
     }
 }

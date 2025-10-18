@@ -27,7 +27,7 @@ class ScoreController(
 
             call.respond(HttpStatusCode.OK,scores)
         }catch (e: SQLException) {
-            call.application.environment.log.error("No scores found")
+            call.application.environment.log.error("No scores found", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
@@ -40,6 +40,7 @@ class ScoreController(
         val scoreId = try {
             UUID.fromString(scoreIdParam)
         } catch (e: SQLException) {
+            call.application.environment.log.error("No score found", e)
             return call.respond(HttpStatusCode.BadRequest, "Invalid id")
         }
 
@@ -49,7 +50,7 @@ class ScoreController(
 
             call.respond(HttpStatusCode.OK, score)
         } catch (e: SQLException) {
-            call.application.environment.log.error("No score found")
+            call.application.environment.log.error("No score found", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
@@ -68,8 +69,8 @@ class ScoreController(
                 call.respond(HttpStatusCode.InternalServerError)
             }
         }catch (e: SQLException) {
-            call.application.environment.log.error("No score found")
-            call.respond(HttpStatusCode.InternalServerError)
+            call.application.environment.log.error("No score found", e)
+            return call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
@@ -81,6 +82,7 @@ class ScoreController(
         val scoreId = try {
             UUID.fromString(scoreIdParam)
         } catch (e: SQLException) {
+            call.application.environment.log.error("No score found", e)
             return call.respond(HttpStatusCode.BadRequest, "Invalid id")
         }
 
