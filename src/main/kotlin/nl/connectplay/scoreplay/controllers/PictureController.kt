@@ -16,4 +16,16 @@ class PictureController(private val pictureRepository: PictureRepository) {
 
         call.respond(HttpStatusCode.OK, PictureDto(url))
     }
+
+    suspend fun handleDeletePictureAsync(call: ApplicationCall) {
+        val pictureId = UUID.fromString(call.parameters["id"] ?: return call.respond(HttpStatusCode.BadRequest))
+
+        val deleted = pictureRepository.deletePictureById(pictureId)
+
+        if (deleted) {
+            call.respond(HttpStatusCode.OK)
+        } else {
+            call.respond(HttpStatusCode.NotFound)
+        }
+    }
 }
