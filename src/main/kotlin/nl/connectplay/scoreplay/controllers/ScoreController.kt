@@ -20,39 +20,23 @@ class ScoreController(
         val limit = call.request.getLimitQueryParameter()
         val offset = call.request.getOffsetQueryParameter()
 
-
-        try {
-            val scores = scoreRepository.getScoresAsync(limit, offset)
-                ?: return call.respond(HttpStatusCode.NotFound)
+        val scores = scoreRepository.getScoresAsync(limit, offset)
+            ?: return call.respond(HttpStatusCode.NotFound)
 
             call.respond(HttpStatusCode.OK,scores)
-        }catch (e: SQLException) {
-            call.application.environment.log.error("No scores found", e)
-            call.respond(HttpStatusCode.InternalServerError)
-        }
     }
 
     //GET /Scored/ID
     suspend fun handleOneAsync(call: ApplicationCall) {
-        val scoreIdParam = call.request.queryParameters["scoreId"] ?:
-        return call.respond(HttpStatusCode.BadRequest, "Missing score id")
+        val scoreIdParam = call.parameters["scoreId"] ?:
+        return call.respond(HttpStatusCode.NotFound, "Missing score id")
 
-        val scoreId = try {
-            UUID.fromString(scoreIdParam)
-        } catch (e: IllegalArgumentException) {
-            call.application.environment.log.error("Invalid score id", e)
-            return call.respond(HttpStatusCode.BadRequest, "Invalid id")
-        }
+        val scoreId = UUID.fromString(scoreIdParam)
 
-        try {
-            val score = scoreRepository.getScoreByIdAsync(scoreId)
-                ?: return call.respond(HttpStatusCode.NotFound, "Score not found")
+        val score = scoreRepository.getScoreByIdAsync(scoreId)
+            ?: return call.respond(HttpStatusCode.NotFound)
 
             call.respond(HttpStatusCode.OK, score)
-        } catch (e: Exception) {
-            call.application.environment.log.error("No score found", e)
-            call.respond(HttpStatusCode.InternalServerError)
-        }
     }
 
     // POST /Scores
@@ -74,17 +58,12 @@ class ScoreController(
         }
     }
 
-    // PUT /scores/ID
+    // PATCH /scores/ID
     suspend fun handleUpdateAsync(call: ApplicationCall) {
         val scoreIdParam =
             call.parameters["scoreId"] ?: return call.respond(HttpStatusCode.BadRequest, "Missing score id")
 
-        val scoreId = try {
-            UUID.fromString(scoreIdParam)
-        } catch (e: IllegalArgumentException) {
-            call.application.environment.log.error("No score found", e)
-            return call.respond(HttpStatusCode.BadRequest, "Invalid id")
-        }
+        val scoreId = UUID.fromString(scoreIdParam)
 
         val updatedScore = call.receiveNullable<UpdateScoreDto>()
             ?: return call.respond(HttpStatusCode.BadRequest, "Missing score id")
