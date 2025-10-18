@@ -3,7 +3,6 @@ package nl.connectplay.scoreplay.controllers
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
-import io.ktor.server.request.*
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import java.sql.SQLException
 

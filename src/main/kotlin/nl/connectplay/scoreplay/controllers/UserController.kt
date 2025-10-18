@@ -7,8 +7,8 @@ import io.ktor.server.plugins.NotFoundException
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 import io.ktor.util.logging.error
-import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
@@ -28,7 +28,7 @@ class UserController(
     private val userRepository: UserRepository,
     private val friendService: FriendService,
     private val userAccountService: UserAccountService,
-    private val gameRepository: GameRepository,
+    private val followGameRepository: FollowGameRepository,
 ) {
 
     suspend fun handleListAsync(call: ApplicationCall) {
@@ -246,14 +246,13 @@ class UserController(
     }
 
     suspend fun handleFollowedGamesAsync(call: ApplicationCall) {
-        println("DEBUG: gameRepository instance = $gameRepository")
         val userId = call.parameters["id"]?.toIntOrNull()
             ?: return call.respond(HttpStatusCode.BadRequest, "User ID is not a number")
         val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
         val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
 
         try {
-            val followedGames = gameRepository.getFollowedGames(userId, offset, limit)
+            val followedGames = followGameRepository.getFollowedGames(userId, offset, limit)
 
             call.respond(HttpStatusCode.OK, followedGames)
         } catch (e: SQLException) {

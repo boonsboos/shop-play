@@ -7,6 +7,7 @@ import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.data.NotificationRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
@@ -16,6 +17,7 @@ import nl.connectplay.scoreplay.controllers.UserController
 import nl.connectplay.scoreplay.controllers.GameController
 import nl.connectplay.scoreplay.data.Database
 import nl.connectplay.scoreplay.data.DatabaseExampleRepository
+import nl.connectplay.scoreplay.data.DatabaseFollowGameRepository
 import nl.connectplay.scoreplay.data.DatabaseFriendRepository
 import nl.connectplay.scoreplay.data.DatabaseSessionRepository
 import nl.connectplay.scoreplay.data.DatabaseUserRepository
@@ -42,6 +44,7 @@ fun repositories() = module {
     singleOf(::DatabaseGameRepository) { bind<GameRepository>() }
     singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
     singleOf(::DatabaseNotificationRepository) { bind<NotificationRepository>() }
+    singleOf(::DatabaseFollowGameRepository) {bind<FollowGameRepository>() }
 }
 
 /**
