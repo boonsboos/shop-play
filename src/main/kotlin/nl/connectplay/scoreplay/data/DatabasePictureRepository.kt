@@ -3,6 +3,7 @@ package nl.connectplay.scoreplay.data
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.PictureRepository
+import nl.connectplay.scoreplay.models.dto.picture.PictureDto
 import java.util.*
 
 class DatabasePictureRepository(private val database: Database) : PictureRepository {
@@ -19,6 +20,30 @@ class DatabasePictureRepository(private val database: Database) : PictureReposit
                 val resultSet = stmt.executeQuery()
 
                 val id = if (resultSet.next()) resultSet.getObject("picture_id", UUID::class.java) else null
+
+                resultSet.close()
+                stmt.close()
+
+                id
+            }
+        }.await()
+    }
+
+    override suspend fun getPictureById(pictureId: UUID): String? = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val sql = """
+                    SELECT picture_url FROM pictures
+                    WHERE picture_id = ?
+                """.trimIndent()
+
+                val stmt = connection.prepareStatement(sql)
+                stmt.setObject(1, pictureId)
+
+
+                val resultSet = stmt.executeQuery()
+
+                val id = if (resultSet.next()) resultSet.getString("picture_url") else null
 
                 resultSet.close()
                 stmt.close()
