@@ -18,8 +18,6 @@ fun Route.notificationEvents() {
     val notificationController by inject<NotificationController>()
 
     authenticate(UserIdJWTAuthenticatorName) {
-
-
         sse (
             "/notifications/live",
             // SSE requires manually configuring serialization
@@ -32,7 +30,7 @@ fun Route.notificationEvents() {
                 notificationController.handleSseSession(this)
             } catch (e: UnauthorizedException) {
                 call.application.environment.log.error("Tried to start SSE session but user was unauthorized", e)
-                return@sse call.respond(HttpStatusCode.BadRequest)
+                return@sse call.respond(HttpStatusCode.Unauthorized)
             }
         }
     }

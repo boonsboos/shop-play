@@ -27,9 +27,9 @@ class NotificationController(private val notificationRepository: NotificationRep
             logger.error("SSE connection with user $userId was closed, cleaning up", e)
         } catch (e: Exception) {
             logger.error("SSE connection with user $userId errored", e)
-        } finally {
-            logger.info("Stopping SSE session with user $userId, removing queue")
-            queueManagerService.removeQueue(userId)
         }
+
+        logger.info("Stopping SSE session with user $userId, removing queue")
+        queueManagerService.removeQueue(userId)
     }
 }
