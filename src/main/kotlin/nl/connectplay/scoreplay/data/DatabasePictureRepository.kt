@@ -58,8 +58,8 @@ class DatabasePictureRepository(private val database: Database) : PictureReposit
             database.connection?.use { connection ->
                 try {
                     val sql = """
-                    DELETE FROM pictures WHERE picture_id = ?
-                """.trimIndent()
+                        DELETE FROM pictures WHERE picture_id = ?
+                    """.trimIndent()
 
                     val stmt = connection.prepareStatement(sql)
                     stmt.setObject(1, pictureId)

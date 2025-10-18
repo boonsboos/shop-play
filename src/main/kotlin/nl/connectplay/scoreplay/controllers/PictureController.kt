@@ -27,6 +27,5 @@ class PictureController(private val pictureRepository: PictureRepository) {
         } else {
             call.respond(HttpStatusCode.NotFound)
         }
-
     }
 }
