@@ -4,7 +4,8 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.User
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import nl.connectplay.scoreplay.models.dto.user.UserDto
-import java.util.UUID
+import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
+import java.util.*
 
 class TestUserRepository : UserRepository {
     val users = mutableMapOf<Int, UserDto>()
@@ -22,6 +23,17 @@ class TestUserRepository : UserRepository {
     ): User = User(1, username ?: "" , email ?: "", "", UUID.randomUUID())
 
     override suspend fun addUser(user: CreateUserDto) {
-        this.users[this.users.size] = UserDto(user.username, null)
+        this.users[this.users.size] = UserDto(user.username, "", null)
     }
+
+    override suspend fun updateUserAsync(
+        userId: Int,
+        updateDto: UserUpdateDto
+    ) {
+        return
+    }
+
+    override suspend fun deleteUser(userId: Int): Boolean = true
+
+    override suspend fun setProfilePictureAsync(userId: Int, pictureId: UUID): Boolean = true
 }

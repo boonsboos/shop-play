@@ -2,15 +2,11 @@ package nl.connectplay.scoreplay
 
 import io.ktor.server.config.*
 import nl.connectplay.scoreplay.abstraction.data.*
-import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
-import nl.connectplay.scoreplay.abstraction.services.FriendService
-import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.abstraction.services.UserAccountService
+import nl.connectplay.scoreplay.abstraction.services.*
 import nl.connectplay.scoreplay.controllers.*
 import nl.connectplay.scoreplay.data.*
 import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
 import nl.connectplay.scoreplay.events.EventRouter
-import nl.connectplay.scoreplay.options.CDNOptions
 import nl.connectplay.scoreplay.options.JWTOptions
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.services.PictureServiceImpl
@@ -55,7 +51,7 @@ fun services() = module {
     singleOf(::PictureServiceImpl) { bind<PictureService>() }
 
     // events
-    singleOf(::EventRouter) { bind<EventRouter>() }
+    singleOf(::EventRouter) { bind<EventRoutingService>() }
     singleOf(::EventQueueManagerServiceImpl) { bind<EventQueueManagerService>() }
 }
 

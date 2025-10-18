@@ -5,7 +5,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
 import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
-import nl.connectplay.scoreplay.models.events.ExampleEvent
+import nl.connectplay.scoreplay.models.events.FriendRequestEvent
 import org.junit.jupiter.api.assertNull
 import kotlin.test.Test
 
@@ -23,7 +23,7 @@ class EventQueueManagerServiceTests {
                 // wait for queue to be deleted from another coroutine
                 delay(100)
 
-                val result = queueManager.enqueueEvent(iteration, ExampleEvent())
+                val result = queueManager.enqueueEvent(iteration, FriendRequestEvent(1))
 
                 // getting a queue that doesn't exist should return null.
                 assertNull(result, "The queue should have been removed.")
