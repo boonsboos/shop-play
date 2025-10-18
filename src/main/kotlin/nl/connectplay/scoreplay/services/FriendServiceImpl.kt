@@ -41,13 +41,11 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
             throw IllegalStateException("Friend request is already pending!")
         }
 
-        var status: FriendshipStatus = FriendshipStatus.PENDING
-
         // if the new friend has a pending friend request we should mark the users as now friends
         if (friendRepository.getFriendsAsync(newFriendId)?.contains(userId) ?: false) {
             // add an entry for the user that requested the friendship
             if(friendRepository.addFriendAsync(newFriendId, userId)) {
-                status = FriendshipStatus.FRIENDS
+                return FriendshipStatus.FRIENDS
             }
         }
 
@@ -58,7 +56,7 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
 
         sendFriendRequestEventAsync(newFriendId, userId)
 
-        return status
+        return FriendshipStatus.PENDING
     }
 
     private suspend fun sendFriendRequestEventAsync(friendRequestTargetId: Int, userId: Int) =
