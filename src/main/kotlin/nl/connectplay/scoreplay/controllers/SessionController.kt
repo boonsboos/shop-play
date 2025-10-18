@@ -57,17 +57,6 @@ class SessionController(
                 call.respond(res.first, res.second)
             }
 
-            contentType.match(ContentType.MultiPart.FormData) -> {
-                val multipart = call.receiveMultipart()
-                val res =
-                    pictureService.handleUploadImageMultipartAsync(
-                        multipart,
-                        PictureService.EntityType.SESSION,
-                        sessionId
-                    )
-                call.respond(res.first, res.second)
-            }
-
             else -> {
                 return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
             }

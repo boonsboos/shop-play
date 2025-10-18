@@ -1,12 +1,11 @@
 package nl.connectplay.scoreplay.services
 
 import io.ktor.http.*
-import io.ktor.http.content.*
+import nl.connectplay.scoreplay.abstraction.data.GamePictureRepository
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.data.PictureRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
-import nl.connectplay.scoreplay.abstraction.services.CdnService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.models.dto.UploadPictureDto
 import java.util.*
@@ -16,28 +15,8 @@ class PictureServiceImpl(
     private val userRepository: UserRepository,
     private val sessionRepository: SessionRepository,
     private val gameRepository: GameRepository,
-    private val cdnService: CdnService
+    private val gamePictureRepository: GamePictureRepository,
 ) : PictureService {
-    override suspend fun uploadImageAsync(
-        file: MultiPartData, entityType: PictureService.EntityType, entityId: String
-    ): Boolean {
-        val url = cdnService.uploadImage(file)
-        return false
-    }
-
-    override suspend fun handleUploadImageMultipartAsync(
-        multipart: MultiPartData,
-        entityType: PictureService.EntityType,
-        entityId: String,
-    ): Pair<HttpStatusCode, Any> {
-        val success = uploadImageAsync(multipart, entityType, entityId)
-
-        return if (success) {
-            Pair(HttpStatusCode.Created, "Image uploaded")
-        } else {
-            Pair(HttpStatusCode.InternalServerError, "Failed to upload")
-        }
-    }
 
     override suspend fun uploadImageByUrlAsync(
         url: String, entityType: PictureService.EntityType, entityId: String
@@ -57,8 +36,7 @@ class PictureServiceImpl(
 
             PictureService.EntityType.Game -> {
                 gameRepository.getGameByIdAsync(entityId.toInt()) ?: return false
-//                return gameRepository.addGameImagesAsync
-                return false
+                return gamePictureRepository.addGamePicture(entityId.toInt(), pictureId)
             }
         }
     }

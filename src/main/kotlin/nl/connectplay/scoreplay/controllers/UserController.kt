@@ -224,13 +224,6 @@ class UserController(
                 call.respond(res.first, res.second)
             }
 
-            contentType.match(ContentType.MultiPart.FormData) -> {
-                val multipart = call.receiveMultipart()
-                val res =
-                    pictureService.handleUploadImageMultipartAsync(multipart, PictureService.EntityType.USER, userId)
-                call.respond(res.first, res.second)
-            }
-
             else -> {
                 return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
             }

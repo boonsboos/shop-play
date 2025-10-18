@@ -2,7 +2,6 @@ package nl.connectplay.scoreplay
 
 import io.ktor.server.config.*
 import nl.connectplay.scoreplay.abstraction.data.*
-import nl.connectplay.scoreplay.abstraction.services.CdnService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
@@ -13,7 +12,6 @@ import nl.connectplay.scoreplay.controllers.UserController
 import nl.connectplay.scoreplay.data.*
 import nl.connectplay.scoreplay.options.CDNOptions
 import nl.connectplay.scoreplay.options.JWTOptions
-import nl.connectplay.scoreplay.services.CdnServiceImpl
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.services.PictureServiceImpl
 import nl.connectplay.scoreplay.services.UserAccountServiceImpl
@@ -22,7 +20,6 @@ import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.onClose
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-import kotlin.math.sin
 
 /**
  * Registers concrete repository instances with their abstraction
@@ -34,6 +31,7 @@ fun repositories() = module {
     singleOf(::DatabaseGameRepository) { bind<GameRepository>() }
     singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
     singleOf(::DatabasePictureRepository) { bind<PictureRepository>() }
+    singleOf(::DatabaseGamePictureRepository) { bind<GamePictureRepository>() }
 }
 
 /**
@@ -53,7 +51,6 @@ fun services() = module {
     singleOf(::FriendServiceImpl) { bind<FriendService>() }
     singleOf(::UserAccountServiceImpl) { bind<UserAccountService>() }
     singleOf(::PictureServiceImpl) { bind<PictureService>() }
-    singleOf(::CdnServiceImpl) { bind<CdnService>() }
 }
 
 /**
@@ -71,7 +68,7 @@ fun jwtOptions(config: ApplicationConfig) = module {
 }
 
 fun cdnOptions(config: ApplicationConfig) = module {
-    single<CDNOptions>{
+    single<CDNOptions> {
         CDNOptions(
             config.property("cdn.base-url").getString(),
             config.property("cdn.base-path").getString(),

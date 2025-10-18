@@ -12,7 +12,6 @@ fun Route.sessionUploadPictureRoute() {
     val gameController by inject<GameController>()
 
     patch("/games/{id}/picture") {
-        println("Patch session picture")
-//        gameController.handleUploadPictureAsync(call)
+        gameController.handleUploadPictureAsync(call)
     }
 }

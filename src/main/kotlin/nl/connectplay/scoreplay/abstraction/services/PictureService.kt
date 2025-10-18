@@ -10,16 +10,9 @@ interface PictureService {
         USER, Game, SESSION
     }
 
-    suspend fun uploadImageAsync(file: MultiPartData, entityType: EntityType, entityId: String): Boolean
     suspend fun uploadImageByUrlAsync(url: String, entityType: EntityType, entityId: String): Boolean
     suspend fun handleUploadImageJsonAsync(
         uploadPicture: UploadPictureDto,
-        entityType: EntityType,
-        entityId: String,
-    ): Pair<HttpStatusCode, Any>
-
-    suspend fun handleUploadImageMultipartAsync(
-        multipart: MultiPartData,
         entityType: EntityType,
         entityId: String,
     ): Pair<HttpStatusCode, Any>

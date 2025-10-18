@@ -1,4 +1,4 @@
-### Upload Game pictures
+### Upload Game pictures by urls
 < {%
     request.variables.set("gameId", 1)
 %}
@@ -6,5 +6,5 @@ POST http://localhost:8080/games/{{gameId}}/pictures
 Content-Type: application/json
 
 {
-  "pictureData": []
+  "pictureData": ["https://google.com"]
 }
