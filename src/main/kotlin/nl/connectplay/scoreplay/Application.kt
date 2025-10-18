@@ -1,17 +1,16 @@
 package nl.connectplay.scoreplay
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.algorithms.Algorithm
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.calllogging.CallLogging
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.openapi.openAPI
-import io.ktor.server.routing.routing
+import io.ktor.server.plugins.calllogging.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.openapi.*
+import io.ktor.server.routing.*
+import io.ktor.server.sse.*
 import nl.connectplay.scoreplay.routes.registerApplicationRoutes
-import org.slf4j.event.Level
 import org.koin.ktor.plugin.Koin
 import org.koin.logger.slf4jLogger
+import org.slf4j.event.Level
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -22,6 +21,8 @@ fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
+
+    install(SSE)
 
     install(CallLogging) {
         level = Level.INFO

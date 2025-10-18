@@ -26,11 +26,6 @@ const val UserIdJWTClaim = "userId"
  *
  */
 fun Application.configureAuthentication() {
-//    val secret = environment.config.property("jwt.secret").getString()
-//    val realm = environment.config.property("jwt.realm").getString()
-//    val audience = environment.config.property("jwt.audience").getString()
-//    val issuer = environment.config.property("jwt.issuer").getString()
-
     val jwtOptions by inject<JWTOptions>()
 
     authentication {

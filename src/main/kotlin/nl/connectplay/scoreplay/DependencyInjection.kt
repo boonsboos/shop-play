@@ -2,14 +2,14 @@ package nl.connectplay.scoreplay
 
 import io.ktor.server.config.*
 import nl.connectplay.scoreplay.abstraction.data.*
+import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
-import nl.connectplay.scoreplay.controllers.ExampleController
-import nl.connectplay.scoreplay.controllers.GameController
-import nl.connectplay.scoreplay.controllers.SessionController
-import nl.connectplay.scoreplay.controllers.UserController
+import nl.connectplay.scoreplay.controllers.*
 import nl.connectplay.scoreplay.data.*
+import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
+import nl.connectplay.scoreplay.events.EventRouter
 import nl.connectplay.scoreplay.options.CDNOptions
 import nl.connectplay.scoreplay.options.JWTOptions
 import nl.connectplay.scoreplay.services.FriendServiceImpl
@@ -32,6 +32,7 @@ fun repositories() = module {
     singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
     singleOf(::DatabasePictureRepository) { bind<PictureRepository>() }
     singleOf(::DatabaseGamePictureRepository) { bind<GamePictureRepository>() }
+    singleOf(::DatabaseNotificationRepository) { bind<NotificationRepository>() }
 }
 
 /**
@@ -42,6 +43,7 @@ fun controllers() = module {
     singleOf(::SessionController)
     singleOf(::UserController)
     singleOf(::GameController)
+    singleOf(::NotificationController)
 }
 
 /**
@@ -51,6 +53,10 @@ fun services() = module {
     singleOf(::FriendServiceImpl) { bind<FriendService>() }
     singleOf(::UserAccountServiceImpl) { bind<UserAccountService>() }
     singleOf(::PictureServiceImpl) { bind<PictureService>() }
+
+    // events
+    singleOf(::EventRouter) { bind<EventRouter>() }
+    singleOf(::EventQueueManagerServiceImpl) { bind<EventQueueManagerService>() }
 }
 
 /**
