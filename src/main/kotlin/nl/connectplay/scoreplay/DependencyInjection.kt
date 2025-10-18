@@ -73,15 +73,6 @@ fun jwtOptions(config: ApplicationConfig) = module {
     }
 }
 
-fun cdnOptions(config: ApplicationConfig) = module {
-    single<CDNOptions> {
-        CDNOptions(
-            config.property("cdn.base-url").getString(),
-            config.property("cdn.base-path").getString(),
-        )
-    }
-}
-
 fun database() = module {
     singleOf(::Database) {
         createdAtStart() // make sure our database is available directly when we start receiving requests
