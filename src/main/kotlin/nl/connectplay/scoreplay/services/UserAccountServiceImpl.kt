@@ -5,16 +5,14 @@ import com.auth0.jwt.algorithms.Algorithm
 import nl.connectplay.scoreplay.UserIdJWTClaim
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
-import nl.connectplay.scoreplay.events.EventRouter
 import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.models.dto.LoginUserDto
-import nl.connectplay.scoreplay.models.events.ExampleEvent
 import nl.connectplay.scoreplay.options.JWTOptions
 import org.mindrot.jbcrypt.BCrypt
 import java.util.*
 
-class UserAccountServiceImpl(private val userRepository: UserRepository, private val jwtConfiguration: JWTOptions, private val eventRouter: EventRouter) : UserAccountService {
+class UserAccountServiceImpl(private val userRepository: UserRepository, private val jwtConfiguration: JWTOptions) : UserAccountService {
     /**
      * Tries to log a user in.
      * @return a valid JWT token
@@ -29,8 +27,6 @@ class UserAccountServiceImpl(private val userRepository: UserRepository, private
         if(!BCrypt.checkpw(loginUserDto.password, user.passwordHash)) {
             throw UnauthorizedException("Password mismatch for user ${user.id}")
         }
-
-        eventRouter.routeEventAsync(ExampleEvent())
 
         return JWT.create()
             .withAudience(jwtConfiguration.audience)
