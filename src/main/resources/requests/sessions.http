@@ -1,0 +1,20 @@
+### Create game session
+POST http://localhost:8080/sessions
+Content-Type: application/json
+
+{
+  "gameId": "1",
+  "userId": "1",
+  "visibility": "0"
+}
+
+### Upload end of session picture
+< {%
+    request.variables.set("sessionId", "35fdabd3-a853-11f0-9709-c6f05388f105")
+%}
+PATCH http://localhost:8080/sessions/{{sessionId}}/picture
+Content-Type: application/json
+
+{
+  "pictureUrl": "https://picsum.photos/256/256"
+}

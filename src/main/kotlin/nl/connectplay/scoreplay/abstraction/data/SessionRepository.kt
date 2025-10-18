@@ -2,6 +2,7 @@ package nl.connectplay.scoreplay.abstraction.data
 
 import nl.connectplay.scoreplay.models.Session
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
+import nl.connectplay.scoreplay.models.dto.session.SessionDto
 import java.util.UUID
 
 /**
@@ -15,4 +16,6 @@ interface SessionRepository {
      * @return the ID of the newly created session
      */
     suspend fun createSessionAsync(createDto: CreateSessionDto): UUID?
+    suspend fun getSessionByIdAsync(sessionId: UUID): SessionDto?
+    suspend fun setEndOfSessionPictureAsync(sessionId: UUID, pictureId: UUID): Boolean
 }

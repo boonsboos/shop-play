@@ -3,10 +3,13 @@ package nl.connectplay.scoreplay.data
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
-import nl.connectplay.scoreplay.models.dto.UserDto
+import nl.connectplay.scoreplay.models.User
+import nl.connectplay.scoreplay.models.dto.user.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
-import kotlin.coroutines.coroutineContext
+import java.util.UUID
+import java.sql.SQLException
 
 class DatabaseUserRepository(private val database: Database) : UserRepository {
 
@@ -32,8 +35,8 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                 // even if an exception occurs.
                 database.connection?.use { connection ->
                     var sql = """
-                        SELECT u.user_name, p.picture_url FROM users AS u
-                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
+                        SELECT u.user_name, u.email, p.picture_url FROM users AS u
+                        LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
                         WHERE u.user_name LIKE ?
                         LIMIT ? OFFSET ?
                     """.trimIndent()
@@ -50,6 +53,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                     while (resultSet?.next() == true) {
                         val user = UserDto(
                             username = resultSet.getString("user_name"),
+                            email = resultSet.getString("email"),
                             profilePicture = resultSet.getString("picture_url"),
                         )
                         users.add(user)
@@ -78,8 +82,8 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
             async {
                 database.connection?.use { connection ->
                     var sql = """
-                        SELECT u.user_name, p.picture_url FROM users AS u
-                        LEFT JOIN pictures AS p on u.profile_picture = p.picture_id
+                        SELECT u.user_name, u.email, p.picture_url FROM users AS u
+                        LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
                         WHERE u.user_id = ?
                     """.trimIndent()
 
@@ -91,6 +95,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                     if (resultSet?.next() == true) {
                         user = UserDto(
                             username = resultSet.getString("user_name"),
+                            email = resultSet.getString("email"),
                             profilePicture = resultSet.getString("picture_url"),
                         )
                     }
@@ -104,13 +109,46 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
         }
     }
 
+    val getUserByNameOrEmailSql = """
+        SELECT user_id, user_name, email, password_hash, profile_picture
+        FROM users
+        WHERE user_name = ? OR email = ?
+    """.trimIndent()
+
+    override suspend fun getUserByNameOrEmail(username: String?, email: String?): User? = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val statement = connection.prepareStatement(getUserByNameOrEmailSql)
+                statement.setString(1, username)
+                statement.setString(2, email)
+
+                val resultSet = statement.executeQuery()
+                var user: User? = null
+                if (resultSet.next()) {
+                    user = User(
+                        resultSet.getInt("user_id"),
+                        resultSet.getString("user_name"),
+                        resultSet.getString("email"),
+                        resultSet.getString("password_hash"),
+                        resultSet.getString("profile_picture")?.let { UUID.fromString(it) }
+                    )
+                }
+
+                resultSet.close()
+                statement.close()
+
+                user
+            }
+        }.await()
+    }
+
     override suspend fun addUser(user: CreateUserDto) {
         return coroutineScope {
             async {
                 database.connection?.use { connection -> // open the connection to the database
-                    val sql =
+                    val stmt = connection.prepareStatement(
                         "INSERT INTO users (user_name, email, password_hash) VALUES (?, ?, ?)" // sql with placeholders to prevent SQL injection
-                    val stmt = connection.prepareStatement(sql)
+                    )
 
                     stmt.setString(1, user.username)
                     stmt.setString(2, user.email)
@@ -119,6 +157,79 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                     stmt.executeUpdate() // execute the sql insert command
                     stmt.close()
                 }
+            }.await()
+        }
+    }
+
+    override suspend fun setProfilePictureAsync(userId: Int, pictureId: UUID): Boolean = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                try {
+                    val sql = """
+                        UPDATE users SET profile_picture = ?
+                        WHERE user_id = ?
+                    """.trimIndent()
+
+                    val stmt = connection.prepareStatement(sql)
+                    stmt.setObject(1, pictureId)
+                    stmt.setInt(2, userId)
+
+                    val affectedRow = stmt.executeUpdate()
+                    stmt.close()
+                    return@async affectedRow > 0
+                } catch (e: SQLException) {
+                    e.printStackTrace()
+                    return@async false
+                }
+            }
+        }.await() ?: false
+    }
+
+    override suspend fun updateUserAsync(userId: Int, updateDto: UserUpdateDto) {
+        return coroutineScope {
+            async {
+                database.connection?.use { connection ->
+                    // only update the fields that are changed
+                    // use the COALESCE for the new value that is not null, else leave old data untouched
+                    val updateStmt = connection.prepareStatement("UPDATE users SET " +
+                            "user_name = COALESCE(?, user_name), " +
+                            "email = COALESCE(?, email), " +
+                            "password_hash = COALESCE(?, password_hash) " +
+                            "WHERE user_id = ?")
+
+                    // the password wil only be hased if password is NOT null, else keep it null.
+                    val hashedPassword = if (updateDto.password != null)
+                        BCrypt.hashpw(updateDto.password, BCrypt.gensalt())
+                    else null
+
+                    updateStmt.setString(1, updateDto.username)
+                    updateStmt.setString(2, updateDto.email)
+                    updateStmt.setString(3, hashedPassword)
+                    updateStmt.setInt(4, userId)
+
+                    val rowsUpdated = updateStmt.executeUpdate() // execute the update and get row count
+
+                    if (rowsUpdated == 0) { // if no rows were updated the user does not exist
+                        throw IllegalArgumentException("User with id $userId not found")
+                    }
+
+                    updateStmt.close()
+                }
+            }.await()
+        }
+    }
+
+    override suspend fun deleteUser(userId: Int): Boolean {
+        return coroutineScope { // coroutinescope is to manage async operations safely
+            async {
+                database.connection?.use { connection -> // opens a safe connection with the database
+                    val stmt = connection.prepareStatement("DELETE FROM users WHERE user_id = ?")
+                    stmt.setInt(1, userId)
+
+                    val userDeleted = stmt.executeUpdate() // execute the delete and returns the number of deleted rows
+                    stmt.close()
+                    userDeleted == 1 // if userDeleted hase more than one delete was successful
+                } ?: false // return false if no user was deleted
             }.await()
         }
     }

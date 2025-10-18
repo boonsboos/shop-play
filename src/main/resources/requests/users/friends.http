@@ -1,25 +1,17 @@
-### get a list of all users
-GET http://localhost:8080/users
+# This is for all friends endpoint inside of the users endpoint
 
-### get a list of all users with query-params
-GET http://localhost:8080/users?limit=10&offset=5
-
-### get user with id '1'
-# this is a pre-request script
-< {%
-    request.variables.set("userId", 1) // this is a per-request variable
-%}
-GET http://localhost:8080/users/{{userId}}
-
-### register new user
-POST http://localhost:8080/register
+### update existing user
+PATCH http://localhost:8080/users/1
 Content-Type: application/json
 
 {
-  "username": "Bob",
-  "email": "bob@connect-play.nl",
-  "password": "Pass1234"
+  "username": "Luigi",
+  "email": "luigi@connect-play.nl"
 }
+
+### delete user
+DELETE http://localhost:8080/users/2
+Accept: application/json // the accept tells the server that the client expects the response in JSON format
 
 ### send friend request
 < {%
@@ -71,3 +63,13 @@ Content-Type: application/json
 %}
 DELETE http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
+
+### log in
+POST http://localhost:8080/login
+Content-Type: application/json
+
+{
+  "username": "Bob",
+  "email": "bob@connect-play.nl",
+  "password": "Pass1234"
+}
