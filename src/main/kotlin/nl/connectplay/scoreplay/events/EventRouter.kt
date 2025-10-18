@@ -43,7 +43,7 @@ class EventRouter(
 
     private suspend fun getRelevantUserIdsAsync(event: BaseEvent): Set<Int> =
         when (event) {
-            else -> setOf()
+            is ExampleEvent -> setOf(1)
         }
 
     private suspend fun getRelevantUserIdForFriendRequest() {
