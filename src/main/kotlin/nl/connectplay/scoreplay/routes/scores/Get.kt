@@ -4,6 +4,8 @@ import io.ktor.server.routing.*
 import nl.connectplay.scoreplay.controllers.ScoreController
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
+import nl.connectplay.scoreplay.services.ScoreMapperService
+import nl.connectplay.scoreplay.abstraction.services.ScoreService
 
 @ApiRoute
 fun Route.getScoresRoute() {

@@ -1,7 +1,9 @@
 package nl.connectplay.scoreplay.data
 
 import nl.connectplay.scoreplay.abstraction.data.ScoreRepository
-import nl.connectplay.scoreplay.models.dto.ScoreDto
+import nl.connectplay.scoreplay.models.dto.score.ScoreDto
+import nl.connectplay.scoreplay.models.dto.score.CreateScoreDto
+import nl.connectplay.scoreplay.models.dto.score.UpdateScoreDto
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.models.Score
@@ -14,41 +16,32 @@ class DatabaseScoreRepository : ScoreRepository {
     private val database = Database()
 
     override suspend fun getScoresAsync(
-        limit: Int?, offset: Int?, userId: UUID?
+        limit: Int?, offset: Int?, sessionPlayerId: UUID?
     ): List<ScoreDto>? {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
                     val scores = mutableListOf<ScoreDto>()
 
+
                     var sql = """
                         SELECT 
-                            s.score_id,
-                            s.session_id,
-                            s.session_player_id,
-                            s.game_iD,
-                            s.score,
-                            s.turn,
-                            s.achieved_on
-                        FROM scores AS s
-                        JOIN games AS g ON s.game_id = g.game_id
-                        JOIN sessions AS se ON s.session_id = se.session_id
-                        LEFT JOIN session_players AS sp ON s.session_player_id = sp.session_player_id
+                            score_id,
+                            session_id,
+                            session_player_id,
+                            game_id,
+                            score,
+                            turn,
+                            achieved_on
+                        FROM scores
+                            LIMIT ? OFFSET ?
                     """.trimIndent()
 
-                    if (limit != null) {
-                        sql += " LIMIT $limit"
-                    }
-
-                    if (offset != null) {
-                        sql += " OFFSET=$offset"
-                    }
-
-                    println(sql)
-
-                    val statement =
+                    val stmt =
                         connection.prepareStatement(sql)
-                    val resultSet = statement.executeQuery()
+                        stmt.setInt(1, limit ?: 25)
+                        stmt.setInt(2, offset ?: 0)
+                    val resultSet = stmt.executeQuery()
 
                     while (resultSet?.next() == true) {
                         val score = ScoreDto(
@@ -64,7 +57,7 @@ class DatabaseScoreRepository : ScoreRepository {
                     }
 
                     resultSet.close()
-                    statement.close()
+                    stmt.close()
 
                     return@async scores.toList()
                 }
@@ -118,14 +111,13 @@ class DatabaseScoreRepository : ScoreRepository {
         }
     }
 
-    override suspend fun addScoreAsync(score: ScoreDto): Boolean = coroutineScope {
+    override suspend fun addScoreAsync(score: CreateScoreDto): Boolean = coroutineScope {
         async {
             database.connection?.use { connection ->
                 try {
                     val statement = connection.prepareStatement(
                         """
                         INSERT INTO scores (
-                            score_id,
                             session_id,
                             session_player_id,
                             game_id,
@@ -133,17 +125,16 @@ class DatabaseScoreRepository : ScoreRepository {
                             turn,
                             achieved_on
                             
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                       ) VALUES (?, ?, ?, ?, ?, ?)
                     """.trimIndent()
                     )
 
-                    statement.setString(1, score.scoreId.toString())
-                    statement.setString(2, score.sessionId.toString())
-                    statement.setString(3, score.sessionPlayerId.toString())
-                    statement.setInt(4, score.gameId)
-                    statement.setDouble(5, score.score)
-                    statement.setInt(6, score.turn)
-                    statement.setTimestamp(7, java.sql.Timestamp.valueOf(score.achievedOn))
+                    statement.setString(1, score.sessionId.toString())
+                    statement.setString(2, score.sessionPlayerId.toString())
+                    statement.setInt(3, score.gameId)
+                    statement.setDouble(4, score.score)
+                    statement.setInt(5, score.turn)
+                    statement.setTimestamp(6, java.sql.Timestamp.valueOf(score.achievedOn))
 
                     val affectedRows = statement.executeUpdate()
                     statement.close()
@@ -156,31 +147,22 @@ class DatabaseScoreRepository : ScoreRepository {
     }.await() ?: false // we can return default false here because something went wrong
 
 
-    override suspend fun updateScoreAsync(score: ScoreDto): Boolean = coroutineScope {
+    override suspend fun updateScoreAsync(score: UpdateScoreDto): Boolean = coroutineScope {
         async {
             database.connection?.use { connection ->
                 try {
                     val statement = connection.prepareStatement(
                         """
                             UPDATE scores SET
-                                score_id = ?,
-                                session_id = ?,
-                                session_player_id = ?,
-                                game_id = ?,
                                 score = ?,
-                                turn = ?,
-                                achieved_on = ?
+                                turn = ?
                             WHERE score_id = ?
                         """.trimIndent()
                     )
 
-                    statement.setString(1, score.scoreId.toString())
-                    statement.setString(2, score.sessionId.toString())
-                    statement.setString(3, score.sessionPlayerId.toString())
-                    statement.setInt(4, score.gameId)
-                    statement.setDouble(5, score.score)
-                    statement.setInt(6, score.turn)
-                    statement.setTimestamp(7, java.sql.Timestamp.valueOf(score.achievedOn))
+                    statement.setDouble(1, score.score)
+                    statement.setInt(2, score.turn)
+
 
                     val affectedRows = statement.executeUpdate()
                     statement.close()

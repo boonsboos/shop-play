@@ -1,6 +1,5 @@
-package nl.connectplay.scoreplay.models.dto
+package nl.connectplay.scoreplay.models.dto.score
 
-import com.fasterxml.jackson.databind.ser.std.DateSerializer
 import kotlinx.serialization.Serializable
 import nl.connectplay.scoreplay.utilities.UUIDSerializer
 import nl.connectplay.scoreplay.utilities.LocalDateTimeSerializer
@@ -11,7 +10,7 @@ import java.time.LocalDateTime
 data class ScoreDto(
     @Serializable(with = UUIDSerializer::class) val scoreId: UUID,
     val score: Double,
-    @Serializable(with = LocalDateTimeSerializer::class) val achievedOn: LocalDateTime?,
+    @Serializable(with = LocalDateTimeSerializer::class) val achievedOn: LocalDateTime,
     val turn: Int,
     @Serializable(with = UUIDSerializer::class) val sessionId: UUID,
     @Serializable(with = UUIDSerializer::class) val sessionPlayerId: UUID,
