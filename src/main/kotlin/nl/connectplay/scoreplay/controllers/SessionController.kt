@@ -12,7 +12,7 @@ import io.ktor.server.request.receiveNullable
 import io.ktor.server.response.respond
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.models.dto.UploadPictureDto
+import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import java.sql.SQLException
 import java.util.UUID

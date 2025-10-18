@@ -7,7 +7,8 @@ import nl.connectplay.scoreplay.abstraction.data.PictureRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.models.dto.UploadPictureDto
+import nl.connectplay.scoreplay.models.dto.picture.PictureDto
+import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import java.util.*
 
 class PictureServiceImpl(
@@ -54,5 +55,4 @@ class PictureServiceImpl(
             Pair(HttpStatusCode.InternalServerError, "Failed to upload")
         }
     }
-
 }

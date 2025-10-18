@@ -3,7 +3,9 @@ package nl.connectplay.scoreplay.abstraction.services
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.MultiPartData
 import io.ktor.utils.io.*
-import nl.connectplay.scoreplay.models.dto.UploadPictureDto
+import nl.connectplay.scoreplay.models.dto.picture.PictureDto
+import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
+import java.util.UUID
 
 interface PictureService {
     enum class EntityType {
@@ -16,4 +18,5 @@ interface PictureService {
         entityType: EntityType,
         entityId: String,
     ): Pair<HttpStatusCode, Any>
+
 }

@@ -44,6 +44,7 @@ fun controllers() = module {
     singleOf(::UserController)
     singleOf(::GameController)
     singleOf(::NotificationController)
+    singleOf(::PictureController)
 }
 
 /**
