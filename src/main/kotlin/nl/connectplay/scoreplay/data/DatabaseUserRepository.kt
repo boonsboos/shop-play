@@ -9,6 +9,7 @@ import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
+import java.sql.SQLException
 
 class DatabaseUserRepository(private val database: Database) : UserRepository {
 
@@ -158,6 +159,30 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                 }
             }.await()
         }
+    }
+
+    override suspend fun setProfilePictureAsync(userId: Int, pictureId: UUID): Boolean = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                try {
+                    val sql = """
+                        UPDATE users SET profile_picture = ?
+                        WHERE user_id = ?
+                    """.trimIndent()
+
+                    val stmt = connection.prepareStatement(sql)
+                    stmt.setObject(1, pictureId)
+                    stmt.setInt(2, userId)
+
+                    val affectedRow = stmt.executeUpdate()
+                    stmt.close()
+                    return@async affectedRow > 0
+                } catch (e: SQLException) {
+                    e.printStackTrace()
+                    return@async false
+                }
+            }
+        }.await() ?: false
     }
 
     override suspend fun updateUserAsync(userId: Int, updateDto: UserUpdateDto) {

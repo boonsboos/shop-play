@@ -2,6 +2,7 @@ package nl.connectplay.scoreplay.abstraction.data
 
 import nl.connectplay.scoreplay.models.User
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import java.util.UUID
 import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 
@@ -13,4 +14,5 @@ interface UserRepository {
     suspend fun addUser(user: CreateUserDto)
     suspend fun updateUserAsync(userId: Int, updateDto: UserUpdateDto)
     suspend fun deleteUser(userId: Int): Boolean
+    suspend fun setProfilePictureAsync(userId: Int, pictureId: UUID): Boolean
 }

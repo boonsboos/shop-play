@@ -42,10 +42,10 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     description = rs.getString("description"),
                                     publisher = rs.getString("publisher"),
                                     // getInt() returns 0 if value is SQL NULL, so we need to make sure it's mapped back to null
-                                    minPlayers = rs.getInt("min_players").let { if (it > 0 ) it else null },
-                                    maxPlayers = rs.getInt("max_players").let { if (it > 0 ) it else null },
-                                    duration = rs.getInt("duration_minutes") .let { if (it > 0 ) it else null },
-                                    minAge = rs.getInt("min_age").let { if (it > 0 ) it else null },
+                                    minPlayers = rs.getInt("min_players").let { if (it > 0) it else null },
+                                    maxPlayers = rs.getInt("max_players").let { if (it > 0) it else null },
+                                    duration = rs.getInt("duration_minutes").let { if (it > 0) it else null },
+                                    minAge = rs.getInt("min_age").let { if (it > 0) it else null },
                                     releaseDate = rs.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
                                 )
                             )
@@ -53,6 +53,42 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                         list.toList() // can be empty
                     }
                 }
+            }
+        }.await()
+    }
+
+    override suspend fun getGameByIdAsync(gameId: Int): GameDto? = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val sql = """
+                    SELECT game_id, name, description, publisher, min_players, max_players, duration_minutes, min_age, release_date
+                    FROM games
+                    WHERE game_id = ?
+                """.trimIndent()
+
+                val stmt = connection.prepareStatement(sql)
+                stmt.setInt(1, gameId)
+
+                val resultSet = stmt?.executeQuery()
+                var game: GameDto? = null;
+                if (resultSet?.next() == true) {
+                    game = GameDto(
+                        id = resultSet.getInt("game_id"),
+                        name = resultSet.getString("name"),
+                        description = resultSet.getString("description"),
+                        publisher = resultSet.getString("publisher"),
+                        minPlayers = resultSet.getInt("min_players").let { if (it > 0) it else null },
+                        maxPlayers = resultSet.getInt("max_players").let { if (it > 0) it else null },
+                        duration = resultSet.getInt("duration_minutes").let { if (it > 0) it else null },
+                        minAge = resultSet.getInt("min_age").let { if (it > 0) it else null },
+                        releaseDate = resultSet.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
+                    )
+                }
+
+                stmt?.close()
+                resultSet?.close()
+
+                game
             }
         }.await()
     }
