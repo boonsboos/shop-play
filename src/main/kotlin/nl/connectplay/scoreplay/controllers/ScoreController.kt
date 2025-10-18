@@ -23,7 +23,7 @@ class ScoreController(
 
         try {
             val scores = scoreRepository.getScoresAsync(limit, offset)
-                ?: return call.respond(HttpStatusCode.NoContent)
+                ?: return call.respond(HttpStatusCode.NotFound)
 
             call.respond(HttpStatusCode.OK,scores)
         }catch (e: SQLException) {
@@ -39,17 +39,17 @@ class ScoreController(
 
         val scoreId = try {
             UUID.fromString(scoreIdParam)
-        } catch (e: SQLException) {
-            call.application.environment.log.error("No score found", e)
+        } catch (e: IllegalArgumentException) {
+            call.application.environment.log.error("Invalid score id", e)
             return call.respond(HttpStatusCode.BadRequest, "Invalid id")
         }
 
         try {
             val score = scoreRepository.getScoreByIdAsync(scoreId)
-                ?: return call.respond(HttpStatusCode.NoContent, "Score not found")
+                ?: return call.respond(HttpStatusCode.NotFound, "Score not found")
 
             call.respond(HttpStatusCode.OK, score)
-        } catch (e: SQLException) {
+        } catch (e: Exception) {
             call.application.environment.log.error("No score found", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
@@ -68,8 +68,8 @@ class ScoreController(
             } else {
                 call.respond(HttpStatusCode.InternalServerError)
             }
-        }catch (e: SQLException) {
-            call.application.environment.log.error("No score found", e)
+        }catch (e: Exception) {
+            call.application.environment.log.error("Exception", e)
             return call.respond(HttpStatusCode.InternalServerError)
         }
     }
@@ -81,7 +81,7 @@ class ScoreController(
 
         val scoreId = try {
             UUID.fromString(scoreIdParam)
-        } catch (e: SQLException) {
+        } catch (e: IllegalArgumentException) {
             call.application.environment.log.error("No score found", e)
             return call.respond(HttpStatusCode.BadRequest, "Invalid id")
         }
