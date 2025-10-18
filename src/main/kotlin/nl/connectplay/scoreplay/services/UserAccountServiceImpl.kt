@@ -9,6 +9,7 @@ import nl.connectplay.scoreplay.events.EventRouter
 import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.models.dto.LoginUserDto
+import nl.connectplay.scoreplay.models.events.ExampleEvent
 import nl.connectplay.scoreplay.options.JWTOptions
 import org.mindrot.jbcrypt.BCrypt
 import java.util.*
@@ -28,6 +29,8 @@ class UserAccountServiceImpl(private val userRepository: UserRepository, private
         if(!BCrypt.checkpw(loginUserDto.password, user.passwordHash)) {
             throw UnauthorizedException("Password mismatch for user ${user.id}")
         }
+
+        eventRouter.routeEventAsync(ExampleEvent())
 
         return JWT.create()
             .withAudience(jwtConfiguration.audience)

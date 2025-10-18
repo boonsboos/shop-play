@@ -12,6 +12,7 @@ import nl.connectplay.scoreplay.controllers.NotificationController
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
+import kotlin.time.Duration.Companion.seconds
 
 @ApiRoute
 fun Route.notificationEvents() {
@@ -26,6 +27,10 @@ fun Route.notificationEvents() {
                 Json.encodeToString(serializer, it)
             }
         ) {
+            heartbeat {
+                period = 15.seconds
+            }
+
             try {
                 notificationController.handleSseSession(this)
             } catch (e: UnauthorizedException) {

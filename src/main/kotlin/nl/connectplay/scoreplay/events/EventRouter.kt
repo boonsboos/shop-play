@@ -6,6 +6,7 @@ import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
 import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.models.dto.notifications.NewNotificationDto
 import nl.connectplay.scoreplay.models.events.BaseEvent
+import nl.connectplay.scoreplay.models.events.ExampleEvent
 import org.slf4j.LoggerFactory
 
 class EventRouter(
@@ -42,7 +43,7 @@ class EventRouter(
 
     private suspend fun getRelevantUserIdsAsync(event: BaseEvent): Set<Int> =
         when (event) {
-            else -> setOf()
+            is ExampleEvent -> setOf(1)
         }
 
     private suspend fun getRelevantUserIdForFriendRequest() {

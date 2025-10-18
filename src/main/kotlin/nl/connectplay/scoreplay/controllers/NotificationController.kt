@@ -24,7 +24,7 @@ class NotificationController(private val notificationRepository: NotificationRep
                 session.send(event)
             }
         } catch (e: ClosedWriteChannelException) {
-            logger.error("SSE connection with user $userId was closed, cleaning up", e)
+            logger.error("SSE connection with user $userId was closed, cleaning up")
         } catch (e: Exception) {
             logger.error("SSE connection with user $userId errored", e)
         }
