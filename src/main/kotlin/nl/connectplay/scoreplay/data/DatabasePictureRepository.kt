@@ -4,6 +4,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.PictureRepository
 import nl.connectplay.scoreplay.models.dto.picture.PictureDto
+import java.sql.SQLException
 import java.util.*
 
 class DatabasePictureRepository(private val database: Database) : PictureRepository {
@@ -40,7 +41,6 @@ class DatabasePictureRepository(private val database: Database) : PictureReposit
                 val stmt = connection.prepareStatement(sql)
                 stmt.setObject(1, pictureId)
 
-
                 val resultSet = stmt.executeQuery()
 
                 val id = if (resultSet.next()) resultSet.getString("picture_url") else null
@@ -50,6 +50,29 @@ class DatabasePictureRepository(private val database: Database) : PictureReposit
 
                 id
             }
+        }.await()
+    }
+
+    override suspend fun deletePictureById(pictureId: UUID): Boolean = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                try {
+                    val sql = """
+                    DELETE FROM pictures WHERE picture_id = ?
+                """.trimIndent()
+
+                    val stmt = connection.prepareStatement(sql)
+                    stmt.setObject(1, pictureId)
+
+                    val affectedRow = stmt.executeUpdate()
+                    stmt.close()
+                    return@async affectedRow > 0
+
+                } catch (e: SQLException) {
+                    e.printStackTrace()
+                    return@async false
+                }
+            } ?: false
         }.await()
     }
 }
