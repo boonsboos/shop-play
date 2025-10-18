@@ -80,7 +80,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     if (create.minAge != null) stmt.setInt(7, create.minAge) else stmt.setNull(7, java.sql.Types.INTEGER)
 
                     if (create.releaseDate != null) {
-                        // kotlinx.datetime.LocalDate -> java.time.LocalDate -> java.sql.Date
+                        // Convert kotlinx.datetime.LocalDate -> java.time.LocalDate -> java.sql.Date
                         val javaLocal = java.time.LocalDate.of(create.releaseDate.year, create.releaseDate.month, create.releaseDate.day)
                         stmt.setDate(8, Date.valueOf(javaLocal))
                     } else {
@@ -109,6 +109,69 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     )
                 }
             } ?: throw IllegalStateException("No database connection")
+        }.await()
+    }
+
+    override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coroutineScope {
+        async {
+            database.connection?.use { conn ->
+                val sets = mutableListOf<String>()
+                val params = mutableListOf<Any?>()
+
+                update.name?.let { sets.add("name = ?"); params.add(it) }
+                update.description?.let { sets.add("description = ?"); params.add(it) }
+                update.publisher?.let { sets.add("publisher = ?"); params.add(it) }
+                if (update.minPlayers != null) { sets.add("minimum_player_count = ?"); params.add(update.minPlayers) }
+                if (update.maxPlayers != null) { sets.add("maximum_player_count = ?"); params.add(update.maxPlayers) }
+                if (update.duration != null) { sets.add("duration = ?"); params.add(update.duration) }
+                if (update.minAge != null) { sets.add("minimum_age = ?"); params.add(update.minAge) }
+                if (update.releaseDate != null) {
+                    // Convert kotlinx LocalDate -> java.sql.Date
+                    val javaLocal = java.time.LocalDate.of(update.releaseDate.year, update.releaseDate.month, update.releaseDate.day)
+                    params.add(Date.valueOf(javaLocal))
+                    sets.add("release_date = ?")
+                }
+
+                if (sets.isEmpty()) {
+                    // Nothing to update
+                    return null
+                }
+
+                val sql = "UPDATE games SET ${sets.joinToString(", ")} WHERE game_id = ?"
+                conn.prepareStatement(sql).use { stmt ->
+                    // Set parameters in order
+                    var idx = 1
+                    for (p in params) {
+                        when (p) {
+                            null -> stmt.setNull(idx++, Types.NULL)
+                            is Int -> stmt.setInt(idx++, p)
+                            is String -> stmt.setString(idx++, p)
+                            is Date -> stmt.setDate(idx++, p)
+                            else -> stmt.setObject(idx++, p)
+                        }
+                    }
+                    stmt.setInt(idx, id) // WHERE game_id = ?
+
+                    val updated = stmt.executeUpdate()
+                    if (updated == 0) return@use null
+
+                    // Re-query updated row
+                    val selectSql = """
+                        SELECT 
+                          g.game_id, g.name, g.description, g.publisher,
+                          g.minimum_player_count, g.maximum_player_count, g.duration, g.minimum_age, g.release_date
+                        FROM games g
+                        WHERE g.game_id = ?
+                    """.trimIndent()
+
+                    conn.prepareStatement(selectSql).use { selectStmt ->
+                        selectStmt.setInt(1, id)
+                        selectStmt.executeQuery().use { rs ->
+                            if (rs.next()) mapRowToGameDto(rs) else null
+                        }
+                    }
+                }
+            }
         }.await()
     }
 }

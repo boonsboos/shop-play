@@ -71,4 +71,50 @@ class GameController(private val gameRepository: GameRepository) {
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
+
+    suspend fun handleUpdateAsync(call: ApplicationCall) {
+        val id = call.parameters["id"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Game Id must be a number")
+
+        val params = call.receive<Map<String, String>>() // keep same style
+        // parse optional fields
+        val name = params["name"]
+        val description = params["description"]
+        val publisher = params["publisher"]
+        val minPlayers = params["minPlayers"]?.toIntOrNull()
+        val maxPlayers = params["maxPlayers"]?.toIntOrNull()
+        val duration = params["duration"]?.toIntOrNull()
+        val minAge = params["minAge"]?.toIntOrNull()
+        val releaseDate = params["releaseDate"]?.let {
+            try {
+                LocalDate.parse(it) // yyyy-MM-dd
+            } catch (ex: Exception) {
+                return call.respond(HttpStatusCode.BadRequest, "Invalid releaseDate format, use yyyy-MM-dd")
+            }
+        }
+
+        val update = UpdateGameDto(
+            name = name,
+            description = description,
+            publisher = publisher,
+            minPlayers = minPlayers,
+            maxPlayers = maxPlayers,
+            duration = duration,
+            minAge = minAge,
+            releaseDate = releaseDate
+        )
+
+        try {
+            val updated = gameRepository.updateGame(id, update)
+                ?: return call.respond(HttpStatusCode.NotFound, "Game not found")
+
+            call.respond(HttpStatusCode.OK, updated)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while updating game", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        } catch (e: Exception) {
+            call.application.environment.log.error("Error while updating game", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
 }

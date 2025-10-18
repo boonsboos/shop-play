@@ -1,0 +1,14 @@
+package nl.connectplay.scoreplay.models.dto
+
+import kotlinx.datetime.LocalDate
+
+data class UpdateGameDto(
+    val name: String? = null,
+    val description: String? = null,
+    val publisher: String? = null,
+    val minPlayers: Int? = null,
+    val maxPlayers: Int? = null,
+    val duration: Int? = null,
+    val minAge: Int? = null,
+    val releaseDate: LocalDate? = null
+)
