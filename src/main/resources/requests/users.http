@@ -98,3 +98,30 @@ Content-Type: application/json
 ### Get followd gameslist
 GET http://localhost:8080/users/1/followed?offset=0&limit=10
 Accept: application/json
+
+### Follow a game with authorisation
+// this block is a pre-request script and it set a variable before sending the request
+< {%
+    request.variables.set("gameId", "5");
+%}
+
+POST http://localhost:8080/games/{{gameId}}/follow
+Accept: application/json
+Authorization: Bearer {{jwtToken}}
+
+### Unfollow a game with authorisation
+< {%
+    request.variables.set("gameId", "5");
+%}
+
+DELETE http://localhost:8080/games/{{gameId}}/unfollow
+Accept: application/json
+Authorization: Bearer {{jwtToken}}
+
+### Get followers of a game
+< {%
+    request.variables.set("gameId", "2");
+%}
+
+GET http://localhost:8080/games/{{gameId}}/followers?offset=0&limit=10
+Accept: application/json

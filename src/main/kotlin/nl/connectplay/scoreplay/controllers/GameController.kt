@@ -2,11 +2,18 @@ package nl.connectplay.scoreplay.controllers
 
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.server.response.*
+import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import java.sql.SQLException
+import java.sql.SQLIntegrityConstraintViolationException
 
-class GameController(private val gameRepository: GameRepository) {
+class GameController(
+    private val gameRepository: GameRepository,
+    private val followGameRepository: FollowGameRepository
+) {
 
     suspend fun handleListAsync(call: ApplicationCall) {
         val limit = call.request.queryParameters["limit"]?.toIntOrNull()
@@ -22,4 +29,58 @@ class GameController(private val gameRepository: GameRepository) {
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
+
+    suspend fun handleFollowGame(call: ApplicationCall) {
+        val gameId = call.parameters["gameId"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid gameId")
+        // check if the user is authorized
+        val principal = call.principal<JWTPrincipal>() // get the user info from the JWT
+        val userId = principal?.payload?. // get the payload from the JWT principal object
+            getClaim("userId")?.asInt() // get the "userId" claim value from the payload as int
+            ?: return call.respond(HttpStatusCode.Unauthorized, "User not authenticated") // code 401
+
+        try {
+            followGameRepository.followGame(userId, gameId)
+            call.respond(HttpStatusCode.Created, "Successfully following the game.")
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            call.respond(HttpStatusCode.Conflict, "User already follows this game")
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while following game", e)
+            call.respond(HttpStatusCode.InternalServerError, "Database error")
+        }
+    }
+
+    suspend fun handleUnfollowGame(call: ApplicationCall) {
+        val gameId = call.parameters["gameId"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid gameId")
+
+        val principal = call.principal<JWTPrincipal>()
+        val userId = principal?.payload
+            ?.getClaim("userId")?.asInt()
+            ?: return call.respond(HttpStatusCode.Unauthorized, "User not authenticated")
+
+        try {
+            followGameRepository.unfollowGame(userId, gameId)
+            call.respond(HttpStatusCode.OK, "Successfully unfollowed the game")
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while unfollowing game", e)
+            call.respond(HttpStatusCode.InternalServerError, "Database error")
+        }
+    }
+
+    suspend fun handleGetFollowers(call: ApplicationCall) {
+        val gameId = call.parameters["gameId"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid gameId")
+        val limit = call.request.queryParameters["limit"]?.toIntOrNull()
+        val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+
+        try {
+            val followers = followGameRepository.getFollowers(gameId, offset, limit)
+            call.respond(HttpStatusCode.OK, followers)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while getting followers", e)
+            call.respond(HttpStatusCode.InternalServerError, "Database error")
+        }
+    }
+
 }

@@ -79,18 +79,76 @@ class DatabaseFollowGameRepository(private val database: Database) : FollowGameR
     }
 
     override suspend fun followGame(userId: Int, gameId: Int) {
-        TODO("Not yet implemented")
+        database.connection?.use { connection -> // use automatically close resources or cleanup after completion
+            val sql = """
+                        INSERT INTO game_followers (user_id, game_id) VALUES (?, ?)
+                    """.trimIndent()
+
+            val stmt = connection.prepareStatement(sql)
+            stmt.apply {
+                setInt(1, userId)
+                setInt(2, gameId)
+            }
+
+            stmt.executeUpdate()
+        }
     }
 
     override suspend fun unfollowGame(userId: Int, gameId: Int) {
-        TODO("Not yet implemented")
+        database.connection?.use { connection -> // use automatically close resources or cleanup after completion
+            val sql = """
+                DELETE FROM game_followers
+                WHERE user_id = ? AND game_id = ?
+            """.trimIndent()
+
+            val stmt = connection.prepareStatement(sql)
+            stmt.apply {
+                setInt(1, userId)
+                setInt(2, gameId)
+            }
+
+            stmt.executeUpdate()
+        }
     }
 
-    override suspend fun getFollowers(
-        gameId: Int,
-        offset: Int,
-        limit: Int?
-    ): List<UserDto> {
-        TODO("Not yet implemented")
+    override suspend fun getFollowers(gameId: Int, offset: Int, limit: Int?): List<UserDto> {
+        return coroutineScope {
+            async {
+                database.connection?.use { connection ->
+                    val sql = """
+                    SELECT users.user_id AS user_id,
+                           users.user_name,
+                           users.email,
+                           users.profile_picture
+                    FROM game_followers
+                    JOIN users ON game_followers.user_id = users.user_id
+                    WHERE game_followers.game_id = ?
+                    LIMIT ? OFFSET ?
+                """.trimIndent()
+
+                    val stmt = connection.prepareStatement(sql)
+
+                    stmt.apply {
+                        setInt(1, gameId)
+                        setInt(2, limit ?: 10)
+                        setInt(3, offset)
+                    }
+
+                    val resultSet = stmt.executeQuery()
+                    val users = mutableListOf<UserDto>()
+
+                    while (resultSet.next()) {
+                        users.add(
+                            UserDto(
+                                username = resultSet.getString("user_name"),
+                                email = resultSet.getString("email"),
+                                profilePicture = resultSet.getString("profile_picture")
+                            )
+                        )
+                    }
+                    return@use users
+                } ?: emptyList()
+            }.await()
+        }
     }
 }

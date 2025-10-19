@@ -1,20 +1,21 @@
 package nl.connectplay.scoreplay.routes.games
 
 import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import nl.connectplay.scoreplay.controllers.GameController
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 
 @ApiRoute
-fun Route.gamesRoute() {
+fun Route.gamesFollowRoute() {
     val gameController by inject<GameController>()
 
-    get("/games") {
-        gameController.handleListAsync(call)
+    post("/games/{gameId}/follow") {
+        gameController.handleFollowGame(call)
     }
 
-    get("/games/{gameId}/followers") {
-        gameController.handleGetFollowers(call)
+    post("/games/{gameId}/follow") {
+        gameController.handleUnfollowGame(call)
     }
 }
+
