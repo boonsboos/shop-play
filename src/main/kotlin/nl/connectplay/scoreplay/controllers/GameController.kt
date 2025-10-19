@@ -92,7 +92,8 @@ class GameController(private val gameRepository: GameRepository) {
                 return call.respond(HttpStatusCode.BadRequest, "Invalid releaseDate format, use yyyy-MM-dd")
             }
         }
-
+        
+        // Put parameters in UpdateGameDto
         val update = UpdateGameDto(
             name = name,
             description = description,

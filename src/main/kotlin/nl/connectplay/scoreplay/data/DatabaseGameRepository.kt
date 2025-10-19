@@ -132,8 +132,8 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     sets.add("release_date = ?")
                 }
 
+                // Skips update if list is empty
                 if (sets.isEmpty()) {
-                    // Nothing to update
                     return null
                 }
 
