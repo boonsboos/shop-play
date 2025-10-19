@@ -1,0 +1,50 @@
+# This is for all the users and auth endpoints
+
+### get a list of all users
+GET http://localhost:8080/users
+
+### get a list of all users with query-params
+GET http://localhost:8080/users?limit=10&offset=5
+
+### get user with id '1'
+# this is a pre-request script
+< {%
+    request.variables.set("userId", 1) // this is a per-request variable
+%}
+GET http://localhost:8080/users/{{userId}}
+
+### register new user
+POST http://localhost:8080/register
+Content-Type: application/json
+
+{
+  "username": "Bob",
+  "email": "bob@connect-play.nl",
+  "password": "Pass1234"
+}
+
+### Upload a new profile picture with an file
+< {%
+    request.variables.set("userId", 1)
+%}
+PATCH http://localhost:8080/users/{{userId}}/picture
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="profile-picture"; filename="picture2.jpg"
+Content-Type: image/jpeg
+
+# route to the picture
+< ../../../../../resources/picture.jpg
+--boundary--
+
+### Upload an new profile picture with an URL
+< {%
+    request.variables.set("userId", 1)
+%}
+PATCH http://localhost:8080/users/{{userId}}/picture
+Content-Type: application/json
+
+{
+  "pictureUrl": "https://picsum.photos/256/256"
+}

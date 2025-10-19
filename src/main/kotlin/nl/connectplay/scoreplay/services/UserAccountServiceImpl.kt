@@ -10,7 +10,7 @@ import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.models.dto.LoginUserDto
 import nl.connectplay.scoreplay.options.JWTOptions
 import org.mindrot.jbcrypt.BCrypt
-import java.util.Date
+import java.util.*
 
 class UserAccountServiceImpl(private val userRepository: UserRepository, private val jwtConfiguration: JWTOptions) : UserAccountService {
     /**

@@ -6,13 +6,21 @@ import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
 import io.ktor.server.response.*
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
+import io.ktor.server.request.*
+import io.ktor.server.response.respond
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
+import nl.connectplay.scoreplay.abstraction.services.PictureService
+import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 
 class GameController(
     private val gameRepository: GameRepository,
-    private val followGameRepository: FollowGameRepository
+    private val followGameRepository: FollowGameRepository,
+    private val pictureService: PictureService
 ) {
 
     suspend fun handleListAsync(call: ApplicationCall) {
@@ -83,4 +91,52 @@ class GameController(
         }
     }
 
+    suspend fun handleUploadPictureAsync(call: ApplicationCall) {
+        val sessionId = call.parameters["id"]
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
+        val contentType = call.request.contentType()
+
+        when {
+            contentType.match(ContentType.Application.Json) -> {
+                val uploadPictures = call.receive<List<UploadPictureDto>>()
+
+                if (uploadPictures.isEmpty()) return call.respond(HttpStatusCode.BadRequest, "No pictures provided")
+                if (uploadPictures.size > 10) return call.respond(
+                    HttpStatusCode.PayloadTooLarge,
+                    "Too many pictures, max 10 pictures"
+                )
+
+                // Asynchronously upload each picture, because there is no bulk upload method (yet)
+                val results = coroutineScope {
+                    uploadPictures.mapIndexed { index, uploadPicture ->
+                        async {
+                            val (status, body) = pictureService.handleUploadImageJsonAsync(
+                                uploadPicture,
+                                PictureService.EntityType.Game,
+                                sessionId
+                            )
+                            mapOf(
+                                "index" to index,
+                                "status" to status.value,
+                                "message" to body
+                            )
+                        }
+                    }.awaitAll()
+                }
+
+                // If all succeeded (Created = 201), respond 201; else return 207 Multi-Status
+                val overallStatus = if (results.all { it["status"] == HttpStatusCode.Created.value }) {
+                    HttpStatusCode.Created
+                } else {
+                    HttpStatusCode.MultiStatus // partial success/failure
+                }
+
+                call.respond(overallStatus, results)
+            }
+
+            else -> {
+                return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
+            }
+        }
+    }
 }
