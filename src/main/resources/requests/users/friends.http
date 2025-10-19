@@ -86,7 +86,7 @@ Accept: application/json
 
 POST http://localhost:8080/games/{{gameId}}/follow
 Accept: application/json
-Authorization: Bearer {{jwtToken}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzY29yZS1wbGF5LXVzZXJzIiwiaXNzIjoiaHR0cHM6Ly9hcGkuY29ubmVjdC1lbi1wbGF5Lm5sIiwidXNlcklkIjo2LCJleHAiOjE3NjA5NjUwODB9.WbU-e3_uxqR-sEksDTa1QgUy8jY-fytQcBXOczrqcnc
 
 ### Unfollow a game with authorisation
 < {%
@@ -95,11 +95,11 @@ Authorization: Bearer {{jwtToken}}
 
 DELETE http://localhost:8080/games/{{gameId}}/unfollow
 Accept: application/json
-Authorization: Bearer {{jwtToken}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzY29yZS1wbGF5LXVzZXJzIiwiaXNzIjoiaHR0cHM6Ly9hcGkuY29ubmVjdC1lbi1wbGF5Lm5sIiwidXNlcklkIjo2LCJleHAiOjE3NjA5NjUwODB9.WbU-e3_uxqR-sEksDTa1QgUy8jY-fytQcBXOczrqcnc
 
 ### Get followers of a game
 < {%
-    request.variables.set("gameId", "2");
+    request.variables.set("gameId", "5");
 %}
 
 GET http://localhost:8080/games/{{gameId}}/followers?offset=0&limit=10
