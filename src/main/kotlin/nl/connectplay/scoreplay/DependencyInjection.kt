@@ -2,18 +2,15 @@ package nl.connectplay.scoreplay
 
 import io.ktor.server.config.*
 import nl.connectplay.scoreplay.abstraction.data.*
-import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
-import nl.connectplay.scoreplay.abstraction.services.FriendService
-import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.abstraction.services.UserAccountService
+import nl.connectplay.scoreplay.abstraction.services.*
 import nl.connectplay.scoreplay.controllers.*
 import nl.connectplay.scoreplay.data.*
 import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
 import nl.connectplay.scoreplay.events.EventRouter
-import nl.connectplay.scoreplay.options.CDNOptions
 import nl.connectplay.scoreplay.options.JWTOptions
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.services.PictureServiceImpl
+import nl.connectplay.scoreplay.services.ScoreServiceImpl
 import nl.connectplay.scoreplay.services.UserAccountServiceImpl
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.createdAtStart
@@ -56,6 +53,7 @@ fun services() = module {
     singleOf(::FriendServiceImpl) { bind<FriendService>() }
     singleOf(::UserAccountServiceImpl) { bind<UserAccountService>() }
     singleOf(::PictureServiceImpl) { bind<PictureService>() }
+    singleOf(::ScoreServiceImpl) { bind<ScoreService>() }
 
     // events
     singleOf(::EventRouter) { bind<EventRouter>() }

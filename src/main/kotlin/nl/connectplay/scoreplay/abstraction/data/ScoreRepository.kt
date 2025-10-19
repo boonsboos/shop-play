@@ -2,21 +2,27 @@ package nl.connectplay.scoreplay.abstraction.data
 import nl.connectplay.scoreplay.models.Score
 import nl.connectplay.scoreplay.models.dto.score.CreateScoreDto
 import nl.connectplay.scoreplay.models.dto.score.UpdateScoreDto
-import nl.connectplay.scoreplay.models.dto.score.ScoreDto
-import java.util.UUID
+import java.util.*
 
 interface ScoreRepository {
-    // because of 'suspend', the function will run asynchronously
+    /**
+     * Gets a score by ID from the specified session
+     * @return [Score] if found, null otherwise
+     */
+    suspend fun getScoreByIdAsync(scoreId: UUID): Score?
 
-    // get score by ID
-    suspend fun getScoreByIdAsync(score: UUID): Score?
+    /**
+     * Uploads a new score to the session
+     */
+    suspend fun addScoreAsync(sessionID: UUID, sessionPlayerId: UUID, gameId: Int, score: CreateScoreDto): Score?
 
-    // Add new score
-    suspend fun addScoreAsync(score: CreateScoreDto) : Boolean
+    /**
+     * Updates an existing score
+     */
+    suspend fun updateScoreAsync(scoreId: UUID, score: UpdateScoreDto): Score?
 
-    // Update existing score
-    suspend fun updateScoreAsync(score: UpdateScoreDto) : Boolean
-
-    // get multiple scores
-    suspend fun getScoresAsync(limit: Int? = 25, offset: Int? = 0, sessionPlayerId: UUID? = null): List<ScoreDto>?
+    /**
+     * Get the scores from a session
+     */
+    suspend fun getScoresAsync(sessionId: UUID): List<Score>
 }
