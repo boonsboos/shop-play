@@ -8,6 +8,7 @@ import io.ktor.server.response.*
 import io.ktor.server.request.*
 import io.ktor.util.logging.error
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
@@ -29,6 +30,7 @@ class UserController(
     private val userRepository: UserRepository,
     private val friendService: FriendService,
     private val userAccountService: UserAccountService,
+    private val followGameRepository: FollowGameRepository,
     private val pictureService: PictureService
 ) {
 
@@ -274,6 +276,23 @@ class UserController(
         } catch (e: SQLException) { // SQLException catch any SQL-related errors
             call.application.environment.log.error("DB error while deleting user with id $userId", e)
             call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleFollowedGamesAsync(call: ApplicationCall) {
+        val userId = call.parameters["id"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "User ID is not a number")
+        val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+        val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
+
+        try {
+            val followedGames = followGameRepository.getFollowedGames(userId, offset, limit)
+
+            call.respond(HttpStatusCode.OK, followedGames)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while following games", e)
+            call.respond(HttpStatusCode.InternalServerError)
+
         }
     }
 }

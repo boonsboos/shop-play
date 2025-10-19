@@ -10,7 +10,6 @@ import nl.connectplay.scoreplay.controllers.*
 import nl.connectplay.scoreplay.data.*
 import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
 import nl.connectplay.scoreplay.events.EventRouter
-import nl.connectplay.scoreplay.options.CDNOptions
 import nl.connectplay.scoreplay.options.JWTOptions
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.services.PictureServiceImpl
@@ -34,6 +33,7 @@ fun repositories() = module {
     singleOf(::DatabasePictureRepository) { bind<PictureRepository>() }
     singleOf(::DatabaseGamePictureRepository) { bind<GamePictureRepository>() }
     singleOf(::DatabaseNotificationRepository) { bind<NotificationRepository>() }
+    singleOf(::DatabaseFollowGameRepository) {bind<FollowGameRepository>() }
 }
 
 /**
