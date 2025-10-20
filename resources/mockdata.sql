@@ -1,7 +1,10 @@
 /* ===== 1) Scoring methods ===== */
 INSERT INTO scoring_methods (name) VALUES
                                        ('Highest score wins'),
-                                       ('Lowest score wins');
+                                       ('Lowest score wins'),
+                                       ('First to X score wins')
+                                       ('Finishing on position Y wins')
+                                       ('Last man standing wins');
 
 /* ===== 2) Users (realistisch) ===== */
 INSERT INTO users (user_name, email, password_hash, profile_picture) VALUES
