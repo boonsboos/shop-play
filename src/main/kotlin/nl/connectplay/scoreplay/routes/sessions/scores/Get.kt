@@ -1,4 +1,4 @@
-package nl.connectplay.scoreplay.routes.scores
+package nl.connectplay.scoreplay.routes.sessions.scores
 
 import io.ktor.server.routing.*
 import nl.connectplay.scoreplay.controllers.ScoreController

@@ -5,7 +5,7 @@ Content-Type: application/json
 {
   "gameId": "1",
   "userId": "1",
-  "visibility": "0"
+  "visibility": 0
 }
 
 ### Upload end of session picture
@@ -17,4 +17,48 @@ Content-Type: application/json
 
 {
   "pictureUrl": "https://picsum.photos/256/256"
+}
+
+### get scores for session
+< {%
+    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
+%}
+GET http://localhost:8080/sessions/{{sessionId}}/scores
+Content-Type: application/json
+
+### upload score to session
+< {%
+    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
+%}
+POST http://localhost:8080/sessions/{{sessionId}}/scores
+Content-Type: application/json
+
+{
+  "score": 10.0,
+  "turn": 0,
+  "sessionPlayer": {
+    "userId": 1,
+    "guest": "guest2"
+  }
+}
+
+### get score from specific session
+< {%
+    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
+    request.variables.set("scoreId", "0199fd79-c4cf-7c8c-8730-c4125a171e6d")
+%}
+GET http://localhost:8080/sessions/{{sessionId}}/scores/{{scoreId}}
+Accept: application/json
+
+### update score
+< {%
+    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
+    request.variables.set("scoreId", "0199fd79-c4cf-7c8c-8730-c4125a171e6d")
+%}
+PATCH http://localhost:8080/sessions/{{sessionId}}/scores/{{scoreId}}
+Content-Type: application/json
+
+{
+  "score": 100.0,
+  "turn": 0
 }

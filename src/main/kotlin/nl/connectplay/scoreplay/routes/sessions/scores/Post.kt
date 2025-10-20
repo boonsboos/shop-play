@@ -1,4 +1,4 @@
-package nl.connectplay.scoreplay.routes.scores
+package nl.connectplay.scoreplay.routes.sessions.scores
 
 import io.ktor.server.routing.*
 import nl.connectplay.scoreplay.controllers.ScoreController
@@ -9,7 +9,6 @@ import org.koin.ktor.ext.inject
 fun Route.postScoresRoute() {
     val scoreController by inject<ScoreController>()
 
-    // POST /scores — Creating score
     post("/sessions/{id}/scores") {
         scoreController.handleCreateAsync(call)
     }

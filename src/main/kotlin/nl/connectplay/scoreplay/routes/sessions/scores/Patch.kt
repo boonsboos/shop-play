@@ -1,4 +1,4 @@
-package nl.connectplay.scoreplay.routes.scores
+package nl.connectplay.scoreplay.routes.sessions.scores
 
 import io.ktor.server.routing.*
 import nl.connectplay.scoreplay.controllers.ScoreController
@@ -9,7 +9,6 @@ import org.koin.ktor.ext.inject
 fun Route.putScoresRoute() {
     val scoreController by inject<ScoreController>()
 
-    // PATCH /Id — Updating score
     patch("/sessions/{id}/scores/{scoreId}") {
         scoreController.handleUpdateAsync(call)
     }
