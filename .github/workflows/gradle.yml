@@ -1,0 +1,12 @@
+name: PR test for Gradle
+on: # on with events the workflow will trigger
+  pull_request: # runs this on a pull request
+jobs: #groupe of jobs that this workflow will run
+  test: # name of the job that wil run the test
+    runs-on: ubuntu-latest # defines on witch os the job will run
+      steps: # list of steps that wil be executed
+      - uses: actions/checktout @v4 # download all the files of the project to a VM
+      - name: Set up JDK # is the label/name of the action shown in the actions log
+    
+  
+  
