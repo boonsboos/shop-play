@@ -1,4 +1,4 @@
-package nl.connectplay.scoreplay.routes.leaderboards
+package nl.connectplay.scoreplay.routes.games.leaderboards
 
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
