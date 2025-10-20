@@ -2,6 +2,7 @@ package nl.connectplay.scoreplay.controllers
 
 import io.ktor.server.sse.*
 import io.ktor.utils.io.*
+import kotlinx.serialization.json.Json
 import nl.connectplay.scoreplay.abstraction.data.NotificationRepository
 import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
@@ -11,7 +12,7 @@ class NotificationController(private val notificationRepository: NotificationRep
 
     private val logger = LoggerFactory.getLogger(NotificationController::class.java)
 
-    suspend fun handleSseSession(session: ServerSSESessionWithSerialization) {
+    suspend fun handleSseSession(session: ServerSSESession) {
         val userId = session.call.getUserIdFromJWT()
 
         logger.info("Starting SSE event session with user $userId, provisioning queue")
@@ -21,7 +22,8 @@ class NotificationController(private val notificationRepository: NotificationRep
         try {
             for (event in eventQueue) {
                 logger.info("Sending event ${event.javaClass.simpleName} to user $userId")
-                session.send(event)
+                // manually convert the event to json
+                session.send(Json.encodeToString(event))
             }
         } catch (e: ClosedWriteChannelException) {
             logger.error("SSE connection with user $userId was closed, cleaning up")
