@@ -112,66 +112,63 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
         }.await()
     }
 
-    override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coroutineScope {
-        async {
-            database.connection?.use { conn ->
-                val sets = mutableListOf<String>()
-                val params = mutableListOf<Any?>()
+override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coroutineScope {
+    async {
+        database.connection?.use { conn ->
+            val sql = """
+                UPDATE games
+                SET
+                    name = COALESCE(?, name),
+                    description = COALESCE(?, description),
+                    publisher = COALESCE(?, publisher),
+                    minimum_player_count = COALESCE(?, minimum_player_count),
+                    maximum_player_count = COALESCE(?, maximum_player_count),
+                    duration = COALESCE(?, duration),
+                    minimum_age = COALESCE(?, minimum_age),
+                    release_date = COALESCE(?, release_date)
+                WHERE game_id = ?
+            """.trimIndent()
 
-                update.name?.let { sets.add("name = ?"); params.add(it) }
-                update.description?.let { sets.add("description = ?"); params.add(it) }
-                update.publisher?.let { sets.add("publisher = ?"); params.add(it) }
-                if (update.minPlayers != null) { sets.add("minimum_player_count = ?"); params.add(update.minPlayers) }
-                if (update.maxPlayers != null) { sets.add("maximum_player_count = ?"); params.add(update.maxPlayers) }
-                if (update.duration != null) { sets.add("duration = ?"); params.add(update.duration) }
-                if (update.minAge != null) { sets.add("minimum_age = ?"); params.add(update.minAge) }
-                if (update.releaseDate != null) {
-                    // Convert kotlinx LocalDate -> java.sql.Date
-                    val javaLocal = java.time.LocalDate.of(update.releaseDate.year, update.releaseDate.month, update.releaseDate.day)
-                    params.add(Date.valueOf(javaLocal))
-                    sets.add("release_date = ?")
+            conn.prepareStatement(sql).use { stmt ->
+                var i = 1
+                if (update.name == null) stmt.setNull(i++, Types.VARCHAR) else stmt.setString(i++, update.name)
+                if (update.description == null) stmt.setNull(i++, Types.VARCHAR) else stmt.setString(i++, update.description)
+                if (update.publisher == null) stmt.setNull(i++, Types.VARCHAR) else stmt.setString(i++, update.publisher)
+                if (update.minPlayers == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.minPlayers)
+                if (update.maxPlayers == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.maxPlayers)
+                if (update.duration == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.duration)
+                if (update.minAge == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.minAge)
+
+                val sqlDate: java.sql.Date? = update.releaseDate?.let { d ->
+                    val jl = java.time.LocalDate.of(d.year, d.month, d.day)
+                    java.sql.Date.valueOf(jl)
                 }
+                if (sqlDate == null) stmt.setNull(i++, Types.DATE) else stmt.setDate(i++, sqlDate)
 
-                // Skips update if list is empty
-                if (sets.isEmpty()) {
-                    return null
-                }
+                // WHERE
+                stmt.setInt(i, id)
 
-                val sql = "UPDATE games SET ${sets.joinToString(", ")} WHERE game_id = ?"
-                conn.prepareStatement(sql).use { stmt ->
-                    // Set parameters in order
-                    var idx = 1
-                    for (p in params) {
-                        when (p) {
-                            null -> stmt.setNull(idx++, Types.NULL)
-                            is Int -> stmt.setInt(idx++, p)
-                            is String -> stmt.setString(idx++, p)
-                            is Date -> stmt.setDate(idx++, p)
-                            else -> stmt.setObject(idx++, p)
-                        }
-                    }
-                    stmt.setInt(idx, id) // WHERE game_id = ?
+                val updated = stmt.executeUpdate()
+                if (updated == 0) return@use null
+            }
 
-                    val updated = stmt.executeUpdate()
-                    if (updated == 0) return@use null
+            // Re-query updated row
+            val selectSql = """
+                SELECT 
+                  g.game_id, g.name, g.description, g.publisher,
+                  g.minimum_player_count, g.maximum_player_count, g.duration, g.minimum_age, g.release_date
+                FROM games g
+                WHERE g.game_id = ?
+            """.trimIndent()
 
-                    // Re-query updated row
-                    val selectSql = """
-                        SELECT 
-                          g.game_id, g.name, g.description, g.publisher,
-                          g.minimum_player_count, g.maximum_player_count, g.duration, g.minimum_age, g.release_date
-                        FROM games g
-                        WHERE g.game_id = ?
-                    """.trimIndent()
-
-                    conn.prepareStatement(selectSql).use { selectStmt ->
-                        selectStmt.setInt(1, id)
-                        selectStmt.executeQuery().use { rs ->
-                            if (rs.next()) mapRowToGameDto(rs) else null
-                        }
-                    }
+            conn.prepareStatement(selectSql).use { selectStmt ->
+                selectStmt.setInt(1, id)
+                selectStmt.executeQuery().use { rs ->
+                    if (rs.next()) mapRowToGameDto(rs) else null
                 }
             }
-        }.await()
-    }
+        }
+    }.await()
+}
+
 }
