@@ -35,7 +35,7 @@ class DatabaseLeaderboardRepository(private val database: Database) : Leaderboar
             while (resultSet.next()) {
                 // these fields are the base for the leaderboardentety
                 val playerName = resultSet.getString("playersName")
-                val score = resultSet.getInt("score")
+                val score = resultSet.getDouble("score")
                 val achievedOn = resultSet.getString("achieved_on")
 
                 // these fields are used to check if de playersname is visable ore not
