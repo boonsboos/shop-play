@@ -143,7 +143,8 @@ CREATE TABLE `sessions` (
 
 CREATE TABLE `session_players` (
     `session_player_id` uuid NOT NULL DEFAULT uuid_v7(),
-    `user_id` int(11) NOT NULL,
+    `session_id` uuid NOT NULL,
+    `user_id` int(11) NULL,
     `guest_name` varchar(255) DEFAULT NULL
 );
 
@@ -321,7 +322,8 @@ ALTER TABLE `sessions`
 -- Beperkingen voor tabel `session_players`
 --
 ALTER TABLE `session_players`
-    ADD CONSTRAINT `FK_session_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+    ADD CONSTRAINT `FK_session_players_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    ADD CONSTRAINT `FK_session_players_sessions` FOREIGN KEY (`session_id`) REFERENCES `sessions` (`session_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Beperkingen voor tabel `users`

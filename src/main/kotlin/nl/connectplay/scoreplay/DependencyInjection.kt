@@ -32,6 +32,7 @@ fun repositories() = module {
     singleOf(::DatabaseGamePictureRepository) { bind<GamePictureRepository>() }
     singleOf(::DatabaseNotificationRepository) { bind<NotificationRepository>() }
     singleOf(::DatabaseFollowGameRepository) {bind<FollowGameRepository>() }
+    singleOf(::DatabaseLeaderboardRepository) { bind<LeaderboardRepository>() }
 }
 
 /**
@@ -45,6 +46,7 @@ fun controllers() = module {
     singleOf(::GameController)
     singleOf(::NotificationController)
     singleOf(::PictureController)
+    singleOf(::LeaderboardController)
 }
 
 /**
