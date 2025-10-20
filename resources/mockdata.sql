@@ -94,38 +94,21 @@ VALUES
 
 /* ===== 7) Session Players ===== */
 /* PUBLIC: echte users (2 per sessie) */
-INSERT INTO session_players (session_player_id, user_id, guest_name, session_id) VALUES
-                                                                                     (UUID(), @u_sven,  NULL, @s_g1_public),
-                                                                                     (UUID(), @u_lieke, NULL, @s_g1_public),
-
-                                                                                     (UUID(), @u_lieke, NULL, @s_g2_public),
-                                                                                     (UUID(), @u_ahmed, NULL, @s_g2_public),
-
-                                                                                     (UUID(), @u_sven,  NULL, @s_g3_public),
-                                                                                     (UUID(), @u_ahmed, NULL, @s_g3_public),
-
-                                                                                     (UUID(), @u_ahmed, NULL, @s_g4_public),
-                                                                                     (UUID(), @u_sven,  NULL, @s_g4_public),
-
-                                                                                     (UUID(), @u_lieke, NULL, @s_g5_public),
-                                                                                     (UUID(), @u_sven,  NULL, @s_g5_public);
+INSERT INTO session_players (session_player_id, user_id, guest_name) VALUES
+(UUID(), @u_sven,  NULL),
+(UUID(), @u_lieke, NULL),
+(UUID(), @u_ahmed, NULL),
+(UUID(), @u_sven,  'Bert');
 
 /* ANON: gastspelers (G1A → per sessie opnieuw: “Gast speler 1/2”) */
-INSERT INTO session_players (session_player_id, user_id, guest_name, session_id) VALUES
-                                                                                     (UUID(), NULL, 'Gast speler 1', @s_g1_anon),
-                                                                                     (UUID(), NULL, 'Gast speler 2', @s_g1_anon),
+INSERT INTO session_players (session_player_id, user_id, guest_name) VALUES
+(UUID(), @u_sven, 'Gast speler 1'),
+(UUID(), @u_sven, 'Gast speler 2'),
+(UUID(), @u_ahmed, 'Gast speler 1'),
+(UUID(), @u_ahmed, 'Gast speler 2'),
+(UUID(), @u_lieke, 'Gast speler 1'),
+(UUID(), @u_lieke, 'Gast speler 2');
 
-                                                                                     (UUID(), NULL, 'Gast speler 1', @s_g2_anon),
-                                                                                     (UUID(), NULL, 'Gast speler 2', @s_g2_anon),
-
-                                                                                     (UUID(), NULL, 'Gast speler 1', @s_g3_anon),
-                                                                                     (UUID(), NULL, 'Gast speler 2', @s_g3_anon),
-
-                                                                                     (UUID(), NULL, 'Gast speler 1', @s_g4_anon),
-                                                                                     (UUID(), NULL, 'Gast speler 2', @s_g4_anon),
-
-                                                                                     (UUID(), NULL, 'Gast speler 1', @s_g5_anon),
-                                                                                     (UUID(), NULL, 'Gast speler 2', @s_g5_anon);
 
 /* ===== 8) Scores (S3: per game-type realistisch) ===== */
 /* Helper: per sessie scores voor alle session_players daarin.
@@ -139,15 +122,13 @@ SELECT UUID(), @s_g1_public, sp.session_player_id, @g1,
             ELSE 3000.00 END,
        1
 FROM session_players sp
-         JOIN users u ON sp.user_id = u.user_id
-WHERE sp.session_id = @s_g1_public;
+JOIN users u ON sp.user_id = u.user_id;
 
 /* Neon Drift — anon */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
 SELECT UUID(), @s_g1_anon, sp.session_player_id, @g1,
        CASE WHEN sp.guest_name='Gast speler 1' THEN 3300.00 ELSE 2800.25 END
-FROM session_players sp
-WHERE sp.session_id = @s_g1_anon;
+FROM session_players sp;
 
 /* Tower Siege — strategy (8000–20000), public */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
@@ -156,15 +137,13 @@ SELECT UUID(), @s_g2_public, sp.session_player_id, @g2,
             WHEN u.user_name='Ahmed El Idrissi' THEN 13200.25
             ELSE 9000.00 END
 FROM session_players sp
-         JOIN users u ON sp.user_id = u.user_id
-WHERE sp.session_id = @s_g2_public;
+ JOIN users u ON sp.user_id = u.user_id;
 
 /* Tower Siege — anon */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
 SELECT UUID(), @s_g2_anon, sp.session_player_id, @g2,
        CASE WHEN sp.guest_name='Gast speler 1' THEN 8900.00 ELSE 7500.50 END
-FROM session_players sp
-WHERE sp.session_id = @s_g2_anon;
+FROM session_players sp;
 
 /* Pixel Rally — retro (1000–6000), public */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
@@ -173,15 +152,13 @@ SELECT UUID(), @s_g3_public, sp.session_player_id, @g3,
             WHEN u.user_name='Ahmed El Idrissi'  THEN 3999.50
             ELSE 1200.00 END
 FROM session_players sp
-         JOIN users u ON sp.user_id = u.user_id
-WHERE sp.session_id = @s_g3_public;
+JOIN users u ON sp.user_id = u.user_id;
 
 /* Pixel Rally — anon */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
 SELECT UUID(), @s_g3_anon, sp.session_player_id, @g3,
        CASE WHEN sp.guest_name='Gast speler 1' THEN 2080.00 ELSE 1750.75 END
-FROM session_players sp
-WHERE sp.session_id = @s_g3_anon;
+FROM session_players sp;
 
 /* Silent Run — speedrun (laag is beter: ~50–200), public */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
@@ -190,15 +167,13 @@ SELECT UUID(), @s_g4_public, sp.session_player_id, @g4,
             WHEN u.user_name='Sven Jansen'      THEN 62.10
             ELSE 150.00 END
 FROM session_players sp
-         JOIN users u ON sp.user_id = u.user_id
-WHERE sp.session_id = @s_g4_public;
+JOIN users u ON sp.user_id = u.user_id;
 
 /* Silent Run — anon (laag) */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
 SELECT UUID(), @s_g4_anon, sp.session_player_id, @g4,
        CASE WHEN sp.guest_name='Gast speler 1' THEN 71.50 ELSE 78.90 END
-FROM session_players sp
-WHERE sp.session_id = @s_g4_anon;
+FROM session_players sp;
 
 /* Galactic Harvest — co-op (300–1000), public */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
@@ -207,29 +182,27 @@ SELECT UUID(), @s_g5_public, sp.session_player_id, @g5,
             WHEN u.user_name='Sven Jansen'    THEN 480.25
             ELSE 350.00 END
 FROM session_players sp
-         JOIN users u ON sp.user_id = u.user_id
-WHERE sp.session_id = @s_g5_public;
+JOIN users u ON sp.user_id = u.user_id;
 
 /* Galactic Harvest — anon */
 INSERT INTO scores (score_id, session_id, session_player_id, game_id, score)
 SELECT UUID(), @s_g5_anon, sp.session_player_id, @g5,
        CASE WHEN sp.guest_name='Gast speler 1' THEN 330.00 ELSE 275.75 END
-FROM session_players sp
-WHERE sp.session_id = @s_g5_anon;
+FROM session_players sp;
 
 /* ===== 9) Friends (wederzijds) ===== */
 INSERT INTO friends (user_id, friend_id) VALUES
-                                             (@u_sven, @u_lieke), (@u_lieke, @u_sven),
-                                             (@u_sven, @u_ahmed), (@u_ahmed, @u_sven),
-                                             (@u_lieke, @u_ahmed), (@u_ahmed, @u_lieke);
+(@u_sven, @u_lieke), (@u_lieke, @u_sven),
+(@u_sven, @u_ahmed), (@u_ahmed, @u_sven),
+(@u_lieke, @u_ahmed), (@u_ahmed, @u_lieke);
 
 /* ===== 10) Game followers ===== */
 INSERT INTO game_followers (game_id, user_id) VALUES
-                                                  (@g1, @u_sven), (@g1, @u_lieke),
-                                                  (@g2, @u_lieke),
-                                                  (@g3, @u_sven), (@g3, @u_ahmed),
-                                                  (@g4, @u_ahmed),
-                                                  (@g5, @u_sven), (@g5, @u_lieke);
+(@g1, @u_sven), (@g1, @u_lieke),
+(@g2, @u_lieke),
+(@g3, @u_sven), (@g3, @u_ahmed),
+(@g4, @u_ahmed),
+(@g5, @u_sven), (@g5, @u_lieke);
 
 /* ===== 11) Notifications (mix read/unread, T1 tijden) ===== */
 INSERT INTO notifications (user_id, content, `read`)

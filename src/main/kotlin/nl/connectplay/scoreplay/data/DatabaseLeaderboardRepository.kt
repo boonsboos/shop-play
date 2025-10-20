@@ -8,7 +8,7 @@ class DatabaseLeaderboardRepository(private val database: Database) : Leaderboar
     override suspend fun getTopScoresForGame(gameId: Int): List<LeaderboardEntryDto> = coroutineScope {
         database.connection?.use { connection ->
             val sql = """
-                SELECT COALESCE(users.user_name, session_players.guest_name) AS playersName,
+                SELECT COALESCE(session_players.guest_name, users.user_name) AS playersName,
                     scores.score,
                     scores.achieved_on,
                     sessions.session_visibility,
