@@ -130,23 +130,22 @@ override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coro
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
-                var i = 1
-                if (update.name == null) stmt.setNull(i++, Types.VARCHAR) else stmt.setString(i++, update.name)
-                if (update.description == null) stmt.setNull(i++, Types.VARCHAR) else stmt.setString(i++, update.description)
-                if (update.publisher == null) stmt.setNull(i++, Types.VARCHAR) else stmt.setString(i++, update.publisher)
-                if (update.minPlayers == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.minPlayers)
-                if (update.maxPlayers == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.maxPlayers)
-                if (update.duration == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.duration)
-                if (update.minAge == null) stmt.setNull(i++, Types.INTEGER) else stmt.setInt(i++, update.minAge)
+                if (update.name == null) stmt.setNull(2, Types.VARCHAR)
+                if (update.description == null) stmt.setNull(3, Types.VARCHAR)
+                if (update.publisher == null) stmt.setNull(4, Types.VARCHAR)
+                if (update.minPlayers == null) stmt.setNull(5, Types.INTEGER)
+                if (update.maxPlayers == null) stmt.setNull(6, Types.INTEGER)
+                if (update.duration == null) stmt.setNull(7, Types.INTEGER)
+                if (update.minAge == null) stmt.setNull(8, Types.INTEGER)
 
                 val sqlDate: java.sql.Date? = update.releaseDate?.let { d ->
                     val jl = java.time.LocalDate.of(d.year, d.month, d.day)
                     java.sql.Date.valueOf(jl)
                 }
-                if (sqlDate == null) stmt.setNull(i++, Types.DATE) else stmt.setDate(i++, sqlDate)
+                if (sqlDate == null) stmt.setNull(8, Types.DATE)
 
                 // WHERE
-                stmt.setInt(i, id)
+                stmt.setInt(1, id)
 
                 val updated = stmt.executeUpdate()
                 if (updated == 0) return@use null
