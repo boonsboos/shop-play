@@ -1,28 +1,34 @@
-package nl.connectplay.scoreplay.tests
+package nl.connectplay.scoreplay.tests.integration
 
-import nl.connectplay.scoreplay.module
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.server.testing.* // provides Ktor’s built-in test engine
-import kotlin.test.* // provides Kotlin test functions (assert, @Test, etc.)
-import io.ktor.client.statement.bodyAsText
+import io.ktor.server.engine.*
+import io.ktor.server.testing.*
+import nl.connectplay.scoreplay.module
+import org.junit.jupiter.api.Tag
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class UserRoutesTests {
     @Test // marks this function as a test
     fun testRegisterUser() {
         testApplication { // runs the Ktor test environment
+            environment { configure("application.yaml") }
             application { module() } // boot the real app: JSON + routes via annotation scanner
 
             // ARRANGE
             val firstResponse = client.post("/register") { // send a POST request to the /register endpoint
                 setBody("""{"id":"1","username":"Mario","email":"mario@connect-play.nl", "password":"Welkom01"}""") // the is what the receiver wants call.receive<Map<String, String>>()
                 header(
-                HttpHeaders.ContentType,
-                ContentType.Application.Json) // tells the server where sending Json data
+                    HttpHeaders.ContentType,
+                    ContentType.Application.Json
+                ) // tells the server where sending Json data
             }
 
             // ASSERT (1)
-            assertEquals(HttpStatusCode.Created, firstResponse.status)
+            assertEquals(HttpStatusCode.Companion.Created, firstResponse.status)
 
             // ACT
             // check if user exist
@@ -32,30 +38,31 @@ class UserRoutesTests {
             }
 
             // ASSERT (2)
-            assertEquals(HttpStatusCode.Conflict, secondResponse.status)
+            assertEquals(HttpStatusCode.Companion.Conflict, secondResponse.status)
         }
     }
 
     @Test
     fun testUpdateUser() {
         testApplication {
+            environment { configure("application.yaml") }
             application { module() }
 
             // ARRANGE
-            client.post("/register")  {
+            client.post("/register") {
                 setBody("""{"username":"Mario","email":"mario@connect-play.nl", "password":"Welkom01"}""")
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
             }
 
             // ACT
-            val patchResponse = client.patch("/users/1"){
+            val patchResponse = client.patch("/users/1") {
                 setBody("""{"username":"Luigi","email":"luigi@connect-play.nl"}""")
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
             }
 
             // ASSERT
             // check if the update was successful
-            assertEquals(HttpStatusCode.OK, patchResponse.status)
+            assertEquals(HttpStatusCode.Companion.OK, patchResponse.status)
 
             // check if the response data match
             val responseBody = patchResponse.bodyAsText()
@@ -67,14 +74,15 @@ class UserRoutesTests {
     @Test
     fun testDeleteUser() {
         testApplication {
+            environment { configure("application.yaml") }
             application { module() }
-            client.post("/register")  {
+            client.post("/register") {
                 setBody("""{"username":"Mario","email":"mario@connect-play.nl", "password":"Welkom01"}""")
                 header(HttpHeaders.ContentType, ContentType.Application.Json)
             }
 
             val deleteResponse = client.delete("/users/1")
-            assertEquals(HttpStatusCode.OK, deleteResponse.status) // check if the user was deleted
+            assertEquals(HttpStatusCode.Companion.OK, deleteResponse.status) // check if the user was deleted
 
             val responseBody = deleteResponse.bodyAsText()
             assertTrue(responseBody.contains("Account deleted successfully"))
