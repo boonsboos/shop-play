@@ -41,10 +41,12 @@ dependencies {
     // bcrypt
     implementation("org.mindrot:jbcrypt:0.4")
 
-    testImplementation("io.ktor:ktor-server-test-host")
+    // test dependencies
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.14.0")
-//    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+
+    testImplementation("io.ktor:ktor-server-test-host")
+
     testImplementation("io.ktor:ktor-client-content-negotiation")
     testImplementation("io.ktor:ktor-serialization-kotlinx-json")
 }
