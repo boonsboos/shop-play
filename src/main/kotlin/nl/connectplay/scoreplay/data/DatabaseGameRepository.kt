@@ -131,14 +131,14 @@ override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coro
 
             conn.prepareStatement(sql).use { stmt ->
                 stmt.setInt(1, id)
-                stmt.setString(1, update.name)
-                stmt.setString(2, update.description)
-                stmt.setString(3, update.publisher)
-                stmt.setInt(4, update.minPlayers)
-                stmt.setInt(5, update.maxPlayers)
-                stmt.setInt(6, update.duration)
-                stmt.setInt(7, update.minAge)
-                stmt.setDate(8,  update.releaseDate?.let {
+                stmt.setString(2, update.name)
+                stmt.setString(3, update.description)
+                stmt.setString(4, update.publisher)
+                stmt.setInt(5, update.minPlayers)
+                stmt.setInt(6, update.maxPlayers)
+                stmt.setInt(7, update.duration)
+                stmt.setInt(8, update.minAge)
+                stmt.setDate(9,  update.releaseDate?.let {
                     Date.valueOf(it.toLocalDate())
                 })
 
