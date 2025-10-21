@@ -24,7 +24,7 @@ class DatabaseScoreRepository : ScoreRepository {
                     val scores = mutableListOf<ScoreDto>()
 
 
-                    var sql = """
+                    val sql = """
                         SELECT 
                             score_id,
                             session_id,

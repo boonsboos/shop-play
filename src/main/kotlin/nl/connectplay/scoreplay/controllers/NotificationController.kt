@@ -41,29 +41,52 @@ class NotificationController(private val notificationRepository: NotificationRep
         queueManagerService.removeQueue(userId)
     }
 
-    suspend fun handleListByUserIdAsync(call: ApplicationCall) {
-        val userIdParam = call.parameters["userId"]
-            ?: return call.respond(HttpStatusCode.NotFound, "Missing user id")
+    suspend fun handleGetNotificationById(call: ApplicationCall) {
+        val notificationIdParam = call.parameters["notificationId"] ?:
+        return call.respond(HttpStatusCode.NotFound)
 
-        val userId = userIdParam.toInt()
+        val notificationId = UUID.fromString(notificationIdParam)
+
+        val notification = notificationRepository.getNotificationByIdAsync(notificationId)
+            ?: return call.respond(HttpStatusCode.NotFound)
+
+        call.respond(HttpStatusCode.OK, notification)
+    }
+
+
+    suspend fun handleListByUserIdAsync(call: ApplicationCall) {
+        val userIdParam = call.getUserIdFromJWT()
 
         val limit = call.request.getLimitQueryParameter()
         val offset = call.request.getOffsetQueryParameter()
 
-        val notifications = notificationRepository.getNotificationByUserAsync(userId, limit, offset)
+        val notifications = notificationRepository.getNotificationByUserAsync(userIdParam, limit, offset)
             ?: return call.respond(HttpStatusCode.NotFound)
 
         call.respond(HttpStatusCode.OK, notifications)
     }
 
+    suspend fun handleGetAllNotifications(call: ApplicationCall) {
+        val limit = call.request.getLimitQueryParameter()
+        val offset = call.request.getOffsetQueryParameter()
+
+        val notifications = notificationRepository.getAllNotificationsAsync(limit, offset)
+            ?: return call.respond(HttpStatusCode.NotFound)
+
+        call.respond(HttpStatusCode.OK, notifications)
+    }
+
+
     suspend fun handleDeleteNotificationAsync(call: ApplicationCall) {
+        val userIdParam = call.getUserIdFromJWT()
+
         val notificationIdParam = call.parameters["notificationId"]
             ?: return call.respond(HttpStatusCode.BadRequest)
 
         val notificationId = UUID.fromString(notificationIdParam)
 
         try {
-            val isDeleted = notificationRepository.deleteNotificationAsync(notificationId)
+            val isDeleted = notificationRepository.deleteNotificationAsync(notificationId, userIdParam)
 
             if (!isDeleted) {
                 return call.respond(HttpStatusCode.NotFound)
@@ -77,25 +100,27 @@ class NotificationController(private val notificationRepository: NotificationRep
         }
     }
 
-        suspend fun handleMarkAsReadAsync(call: ApplicationCall) {
-            val notificationIdParam = call.parameters["notificationId"]
-                ?: return call.respond(HttpStatusCode.BadRequest)
+    suspend fun handleMarkAsReadAsync(call: ApplicationCall) {
+        val userIdParam = call.getUserIdFromJWT()
 
-            val notificationId = UUID.fromString(notificationIdParam)
+        val notificationIdParam = call.parameters["notificationId"]
+            ?: return call.respond(HttpStatusCode.BadRequest)
 
-            try {
-                val updated = notificationRepository.setNotificationAsReadAsync(notificationId)
-                if (updated) {
-                    call.respond(HttpStatusCode.OK)
-                } else {
-                    call.respond(HttpStatusCode.NotFound)
-                }
-            } catch (e: SQLException) {
-                call.application.environment.log.error("DB error while marking notification as read: $notificationId" , e)
-                call.respond(HttpStatusCode.InternalServerError)
+        val notificationId = UUID.fromString(notificationIdParam)
+
+        try {
+            val updated = notificationRepository.setNotificationAsReadAsync(notificationId, userIdParam)
+            if (updated) {
+                call.respond(HttpStatusCode.OK)
+            } else {
+                call.respond(HttpStatusCode.NotFound)
             }
+        } catch (e: SQLException) {
+            call.application.environment.log.error(
+                "DB error while marking notification as read: $notificationId",
+                e
+            )
+            call.respond(HttpStatusCode.InternalServerError)
         }
-
-
-
+    }
 }
