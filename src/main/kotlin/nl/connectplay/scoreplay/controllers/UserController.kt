@@ -85,7 +85,7 @@ class UserController(
         try {
             userRepository.addUser(user) // try to save new user
             call.respond(HttpStatusCode.Created, user) // send the 201 code as text and the data of the user
-        } catch (_: IllegalArgumentException) { // catch the Exception from the UserRepository
+        } catch (_: SQLIntegrityConstraintViolationException) { // catch the Exception from the UserRepository
             // handle duplicate or invalid user data
             call.respond(HttpStatusCode.Conflict, "User already exists")
         } catch (e: SQLException) {

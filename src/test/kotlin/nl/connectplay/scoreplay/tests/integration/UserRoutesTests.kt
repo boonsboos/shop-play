@@ -1,5 +1,6 @@
 package nl.connectplay.scoreplay.tests.integration
 
+import com.auth0.jwt.JWT
 import io.ktor.client.call.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -12,6 +13,7 @@ import nl.connectplay.scoreplay.module
 import org.junit.jupiter.api.MethodOrderer
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.TestMethodOrder
+import org.junit.jupiter.api.fail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -27,7 +29,7 @@ class UserRoutesTests {
         // ARRANGE
         val firstResponse = client.post("/register") { // send a POST request to the /register endpoint
             setBody("""{"username":"Mario","email":"mario@connect-play.nl", "password":"Welkom01"}""") // the is what the receiver wants call.receive<Map<String, String>>()
-            header(HttpHeaders.ContentType, ContentType.Application.Json) // tells the server we're sending Json data
+            contentType(ContentType.Application.Json) // tells the server we're sending Json data
         }
 
         // ASSERT (1)
@@ -37,7 +39,7 @@ class UserRoutesTests {
         // check if user exist
         val secondResponse = client.post("/register") {
             setBody("""{"username":"Mario","email":"mario@connect-play.nl", "password":"Welkom01"}""")
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
         }
 
         // ASSERT (2)
@@ -59,16 +61,19 @@ class UserRoutesTests {
         // ARRANGE
         val loginResponse = client.post("/login") {
             setBody("""{"username": "Mario","password": "Welkom01"}""")
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
+            contentType(ContentType.Application.Json)
         }
 
-        val tokenBody = loginResponse.body<Map<String, String>>()
+        val jwtToken = loginResponse.body<Map<String, String>>()["token"]
+            ?: fail("Token is missing")
+
+        val userId = JWT.decode(jwtToken).claims["userId"]
 
         // ACT
-        val patchResponse = client.patch("/users/1") {
+        val patchResponse = client.patch("/users/$userId") {
             setBody("""{"username":"Luigi","email":"luigi@connect-play.nl"}""")
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
-            header(HttpHeaders.Authorization, "Bearer ${tokenBody["token"]}")
+            contentType(ContentType.Application.Json)
+            bearerAuth(jwtToken)
         }
 
         // ASSERT
@@ -93,18 +98,26 @@ class UserRoutesTests {
             }
         }
 
+        // ARRANGE
         val loginResponse = client.post("/login") {
-            setBody("""{"username": "Mario","password": "Welkom01"}""")
-            header(HttpHeaders.ContentType, ContentType.Application.Json)
+            // our user has changed their username
+            setBody("""{"username": "Luigi","password": "Welkom01"}""")
+            contentType(ContentType.Application.Json)
         }
 
-        val tokenBody = loginResponse.body<Map<String, String>>()
+        val jwtToken = loginResponse.body<Map<String, String>>()["token"]
+            ?: fail("Token is missing")
 
-        val deleteResponse = client.delete("/users/1") {
-            header(HttpHeaders.Authorization, "Bearer ${tokenBody["token"]}")
+        val userId = JWT.decode(jwtToken).claims["userId"]
+
+        // ACT
+        val deleteResponse = client.delete("/users/$userId") {
+            contentType(ContentType.Application.Json)
+            bearerAuth(jwtToken)
         }
+
+        // ASSERT
         assertEquals(HttpStatusCode.Companion.OK, deleteResponse.status) // check if the user was deleted
-
         val responseBody = deleteResponse.bodyAsText()
         assertTrue(responseBody.contains("Account deleted successfully"))
     }
