@@ -31,7 +31,7 @@ class UserRoutesTests {
         }
 
         // ASSERT (1)
-        assertEquals(HttpStatusCode.Companion.Created, firstResponse.status)
+        assertEquals(HttpStatusCode.Created, firstResponse.status)
 
         // ACT
         // check if user exist
@@ -41,7 +41,7 @@ class UserRoutesTests {
         }
 
         // ASSERT (2)
-        assertEquals(HttpStatusCode.Companion.Conflict, secondResponse.status)
+        assertEquals(HttpStatusCode.Conflict, secondResponse.status)
     }
 
     @Test
@@ -76,7 +76,7 @@ class UserRoutesTests {
 
         // ASSERT
         // check if the update was successful
-        assertEquals(HttpStatusCode.Companion.OK, patchResponse.status)
+        assertEquals(HttpStatusCode.OK, patchResponse.status)
 
         // check if the response data match
         val responseBody = patchResponse.bodyAsText()
@@ -115,7 +115,7 @@ class UserRoutesTests {
         }
 
         // ASSERT
-        assertEquals(HttpStatusCode.Companion.OK, deleteResponse.status) // check if the user was deleted
+        assertEquals(HttpStatusCode.OK, deleteResponse.status) // check if the user was deleted
         val responseBody = deleteResponse.bodyAsText()
         assertTrue(responseBody.contains("Account deleted successfully"))
     }
