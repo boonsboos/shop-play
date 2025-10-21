@@ -44,7 +44,7 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
         }.await()
     }
 
-    override suspend fun getAllNotificationsAsync(limit: Int?, offset: Int? ,userId: Int): List<NotificationDto>? {
+    override suspend fun getAllNotificationsAsync(limit: Int?, offset: Int?): List<NotificationDto>? {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
