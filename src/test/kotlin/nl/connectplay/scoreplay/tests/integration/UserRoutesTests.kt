@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 class UserRoutesTests {
     @Test // marks this function as a test
     @Order(1)
-    fun test1RegisterUserReservesUsernameAndEmail() = testApplication { // runs the Ktor test environment
+    fun testRegisterUserReservesUsernameAndEmail() = testApplication { // runs the Ktor test environment
         environment { configure("application.yaml") }
         application { module() } // boot the real app: JSON + routes via annotation scanner
 
@@ -46,7 +46,7 @@ class UserRoutesTests {
 
     @Test
     @Order(2)
-    fun test2LoginAndUpdateUser() = testApplication {
+    fun testLoginAndUpdateUser() = testApplication {
         environment { configure("application.yaml") }
         application { module() }
 
@@ -86,7 +86,7 @@ class UserRoutesTests {
 
     @Test
     @Order(3)
-    fun test3LoginAndDeleteUser() = testApplication {
+    fun testLoginAndDeleteUser() = testApplication {
         environment { configure("application.yaml") }
         application { module() }
 
