@@ -18,5 +18,5 @@ data class GameDto(
 
 // simple mapper
 fun Game.toDto() = GameDto(
-    id, null, name, description, publisher, minPlayers, maxPlayers, duration, minAge, releaseDate
+    id, scoringMethodId, name, description, publisher, minPlayers, maxPlayers, duration, minAge, releaseDate
 )
