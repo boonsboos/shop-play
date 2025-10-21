@@ -74,10 +74,10 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     stmt.setString(1, create.name)
                     stmt.setString(2, create.description)
                     stmt.setString(3, create.publisher)
-                    if (create.minPlayers != null) stmt.setInt(4, create.minPlayers) else stmt.setNull(4, java.sql.Types.INTEGER)
-                    if (create.maxPlayers != null) stmt.setInt(5, create.maxPlayers) else stmt.setNull(5, java.sql.Types.INTEGER)
-                    if (create.duration != null) stmt.setInt(6, create.duration) else stmt.setNull(6, java.sql.Types.INTEGER)
-                    if (create.minAge != null) stmt.setInt(7, create.minAge) else stmt.setNull(7, java.sql.Types.INTEGER)
+                    stmt.setInt(4, create.minPlayers)
+                    stmt.setInt(5, create.maxPlayers)
+                    stmt.setInt(6, create.duration)
+                    stmt.setInt(7, create.minAge)
 
                     if (create.releaseDate != null) {
                         // Convert kotlinx.datetime.LocalDate -> java.time.LocalDate -> java.sql.Date
@@ -130,22 +130,17 @@ override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coro
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
-                if (update.name == null) stmt.setNull(2, Types.VARCHAR)
-                if (update.description == null) stmt.setNull(3, Types.VARCHAR)
-                if (update.publisher == null) stmt.setNull(4, Types.VARCHAR)
-                if (update.minPlayers == null) stmt.setNull(5, Types.INTEGER)
-                if (update.maxPlayers == null) stmt.setNull(6, Types.INTEGER)
-                if (update.duration == null) stmt.setNull(7, Types.INTEGER)
-                if (update.minAge == null) stmt.setNull(8, Types.INTEGER)
-
-                val sqlDate: java.sql.Date? = update.releaseDate?.let { d ->
-                    val jl = java.time.LocalDate.of(d.year, d.month, d.day)
-                    java.sql.Date.valueOf(jl)
-                }
-                if (sqlDate == null) stmt.setNull(8, Types.DATE)
-
-                // WHERE
                 stmt.setInt(1, id)
+                stmt.setString(1, update.name)
+                stmt.setString(2, update.description)
+                stmt.setString(3, update.publisher)
+                stmt.setInt(4, update.minPlayers)
+                stmt.setInt(5, update.maxPlayers)
+                stmt.setInt(6, update.duration)
+                stmt.setInt(7, update.minAge)
+                stmt.setDate(8,  update.releaseDate?.let {
+                    Date.valueOf(it.toLocalDate())
+                })
 
                 val updated = stmt.executeUpdate()
                 if (updated == 0) return@use null
