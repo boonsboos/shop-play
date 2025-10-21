@@ -10,14 +10,12 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
 import nl.connectplay.scoreplay.module
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
-import org.junit.jupiter.api.TestMethodOrder
-import org.junit.jupiter.api.fail
+import org.junit.jupiter.api.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+@Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class UserRoutesTests {
     @Test // marks this function as a test
@@ -33,7 +31,7 @@ class UserRoutesTests {
         }
 
         // ASSERT (1)
-        assertEquals(HttpStatusCode.Created, firstResponse.status)
+        assertEquals(HttpStatusCode.Companion.Created, firstResponse.status)
 
         // ACT
         // check if user exist
@@ -43,7 +41,7 @@ class UserRoutesTests {
         }
 
         // ASSERT (2)
-        assertEquals(HttpStatusCode.Conflict, secondResponse.status)
+        assertEquals(HttpStatusCode.Companion.Conflict, secondResponse.status)
     }
 
     @Test
@@ -78,7 +76,7 @@ class UserRoutesTests {
 
         // ASSERT
         // check if the update was successful
-        assertEquals(HttpStatusCode.OK, patchResponse.status)
+        assertEquals(HttpStatusCode.Companion.OK, patchResponse.status)
 
         // check if the response data match
         val responseBody = patchResponse.bodyAsText()

@@ -92,8 +92,6 @@ class UserController(
             // handle unexpected database errors
             logger.error("DB error while adding user", e)
             call.respond(HttpStatusCode.InternalServerError)
-        } catch (e: Exception) {
-            logger.error("Another! error while adding user", e)
         }
     }
 
