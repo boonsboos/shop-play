@@ -52,12 +52,14 @@ dependencies {
 }
 
 tasks.test {
-    include("**/*")
+    // use JUnit5
     useJUnitPlatform {
         if (project.hasProperty("ci")) {
+            // exclude test classes that have the @Tag("integration") annotation
             excludeTags("integration")
         }
     }
+    // log all events in the CI output
     testLogging {
         events("passed", "skipped", "failed")
     }

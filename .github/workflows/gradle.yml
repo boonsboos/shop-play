@@ -18,4 +18,4 @@ jobs: #groupe of jobs that this workflow will run
       
       - name: Run Gradle test task
         run: ./gradlew test -Pci # runs the terminal-commando on the Ubuntu-VM
-        # the -Pci property corresponds with a toggle in the Gradle build script to exclude integration tests
+        # set the ci property that corresponds with a toggle in the Gradle build script to exclude integration tests
