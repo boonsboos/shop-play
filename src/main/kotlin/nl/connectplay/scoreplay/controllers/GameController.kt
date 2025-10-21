@@ -44,7 +44,7 @@ class GameController(
         // check if the user is authorized
         val principal = call.principal<JWTPrincipal>() // get the user info from the JWT
         val userId = principal?.payload?. // get the payload from the JWT principal object
-            getClaim("userId")?.asInt() // get the "userId" claim value from the payload as int
+        getClaim("userId")?.asInt() // get the "userId" claim value from the payload as int
             ?: return call.respond(HttpStatusCode.Unauthorized, "User not authenticated") // code 401
 
         try {
@@ -113,7 +113,7 @@ class GameController(
                             val (status, body) = pictureService.handleUploadImageJsonAsync(
                                 uploadPicture,
                                 PictureService.EntityType.Game,
-                                sessionId
+                                sessionId,
                             )
                             mapOf(
                                 "index" to index,

@@ -18,7 +18,8 @@ interface SessionRepository {
      * @return the ID of the newly created session
      */
     suspend fun createSessionAsync(createDto: CreateSessionDto): UUID?
-    suspend fun getSessionByIdAsync(sessionId: UUID): SessionDto?
+    suspend fun getSessionByIdAsync(sessionId: UUID, userId: Int): SessionDto?
+    suspend fun getSessionsAsync(userId: Int): List<SessionDto>
     suspend fun setEndOfSessionPictureAsync(sessionId: UUID, pictureId: UUID): Boolean
 
     /**
