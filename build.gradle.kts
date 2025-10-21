@@ -43,7 +43,10 @@ dependencies {
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("io.ktor:ktor-client-content-negotiation")
+    testImplementation("io.ktor:ktor-serialization-kotlinx-json")
+
     // explicit dependencies on JUnit to be compatible with Gradle 9
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.14.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
