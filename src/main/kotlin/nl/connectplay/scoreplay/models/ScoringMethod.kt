@@ -1,33 +1,35 @@
 package nl.connectplay.scoreplay.models
 
 /**
- * Represents all possible scoring methods a game can use.
+ * This enum class that implements [EnumAction].
  *
- * Each scoring method is defined as a singleton `data object` with a unique [id] and [name].
+ * Each value defines its own implementation of [handle],
+ * allowing different scoring strategies to be executed
+ * depending on the selected enum value.
  *
- * The [companion object] provides a helper function [fromId] to look up
- * a specific [ScoringMethod] instance by its id.
+ * Enum of all scoring methods a game can use.
+ *
+ * Use [id] for persistence and [name] for UI.
+ * Look up by id with [fromId].
  */
-sealed class ScoringMethod(
+enum class ScoringMethod(
     val id: Int,
     val name: String
-) {
-    // Singleton for a single fixed instance
-    data object HighestScoreWins : ScoringMethod(1, "Highest score wins")
-    data object LowestScoreWins : ScoringMethod(2, "Lowest score wins")
-    data object FirstToXScoreWins : ScoringMethod(3, "First to X score wins")
-    data object FinishingOnPositionYWins : ScoringMethod(4, "Finishing on position Y wins")
-    data object LastManStandingWins : ScoringMethod(5, "Last man standing wins")
+) : EnumAction {
 
-    // Static holder for factory functions
-    companion object {
-        fun fromId(id: Int): ScoringMethod? = when (id) {
-            1 -> HighestScoreWins
-            2 -> LowestScoreWins
-            3 -> FirstToXScoreWins
-            4 -> FinishingOnPositionYWins
-            5 -> LastManStandingWins
-            else -> null
-        }
-    }
+    HIGHEST_SCORE_WINS(1, "Highest score wins") {
+        override fun handle() = println(name)
+    },
+    LOWEST_SCORE_WINS(2, "Lowest score wins") {
+        override fun handle() = println(name)
+    },
+    FIRST_TO_X_SCORE_WINS(3, "First to X score wins") {
+        override fun handle() = println(name)
+    },
+    FINISHING_ON_POSITION_Y_WINS(4, "Finishing on position Y wins") {
+        override fun handle() = println(name)
+    },
+    LAST_MAN_STANDING_WINS(5, "Last man standing wins") {
+        override fun handle() = println(name)
+    };
 }
