@@ -8,7 +8,7 @@ jobs: #groupe of jobs that this workflow will run
     runs-on: ubuntu-latest # defines on witch os the job will run
     
     steps: # list of steps that wil be executed
-      - uses: actions/checktout @v4 # download all the files of the project to a VM
+      - uses: actions/checktout@v4 # download all the files of the project to a VM
       
       - name: Set up JDK # is the label/name of the action shown in the actions loggeld
         uses: actions/setup-java@v4 # the action that install and configures the Java JDK on the runner
