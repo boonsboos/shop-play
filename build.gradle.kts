@@ -53,7 +53,6 @@ tasks.test {
     include("**/*")
     useJUnitPlatform {
         if (project.hasProperty("ci")) {
-            exclude("**/integration/**")
             excludeTags("integration")
         }
     }
