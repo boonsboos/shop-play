@@ -32,6 +32,15 @@ Authorization: bearer {{auth_token}}
   "visibility": 2
 }
 
+### Delete session
+< {%
+    request.variables.set("sessionId", "fd3fb025-af3e-11f0-8e78-f6e891eb1b7a")
+%}
+DELETE http://localhost:8080/sessions/{{sessionId}}
+Content-Type: application/json
+Authorization: bearer {{auth_token}}
+
+
 ### get scores for session
 < {%
     request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")

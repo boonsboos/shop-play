@@ -193,6 +193,31 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
         }.await() ?: false
     }
 
+    override suspend fun deleteSessionAsync(userId: Int, sessionId: UUID): Boolean = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                try {
+                    val sql = """
+                    DELETE FROM sessions WHERE session_id = ? and host_user_id = ?
+                """.trimIndent()
+
+                    val stmt = connection.prepareStatement(sql)
+                    stmt.setObject(1, sessionId)
+                    stmt.setInt(2, userId)
+
+
+                    val affectedRow = stmt.executeUpdate()
+                    stmt.close()
+                    return@async affectedRow > 0
+
+                } catch (e: SQLException) {
+                    e.printStackTrace()
+                    return@async false
+                }
+            }
+        }.await() ?: false
+    }
+
     override suspend fun getSessionPlayers(userId: Int): List<SessionPlayer> = coroutineScope {
         val sessionPlayers: MutableList<SessionPlayer> = mutableListOf()
         async {
@@ -258,35 +283,36 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
         }.await()
     }
 
-    override suspend fun createSessionPlayerAsync(sessionPlayer: SessionPlayerDto): SessionPlayer? = coroutineScope {
-        val sessionPlayerId = async {
-            database.connection?.use { connection ->
-                val statement = connection.prepareStatement(
-                    """
+    override suspend fun createSessionPlayerAsync(sessionPlayer: SessionPlayerDto): SessionPlayer? =
+        coroutineScope {
+            val sessionPlayerId = async {
+                database.connection?.use { connection ->
+                    val statement = connection.prepareStatement(
+                        """
                     INSERT INTO `session_players` (user_id, guest_name)
                     VALUES (?, ?)
                     RETURNING session_player_id;
                     """.trimIndent()
-                )
+                    )
 
-                statement.apply {
-                    setInt(1, sessionPlayer.userId)
-                    setString(2, sessionPlayer.guest)
+                    statement.apply {
+                        setInt(1, sessionPlayer.userId)
+                        setString(2, sessionPlayer.guest)
+                    }
+
+                    val resultSet = statement.executeQuery()
+
+                    var sessionPlayer: UUID? = null
+                    if (resultSet.next()) {
+                        sessionPlayer = UUID.fromString(resultSet.getString("session_player_id"))
+                    }
+
+                    resultSet.close()
+                    statement.close()
+                    sessionPlayer
                 }
-
-                val resultSet = statement.executeQuery()
-
-                var sessionPlayer: UUID? = null
-                if (resultSet.next()) {
-                    sessionPlayer = UUID.fromString(resultSet.getString("session_player_id"))
-                }
-
-                resultSet.close()
-                statement.close()
-                sessionPlayer
             }
-        }
 
-        getSessionPlayerAsync(sessionPlayerId.await()!!)
-    }
+            getSessionPlayerAsync(sessionPlayerId.await()!!)
+        }
 }

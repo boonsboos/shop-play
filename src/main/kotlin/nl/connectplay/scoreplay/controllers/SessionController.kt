@@ -114,4 +114,24 @@ class SessionController(
             return call.respond(HttpStatusCode.InternalServerError, "Something went wrong while updating session")
         }
     }
+
+    suspend fun handleDeleteSessionAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
+        val sessionId = UUID.fromString(
+            call.parameters["sessionId"]
+                ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
+        )
+
+        try {
+            val success = repository.deleteSessionAsync(userId, sessionId)
+            if (success) {
+                call.respond(HttpStatusCode.OK, "Session deleted successfully")
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Could not delete session")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return call.respond(HttpStatusCode.InternalServerError, "Could not delete session")
+        }
+    }
 }

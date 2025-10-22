@@ -23,6 +23,7 @@ interface SessionRepository {
     suspend fun getSessionsAsync(userId: Int): List<SessionDto>
     suspend fun updateSessionAsync(sessionId: UUID, userId: Int, updateSession: UpdateSessionDto): Boolean
     suspend fun setEndOfSessionPictureAsync(sessionId: UUID, pictureId: UUID): Boolean
+    suspend fun deleteSessionAsync(userId: Int, sessionId: UUID): Boolean
 
     /**
      * Creates a new session player
