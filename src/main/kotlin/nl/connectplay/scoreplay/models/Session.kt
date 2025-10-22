@@ -9,6 +9,6 @@ data class Session(
     val hostId: Int,
     val startTime: LocalDateTime,
     val endTime: LocalDateTime,
-    val endOfSessionPicturesId: Int,
+    val endOfSessionPicturesId: UUID,
     val sessionVisibility: SessionVisibility
 )

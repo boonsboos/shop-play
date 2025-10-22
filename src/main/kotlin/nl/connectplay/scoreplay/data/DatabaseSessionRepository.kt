@@ -65,7 +65,7 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
 
                 val stmt = connection.prepareStatement(sql)
                 stmt.setObject(1, sessionId)
-                stmt.setInt(1, userId)
+                stmt.setInt(2, userId)
 
                 val resultSet = stmt?.executeQuery()
                 var session: SessionDto? = null;

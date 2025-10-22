@@ -12,7 +12,7 @@ fun Route.getScoresRoute() {
     val scoreController by inject<ScoreController>()
     authenticate(UserIdJWTAuthenticatorName) {
         // GET /scores — List of scores
-        get("/sessions/{sessionsId}/scores") {
+        get("/sessions/{sessionId}/scores") {
             scoreController.handleListAsync(call)
         }
 
