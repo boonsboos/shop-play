@@ -16,5 +16,6 @@ jobs: #groupe of jobs that this workflow will run
           java-version: '24'
           distribution: 'temurin' # install the Java-version of temurin
       
-      - name: Run Gradle Unit-tests
-        run: ./gradlew test # runs the terminal-commando on the Ubuntu-VM
+      - name: Run Gradle test task
+        run: ./gradlew test -Pci # runs the terminal-commando on the Ubuntu-VM
+        # set the ci property that corresponds with a toggle in the Gradle build script to exclude integration tests

@@ -3,26 +3,27 @@ package nl.connectplay.scoreplay.controllers
 import com.auth0.jwt.exceptions.JWTCreationException
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.NotFoundException
-import io.ktor.server.response.*
+import io.ktor.server.plugins.*
 import io.ktor.server.request.*
-import io.ktor.util.logging.error
-import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import io.ktor.server.response.*
+import io.ktor.util.logging.*
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
+import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
+import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.models.dto.user.UserDto
-import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import nl.connectplay.scoreplay.models.dto.LoginUserDto
-import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
+import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
+import nl.connectplay.scoreplay.models.dto.user.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
+import org.slf4j.LoggerFactory
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 
@@ -33,6 +34,8 @@ class UserController(
     private val followGameRepository: FollowGameRepository,
     private val pictureService: PictureService
 ) {
+
+    private val logger = LoggerFactory.getLogger(UserController::class.java)
 
     suspend fun handleListAsync(call: ApplicationCall) {
         // These are optional query parameters:
@@ -82,12 +85,12 @@ class UserController(
         try {
             userRepository.addUser(user) // try to save new user
             call.respond(HttpStatusCode.Created, user) // send the 201 code as text and the data of the user
-        } catch (e: IllegalArgumentException) { // catch the Exception from the UserRepository
+        } catch (_: SQLIntegrityConstraintViolationException) { // catch the Exception from the UserRepository
             // handle duplicate or invalid user data
-            call.respond(HttpStatusCode.Conflict, e.message ?: "User already exists")
+            call.respond(HttpStatusCode.Conflict, "User already exists")
         } catch (e: SQLException) {
             // handle unexpected database errors
-            call.application.environment.log.error("DB error while adding user", e)
+            logger.error("DB error while adding user", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }

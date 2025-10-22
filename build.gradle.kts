@@ -41,6 +41,23 @@ dependencies {
     // bcrypt
     implementation("org.mindrot:jbcrypt:0.4")
 
+    // test dependencies
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.14.0")
     testImplementation("io.ktor:ktor-server-test-host")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("io.ktor:ktor-client-content-negotiation")
+}
+
+tasks.test {
+    // use JUnit5
+    useJUnitPlatform {
+        if (project.hasProperty("ci")) {
+            // exclude test classes that have the @Tag("integration") annotation
+            excludeTags("integration")
+        }
+    }
+    // log all events in the CI output
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
