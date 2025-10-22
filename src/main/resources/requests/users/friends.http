@@ -1,25 +1,4 @@
-### get a list of all users
-GET http://localhost:8080/users
-
-### get a list of all users with query-params
-GET http://localhost:8080/users?limit=10&offset=5
-
-### get user with id '1'
-# this is a pre-request script
-< {%
-    request.variables.set("userId", 1) // this is a per-request variable
-%}
-GET http://localhost:8080/users/{{userId}}
-
-### register new user
-POST http://localhost:8080/register
-Content-Type: application/json
-
-{
-  "username": "Bob",
-  "email": "bob@connect-play.nl",
-  "password": "Pass1234"
-}
+# This is for all friends endpoint inside of the users endpoint
 
 ### update existing user
 PATCH http://localhost:8080/users/1
@@ -94,3 +73,34 @@ Content-Type: application/json
   "email": "bob@connect-play.nl",
   "password": "Pass1234"
 }
+
+### Get followd gameslist
+GET http://localhost:8080/users/1/followed?offset=0&limit=10
+Accept: application/json
+
+### Follow a game with authorisation
+// this block is a pre-request script and it set a variable before sending the request
+< {%
+    request.variables.set("gameId", "5");
+%}
+
+POST http://localhost:8080/games/{{gameId}}/follow
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzY29yZS1wbGF5LXVzZXJzIiwiaXNzIjoiaHR0cHM6Ly9hcGkuY29ubmVjdC1lbi1wbGF5Lm5sIiwidXNlcklkIjo2LCJleHAiOjE3NjA5NjUwODB9.WbU-e3_uxqR-sEksDTa1QgUy8jY-fytQcBXOczrqcnc
+
+### Unfollow a game with authorisation
+< {%
+    request.variables.set("gameId", "5");
+%}
+
+DELETE http://localhost:8080/games/{{gameId}}/unfollow
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzY29yZS1wbGF5LXVzZXJzIiwiaXNzIjoiaHR0cHM6Ly9hcGkuY29ubmVjdC1lbi1wbGF5Lm5sIiwidXNlcklkIjo2LCJleHAiOjE3NjA5NjUwODB9.WbU-e3_uxqR-sEksDTa1QgUy8jY-fytQcBXOczrqcnc
+
+### Get followers of a game
+< {%
+    request.variables.set("gameId", "5");
+%}
+
+GET http://localhost:8080/games/{{gameId}}/followers?offset=0&limit=10
+Accept: application/json

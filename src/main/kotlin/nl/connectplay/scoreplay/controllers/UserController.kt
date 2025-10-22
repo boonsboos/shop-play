@@ -3,31 +3,39 @@ package nl.connectplay.scoreplay.controllers
 import com.auth0.jwt.exceptions.JWTCreationException
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.plugins.NotFoundException
-import io.ktor.server.response.*
+import io.ktor.server.plugins.*
 import io.ktor.server.request.*
-import io.ktor.util.logging.error
+import io.ktor.server.response.*
+import io.ktor.util.logging.*
+import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
+import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.models.dto.user.UserDto
-import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.models.dto.CreateUserDto
 import nl.connectplay.scoreplay.models.dto.LoginUserDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
+import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
+import nl.connectplay.scoreplay.models.dto.user.UserDto
+import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
+import org.slf4j.LoggerFactory
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 
 class UserController(
     private val userRepository: UserRepository,
     private val friendService: FriendService,
-    private val userAccountService: UserAccountService
+    private val userAccountService: UserAccountService,
+    private val followGameRepository: FollowGameRepository,
+    private val pictureService: PictureService
 ) {
+
+    private val logger = LoggerFactory.getLogger(UserController::class.java)
 
     suspend fun handleListAsync(call: ApplicationCall) {
         // These are optional query parameters:
@@ -77,12 +85,12 @@ class UserController(
         try {
             userRepository.addUser(user) // try to save new user
             call.respond(HttpStatusCode.Created, user) // send the 201 code as text and the data of the user
-        } catch (e: IllegalArgumentException) { // catch the Exception from the UserRepository
+        } catch (_: SQLIntegrityConstraintViolationException) { // catch the Exception from the UserRepository
             // handle duplicate or invalid user data
-            call.respond(HttpStatusCode.Conflict, e.message ?: "User already exists")
+            call.respond(HttpStatusCode.Conflict, "User already exists")
         } catch (e: SQLException) {
             // handle unexpected database errors
-            call.application.environment.log.error("DB error while adding user", e)
+            logger.error("DB error while adding user", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
@@ -102,7 +110,10 @@ class UserController(
             call.application.environment.log.error(e)
             call.respond(HttpStatusCode.Unauthorized) // user is not allowed if the passwords do not match
         } catch (e: SQLException) {
-            call.application.environment.log.error("DB error while logging in user '${loginDto.username ?: loginDto.email}'", e)
+            call.application.environment.log.error(
+                "DB error while logging in user '${loginDto.username ?: loginDto.email}'",
+                e
+            )
             call.respond(HttpStatusCode.InternalServerError)
         } catch (e: JWTCreationException) {
             call.application.environment.log.error("Failed to create JWT", e)
@@ -116,8 +127,9 @@ class UserController(
 
         try {
             // are the users friends already?
-            val areFriends = friendService.isFriendsAsync(userId, requestBody.friendId)
-                    ?: return call.respond(HttpStatusCode.InternalServerError) // we failed to do a very important check
+            val areFriends = friendService.isFriendsAsync(userId, requestBody.friendId) ?: return call.respond(
+                HttpStatusCode.InternalServerError
+            ) // we failed to do a very important check
             if (areFriends) {
                 return call.respond(HttpStatusCode.Conflict, "Already friends")
             }
@@ -131,7 +143,9 @@ class UserController(
         } catch (exception: IllegalStateException) {
             return call.respond(HttpStatusCode.Conflict, "Request already sent")
         } catch (exception: SQLException) {
-            call.application.environment.log.error("DB error while adding friend request to ${requestBody.friendId} for user $userId", exception)
+            call.application.environment.log.error(
+                "DB error while adding friend request to ${requestBody.friendId} for user $userId", exception
+            )
             return call.respond(HttpStatusCode.InternalServerError)
         }
     }
@@ -149,8 +163,9 @@ class UserController(
 
         // get all friends of the user
         try {
-            val friendsAsUsers = friendService.getFriendsAsync(userId, limit, offset)
-                ?: return call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
+            val friendsAsUsers = friendService.getFriendsAsync(userId, limit, offset) ?: return call.respond(
+                HttpStatusCode.InternalServerError
+            ) // we failed to fetch all users
 
             call.respond(HttpStatusCode.OK, friendsAsUsers)
         } catch (e: SQLException) {
@@ -170,14 +185,16 @@ class UserController(
         val reply = call.receive<FriendRequestReplyDto>()
 
         try {
-            when(reply.accept) {
+            when (reply.accept) {
                 true -> friendService.acceptFriendAsync(userId, friendId)
                 false -> friendService.rejectFriendAsync(userId, friendId)
             }
 
             return call.respond(HttpStatusCode.OK)
         } catch (sqlException: SQLException) {
-            call.application.environment.log.error("DB error while user $userId was replying to friend request from user $friendId", sqlException)
+            call.application.environment.log.error(
+                "DB error while user $userId was replying to friend request from user $friendId", sqlException
+            )
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
@@ -193,8 +210,30 @@ class UserController(
 
             return call.respond(HttpStatusCode.NoContent)
         } catch (sqlException: SQLException) {
-            call.application.environment.log.error("DB error while user $userId was unfriending user $friendId", sqlException)
+            call.application.environment.log.error(
+                "DB error while user $userId was unfriending user $friendId", sqlException
+            )
             call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleUploadPictureAsync(call: ApplicationCall) {
+        val userId = call.parameters["id"]
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid user id")
+
+        val contentType = call.request.contentType()
+
+        when {
+            contentType.match(ContentType.Application.Json) -> {
+                val uploadPicture = call.receive<UploadPictureDto>()
+                val res =
+                    pictureService.handleUploadImageJsonAsync(uploadPicture, PictureService.EntityType.USER, userId)
+                call.respond(res.first, res.second)
+            }
+
+            else -> {
+                return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
+            }
         }
     }
 
@@ -240,6 +279,23 @@ class UserController(
         } catch (e: SQLException) { // SQLException catch any SQL-related errors
             call.application.environment.log.error("DB error while deleting user with id $userId", e)
             call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleFollowedGamesAsync(call: ApplicationCall) {
+        val userId = call.parameters["id"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "User ID is not a number")
+        val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
+        val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
+
+        try {
+            val followedGames = followGameRepository.getFollowedGames(userId, offset, limit)
+
+            call.respond(HttpStatusCode.OK, followedGames)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while following games", e)
+            call.respond(HttpStatusCode.InternalServerError)
+
         }
     }
 }

@@ -2,15 +2,16 @@ package nl.connectplay.scoreplay
 
 import io.ktor.server.config.*
 import nl.connectplay.scoreplay.abstraction.data.*
-import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
-import nl.connectplay.scoreplay.abstraction.services.FriendService
-import nl.connectplay.scoreplay.abstraction.services.UserAccountService
+import nl.connectplay.scoreplay.abstraction.services.*
 import nl.connectplay.scoreplay.controllers.*
 import nl.connectplay.scoreplay.data.*
 import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
 import nl.connectplay.scoreplay.events.EventRouter
 import nl.connectplay.scoreplay.options.JWTOptions
 import nl.connectplay.scoreplay.services.FriendServiceImpl
+import nl.connectplay.scoreplay.services.PictureServiceImpl
+import nl.connectplay.scoreplay.services.ScoreServiceImpl
+import nl.connectplay.scoreplay.services.SessionServiceImpl
 import nl.connectplay.scoreplay.services.UserAccountServiceImpl
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.createdAtStart
@@ -27,7 +28,12 @@ fun repositories() = module {
     singleOf(::DatabaseUserRepository) { bind<UserRepository>() }
     singleOf(::DatabaseGameRepository) { bind<GameRepository>() }
     singleOf(::DatabaseFriendRepository) { bind<FriendRepository>() }
+    singleOf(::DatabaseScoreRepository) { bind<ScoreRepository>() }
+    singleOf(::DatabasePictureRepository) { bind<PictureRepository>() }
+    singleOf(::DatabaseGamePictureRepository) { bind<GamePictureRepository>() }
     singleOf(::DatabaseNotificationRepository) { bind<NotificationRepository>() }
+    singleOf(::DatabaseFollowGameRepository) { bind<FollowGameRepository>() }
+    singleOf(::DatabaseLeaderboardRepository) { bind<LeaderboardRepository>() }
 }
 
 /**
@@ -37,8 +43,11 @@ fun controllers() = module {
     singleOf(::ExampleController)
     singleOf(::SessionController)
     singleOf(::UserController)
+    singleOf(::ScoreController)
     singleOf(::GameController)
     singleOf(::NotificationController)
+    singleOf(::PictureController)
+    singleOf(::LeaderboardController)
 }
 
 /**
@@ -47,9 +56,12 @@ fun controllers() = module {
 fun services() = module {
     singleOf(::FriendServiceImpl) { bind<FriendService>() }
     singleOf(::UserAccountServiceImpl) { bind<UserAccountService>() }
+    singleOf(::PictureServiceImpl) { bind<PictureService>() }
+    singleOf(::ScoreServiceImpl) { bind<ScoreService>() }
+    singleOf(::SessionServiceImpl) { bind<SessionService>() }
 
     // events
-    singleOf(::EventRouter) { bind<EventRouter>() }
+    singleOf(::EventRouter) { bind<EventRoutingService>() }
     singleOf(::EventQueueManagerServiceImpl) { bind<EventQueueManagerService>() }
 }
 

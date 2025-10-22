@@ -1,0 +1,18 @@
+### Upload Game pictures by urls
+< {%
+    request.variables.set("gameId", 1)
+%}
+POST http://localhost:8080/games/{{gameId}}/pictures
+Content-Type: application/json
+
+{
+  "pictureData": ["https://google.com"]
+}
+
+### Get topscores from a game
+< {%
+    request.variables.set("gameId", 2)
+%}
+
+GET http://localhost:8080/games/{{gameId}}/leaderboard
+Content-Type: application/json

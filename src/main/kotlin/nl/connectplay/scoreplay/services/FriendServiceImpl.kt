@@ -1,16 +1,15 @@
 package nl.connectplay.scoreplay.services
 
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.runBlocking
 import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.models.FriendshipStatus
-import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.friend.UserFriendDto
+import nl.connectplay.scoreplay.models.events.FriendRequestEvent
+import nl.connectplay.scoreplay.models.events.FriendRequestReplyEvent
 
-class FriendServiceImpl(private val friendRepository: FriendRepository, private val userRepository: UserRepository) : FriendService {
+class FriendServiceImpl(private val friendRepository: FriendRepository, private val userRepository: UserRepository, private val eventRouter: EventRoutingService) : FriendService {
 
     /**
      * Checks if users are already friends
@@ -42,13 +41,11 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
             throw IllegalStateException("Friend request is already pending!")
         }
 
-        var status: FriendshipStatus = FriendshipStatus.PENDING
-
         // if the new friend has a pending friend request we should mark the users as now friends
         if (friendRepository.getFriendsAsync(newFriendId)?.contains(userId) ?: false) {
             // add an entry for the user that requested the friendship
             if(friendRepository.addFriendAsync(newFriendId, userId)) {
-                status = FriendshipStatus.FRIENDS
+                return FriendshipStatus.FRIENDS
             }
         }
 
@@ -57,11 +54,19 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
             return null
         }
 
-        // TODO: if the status is now pending,
-        //  we should create a notification and route it to the new friend
+        sendFriendRequestEventAsync(newFriendId, userId)
 
-        return status
+        return FriendshipStatus.PENDING
     }
+
+    private suspend fun sendFriendRequestEventAsync(friendRequestTargetId: Int, userId: Int) =
+        eventRouter.routeEventAsync(friendRequestTargetId, FriendRequestEvent(userId))
+
+    private suspend fun sendFriendRequestResponseEventAsync(friendRequestSenderId: Int, friendRequestReceiverId: Int, accepts: Boolean) =
+        eventRouter.routeEventAsync(
+            friendRequestSenderId,
+            FriendRequestReplyEvent(friendRequestReceiverId, accepts)
+        )
 
     /**
      * Removes a user as friend
@@ -85,6 +90,7 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
         // the user who requests the friendship created an entry,
         // so we need to remove it with their ID as key
         friendRepository.deleteFriendAsync(requesterUserId, userId)
+        sendFriendRequestResponseEventAsync(requesterUserId, userId, false)
     }
 
     /**
@@ -95,6 +101,7 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
      */
     override suspend fun acceptFriendAsync(userId: Int, requesterUserId: Int) {
         friendRepository.addFriendAsync(userId, requesterUserId)
+        sendFriendRequestResponseEventAsync(requesterUserId, userId, true)
     }
 
     /**

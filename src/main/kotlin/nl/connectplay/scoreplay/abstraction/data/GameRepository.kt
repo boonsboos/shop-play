@@ -8,4 +8,5 @@ interface GameRepository {
     suspend fun getGamesAsync(limit: Int?, offset: Int?, query: String?): List<GameDto>?
     suspend fun addGame(create: CreateGameDto): GameDto
     suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto?
+    suspend fun getGameByIdAsync(gameId: Int): GameDto?
 }

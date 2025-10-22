@@ -5,23 +5,26 @@ import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.FriendshipStatus
 import nl.connectplay.scoreplay.services.FriendServiceImpl
+import nl.connectplay.scoreplay.tests.testhelpers.TestEventRouter
 import nl.connectplay.scoreplay.tests.testhelpers.TestFriendRepository
 import nl.connectplay.scoreplay.tests.testhelpers.TestUserRepository
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 
 class FriendServiceTests {
+    val eventRouter: TestEventRouter = TestEventRouter()
 
     @Test
     fun testFriendsIntersect() {
         // Arrange
         val friendRepository: FriendRepository = TestFriendRepository()
         val userRepository: UserRepository = TestUserRepository()
-        val friendService = FriendServiceImpl(friendRepository, userRepository)
+
+        val friendService = FriendServiceImpl(friendRepository, userRepository, eventRouter)
 
         runBlocking {
             friendRepository.addFriendAsync(1, 2)
@@ -40,7 +43,7 @@ class FriendServiceTests {
         // Arrange
         val friendRepository: FriendRepository = TestFriendRepository()
         val userRepository: UserRepository = TestUserRepository()
-        val friendService = FriendServiceImpl(friendRepository, userRepository)
+        val friendService = FriendServiceImpl(friendRepository, userRepository, eventRouter)
 
         runBlocking {
             friendRepository.addFriendAsync(1, 2)
@@ -59,7 +62,7 @@ class FriendServiceTests {
         // Arrange
         val friendRepository = TestFriendRepository()
         val userRepository = TestUserRepository()
-        val friendService = FriendServiceImpl(friendRepository, userRepository)
+        val friendService = FriendServiceImpl(friendRepository, userRepository, eventRouter)
 
         runBlocking {
             friendRepository.friends[1] = 2
@@ -76,7 +79,7 @@ class FriendServiceTests {
         // Arrange
         val friendRepository = TestFriendRepository()
         val userRepository = TestUserRepository()
-        val friendService = FriendServiceImpl(friendRepository, userRepository)
+        val friendService = FriendServiceImpl(friendRepository, userRepository, eventRouter)
 
         runBlocking {
             friendRepository.friends[2] = 1

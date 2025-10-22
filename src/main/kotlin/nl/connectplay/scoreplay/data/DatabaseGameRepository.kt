@@ -46,11 +46,11 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     name = rs.getString("name"),
                                     description = rs.getString("description"),
                                     publisher = rs.getString("publisher"),
-                                    // getInt() returns 0 if value is SQL NULL
-                                    minPlayers = rs.getInt("minimum_player_count").let { if (it > 0 ) it else null },
-                                    maxPlayers = rs.getInt("maximum_player_count").let { if (it > 0 ) it else null },
-                                    duration = rs.getInt("duration") .let { if (it > 0 ) it else null },
-                                    minAge = rs.getInt("minimum_age").let { if (it > 0 ) it else null },
+                                    // getInt() returns 0 if value is SQL NULL, so we need to make sure it's mapped back to null
+                                    minPlayers = rs.getInt("min_players").let { if (it > 0) it else null },
+                                    maxPlayers = rs.getInt("max_players").let { if (it > 0) it else null },
+                                    duration = rs.getInt("duration_minutes").let { if (it > 0) it else null },
+                                    minAge = rs.getInt("min_age").let { if (it > 0) it else null },
                                     releaseDate = rs.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
                                 )
                             )
@@ -114,43 +114,79 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
         }.await()
     }
 
-override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coroutineScope {
-    async {
-        database.connection?.use { conn ->
-            val sql = """
-                UPDATE games
-                SET
-                    name = COALESCE(?, name),
-                    description = COALESCE(?, description),
-                    publisher = COALESCE(?, publisher),
-                    minimum_player_count = COALESCE(?, minimum_player_count),
-                    maximum_player_count = COALESCE(?, maximum_player_count),
-                    duration = COALESCE(?, duration),
-                    minimum_age = COALESCE(?, minimum_age),
-                    release_date = COALESCE(?, release_date)
-                WHERE game_id = ?
-            """.trimIndent()
+    override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coroutineScope {
+        async {
+            database.connection?.use { conn ->
+                val sql = """
+                    UPDATE games
+                    SET
+                        name = COALESCE(?, name),
+                        description = COALESCE(?, description),
+                        publisher = COALESCE(?, publisher),
+                        minimum_player_count = COALESCE(?, minimum_player_count),
+                        maximum_player_count = COALESCE(?, maximum_player_count),
+                        duration = COALESCE(?, duration),
+                        minimum_age = COALESCE(?, minimum_age),
+                        release_date = COALESCE(?, release_date)
+                    WHERE game_id = ?
+                """.trimIndent()
 
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.setString(1, update.name)
-                stmt.setString(2, update.description)
-                stmt.setString(3, update.publisher)
-                stmt.setObject(4, update.minPlayers)
-                stmt.setObject(5, update.maxPlayers)
-                stmt.setObject(6, update.duration)
-                stmt.setObject(7, update.minAge)
-                stmt.setObject(8,  update.releaseDate?.let {
-                    Date.valueOf(it.toJavaLocalDate())
-                })
-                stmt.setInt(9, id)
+                conn.prepareStatement(sql).use { stmt ->
+                    stmt.setString(1, update.name)
+                    stmt.setString(2, update.description)
+                    stmt.setString(3, update.publisher)
+                    stmt.setObject(4, update.minPlayers)
+                    stmt.setObject(5, update.maxPlayers)
+                    stmt.setObject(6, update.duration)
+                    stmt.setObject(7, update.minAge)
+                    stmt.setObject(8,  update.releaseDate?.let {
+                        Date.valueOf(it.toJavaLocalDate())
+                    })
+                    stmt.setInt(9, id)
 
-                val updated = stmt.executeUpdate()
-                if (updated == 0) return@use null
+                    val updated = stmt.executeUpdate()
+                    if (updated == 0) return@use null
+                }
+
+                null
             }
+        }.await()
+    }
 
-            null
-        }
-    }.await()
-}
 
+    override suspend fun getGameByIdAsync(gameId: Int): GameDto? = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val sql = """
+                    SELECT game_id, name, description, publisher, min_players, max_players, duration_minutes, min_age, release_date
+                    FROM games
+                    WHERE game_id = ?
+                """.trimIndent()
+
+                val stmt = connection.prepareStatement(sql)
+                stmt.setInt(1, gameId)
+
+                val resultSet = stmt?.executeQuery()
+                var game: GameDto? = null;
+                if (resultSet?.next() == true) {
+                    game = GameDto(
+                        id = resultSet.getInt("game_id"),
+                        name = resultSet.getString("name"),
+                        description = resultSet.getString("description"),
+                        publisher = resultSet.getString("publisher"),
+                        minPlayers = resultSet.getInt("min_players").let { if (it > 0) it else null },
+                        maxPlayers = resultSet.getInt("max_players").let { if (it > 0) it else null },
+                        duration = resultSet.getInt("duration_minutes").let { if (it > 0) it else null },
+                        minAge = resultSet.getInt("min_age").let { if (it > 0) it else null },
+                        releaseDate = resultSet.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
+                    )
+                }
+
+                stmt?.close()
+                resultSet?.close()
+
+                game
+            }
+        }.await()
+    }
 }

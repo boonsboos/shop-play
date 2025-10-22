@@ -1,16 +1,23 @@
 package nl.connectplay.scoreplay.routes.games
 
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.post
+import io.ktor.server.auth.*
+import io.ktor.server.routing.*
+import nl.connectplay.scoreplay.UserIdJWTAuthenticatorName
 import nl.connectplay.scoreplay.controllers.GameController
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 
 @ApiRoute
-fun Route.gamesCreateRoute() {
+fun Route.gamePostRoutes() {
     val gameController by inject<GameController>()
 
     post("/games") {
         gameController.handleCreateAsync(call)
+    }
+
+    authenticate(UserIdJWTAuthenticatorName) {
+        post("/games/{gameId}/follow") {
+            gameController.handleFollowGame(call)
+        }
     }
 }

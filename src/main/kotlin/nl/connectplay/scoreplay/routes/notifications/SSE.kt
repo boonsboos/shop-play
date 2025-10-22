@@ -5,11 +5,14 @@ import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
+import io.ktor.util.reflect.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import nl.connectplay.scoreplay.UserIdJWTAuthenticatorName
 import nl.connectplay.scoreplay.controllers.NotificationController
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
+import nl.connectplay.scoreplay.models.events.BroadcastEvent
+import nl.connectplay.scoreplay.models.events.SingleTargetEvent
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 import kotlin.time.Duration.Companion.seconds
@@ -21,11 +24,6 @@ fun Route.notificationEvents() {
     authenticate(UserIdJWTAuthenticatorName) {
         sse (
             "/notifications/live",
-            // SSE requires manually configuring serialization
-            serialize = { typeInfo, it ->
-                val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
-                Json.encodeToString(serializer, it)
-            }
         ) {
             heartbeat {
                 period = 15.seconds
