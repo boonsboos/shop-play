@@ -1,6 +1,6 @@
 package nl.connectplay.scoreplay.abstraction.services
 
-import nl.connectplay.scoreplay.models.dto.LoginUserDto
+import nl.connectplay.scoreplay.models.dto.user.LoginUserDto
 
 interface UserAccountService {
     /**

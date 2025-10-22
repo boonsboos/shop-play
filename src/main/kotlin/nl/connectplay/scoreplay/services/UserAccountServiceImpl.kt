@@ -7,7 +7,7 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.models.dto.LoginUserDto
+import nl.connectplay.scoreplay.models.dto.user.LoginUserDto
 import nl.connectplay.scoreplay.options.JWTOptions
 import org.mindrot.jbcrypt.BCrypt
 import java.util.*

@@ -1,7 +1,7 @@
 package nl.connectplay.scoreplay.abstraction.data
 
 import nl.connectplay.scoreplay.models.User
-import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
 import java.util.UUID
 import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
