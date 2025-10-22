@@ -5,6 +5,7 @@ import nl.connectplay.scoreplay.models.SessionPlayer
 import nl.connectplay.scoreplay.models.dto.score.SessionPlayerDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import nl.connectplay.scoreplay.models.dto.session.SessionDto
+import nl.connectplay.scoreplay.models.dto.session.UpdateSessionDto
 import java.util.*
 
 /**
@@ -20,6 +21,7 @@ interface SessionRepository {
     suspend fun createSessionAsync(createDto: CreateSessionDto): UUID?
     suspend fun getSessionByIdAsync(sessionId: UUID, userId: Int): SessionDto?
     suspend fun getSessionsAsync(userId: Int): List<SessionDto>
+    suspend fun updateSessionAsync(sessionId: UUID, userId: Int, updateSession: UpdateSessionDto): Boolean
     suspend fun setEndOfSessionPictureAsync(sessionId: UUID, pictureId: UUID): Boolean
 
     /**

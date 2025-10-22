@@ -12,6 +12,7 @@ import nl.connectplay.scoreplay.models.SessionVisibility
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import nl.connectplay.scoreplay.models.dto.session.SessionDto
+import nl.connectplay.scoreplay.models.dto.session.UpdateSessionDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
@@ -63,7 +64,6 @@ class SessionController(
         }
     }
 
-
     suspend fun handleListAsync(call: ApplicationCall) {
         val authedUserId = call.getUserIdFromJWT()// id of the authenticated user (from the JWT)
         val targetUserId = call.parameters["targetId"]?.toInt() // id of the user whose sessions are being requested
@@ -84,5 +84,34 @@ class SessionController(
 
         val (status, message) = sessionService.getSessionAsync(authedUserId, targetUserId, UUID.fromString(sessionId))
         return call.respondNullable(status = status, message = message)
+    }
+
+    suspend fun handleUpdateSessionAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
+        val sessionId = UUID.fromString(
+            call.parameters["sessionId"]
+                ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
+        )
+        var updateSession = call.receiveNullable<UpdateSessionDto>()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Body is incorrect or empty")
+
+        try {
+            val existingSession = repository.getSessionByIdAsync(sessionId, userId)
+                ?: return call.respond(HttpStatusCode.NotFound, "Session not found")
+            // check if session already has an endTime, if so remove it from the UpdateSessionDto
+            if (existingSession.endTime != null) {
+                updateSession = UpdateSessionDto(endTime = null, visibility = updateSession.visibility) // Omit endTime
+            }
+
+            val success = repository.updateSessionAsync(sessionId, userId, updateSession)
+            return if (success) {
+                call.respond(HttpStatusCode.OK, "Session updated successfully")
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Could not update session")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return call.respond(HttpStatusCode.InternalServerError, "Something went wrong while updating session")
+        }
     }
 }

@@ -2,15 +2,19 @@ package nl.connectplay.scoreplay.data
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toKotlinLocalDateTime
+import java.time.LocalDateTime
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
-import nl.connectplay.scoreplay.models.Session
 import nl.connectplay.scoreplay.models.SessionPlayer
 import nl.connectplay.scoreplay.models.SessionVisibility
 import nl.connectplay.scoreplay.models.dto.score.SessionPlayerDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import nl.connectplay.scoreplay.models.dto.session.SessionDto
+import nl.connectplay.scoreplay.models.dto.session.UpdateSessionDto
+import org.slf4j.LoggerFactory
 import java.sql.SQLException
+import java.sql.Timestamp
+import java.time.Instant
 import java.util.*
 
 /**
@@ -19,7 +23,7 @@ import java.util.*
  */
 class DatabaseSessionRepository(private val database: Database) : SessionRepository {
 
-//    private val logger = LoggerFactory.getLogger(DatabaseSessionRepository::class.java)
+    private val logger = LoggerFactory.getLogger(DatabaseSessionRepository::class.java)
 
     val createSessionQuery: String = """
         INSERT INTO `sessions` (`game_id`, `host_user_id`, `session_visibility`)
@@ -75,10 +79,10 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                         resultSet.getObject("session_id", UUID::class.java),
                         resultSet.getInt("game_id"),
                         resultSet.getInt("host_user_id"),
-                        resultSet.getObject("start_time", LocalDateTime::class.java),
-                        resultSet.getObject("end_time", LocalDateTime::class.java),
+                        resultSet.getTimestamp("start_time").toLocalDateTime().toKotlinLocalDateTime(),
+                        resultSet.getTimestamp("end_time")?.toLocalDateTime()?.toKotlinLocalDateTime(),
                         resultSet.getString("end_of_session_picture"),
-                        SessionVisibility.entries[resultSet.getInt("session_visibility")],
+                        SessionVisibility.fromInt(resultSet.getInt("session_visibility")),
                     )
                 }
 
@@ -113,10 +117,10 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                             resultSet.getObject("session_id", UUID::class.java),
                             resultSet.getInt("game_id"),
                             resultSet.getInt("host_user_id"),
-                            resultSet.getObject("start_time", LocalDateTime::class.java),
-                            resultSet.getObject("end_time", LocalDateTime::class.java),
+                            resultSet.getTimestamp("start_time").toLocalDateTime().toKotlinLocalDateTime(),
+                            resultSet.getTimestamp("end_time")?.toLocalDateTime()?.toKotlinLocalDateTime(),
                             resultSet.getString("end_of_session_picture"),
-                            SessionVisibility.entries[resultSet.getInt("session_visibility")],
+                            SessionVisibility.fromInt(resultSet.getInt("session_visibility")),
                         )
                     )
                 }
@@ -128,6 +132,42 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
             }
         }.await() ?: emptyList()
     }
+
+    override suspend fun updateSessionAsync(sessionId: UUID, userId: Int, updateSession: UpdateSessionDto): Boolean =
+        coroutineScope {
+            async {
+                database.connection?.use { connection ->
+                    try {
+                        val sql = """
+                            UPDATE sessions SET
+                            end_time = COALESCE(?, end_time),
+                            session_visibility = COALESCE(?, session_visibility)
+                            WHERE session_id = ? AND host_user_id = ?
+                        """.trimIndent()
+
+                        val stmt = connection.prepareStatement(sql)
+
+                        val computedEndTime = if (updateSession.endTime != null)
+                            Timestamp.from(Instant.parse(updateSession.endTime))
+                        else null
+
+                        val computedVisibility = updateSession.visibility ?: SessionVisibility.PUBLIC.toInt()
+
+                        stmt.setTimestamp(1, computedEndTime)
+                        stmt.setInt(2, computedVisibility)
+                        stmt.setObject(3, sessionId)
+                        stmt.setInt(4, userId)
+
+                        val affectedRow = stmt.executeUpdate()
+                        stmt.close()
+                        return@async affectedRow > 0
+                    } catch (e: Exception) {
+                        logger.error("Error updating session", e)
+                        return@async false
+                    }
+                }
+            }.await() ?: false
+        }
 
     override suspend fun setEndOfSessionPictureAsync(sessionId: UUID, pictureId: UUID): Boolean = coroutineScope {
         async {
