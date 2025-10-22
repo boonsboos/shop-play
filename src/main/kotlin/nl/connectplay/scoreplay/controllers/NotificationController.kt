@@ -42,35 +42,26 @@ class NotificationController(private val notificationRepository: NotificationRep
     }
 
     suspend fun handleGetNotificationById(call: ApplicationCall) {
+        val userIdParam = call.getUserIdFromJWT()
+
         val notificationIdParam = call.parameters["notificationId"] ?:
         return call.respond(HttpStatusCode.NotFound)
 
         val notificationId = UUID.fromString(notificationIdParam)
 
-        val notification = notificationRepository.getNotificationByIdAsync(notificationId)
+        val notification = notificationRepository.getNotificationByIdAsync(notificationId, userIdParam)
             ?: return call.respond(HttpStatusCode.NotFound)
 
         call.respond(HttpStatusCode.OK, notification)
     }
 
-
-    suspend fun handleListByUserIdAsync(call: ApplicationCall) {
+    suspend fun handleGetAllNotifications(call: ApplicationCall) {
         val userIdParam = call.getUserIdFromJWT()
 
         val limit = call.request.getLimitQueryParameter()
         val offset = call.request.getOffsetQueryParameter()
 
-        val notifications = notificationRepository.getNotificationByUserAsync(userIdParam, limit, offset)
-            ?: return call.respond(HttpStatusCode.NotFound)
-
-        call.respond(HttpStatusCode.OK, notifications)
-    }
-
-    suspend fun handleGetAllNotifications(call: ApplicationCall) {
-        val limit = call.request.getLimitQueryParameter()
-        val offset = call.request.getOffsetQueryParameter()
-
-        val notifications = notificationRepository.getAllNotificationsAsync(limit, offset)
+        val notifications = notificationRepository.getAllNotificationsAsync(userIdParam, limit, offset)
             ?: return call.respond(HttpStatusCode.NotFound)
 
         call.respond(HttpStatusCode.OK, notifications)

@@ -6,9 +6,8 @@ import java.util.UUID
 
 interface NotificationRepository {
     suspend fun saveNotificationAsync(notification: NewNotificationDto)
-    suspend fun getNotificationByIdAsync(notificationId: UUID): NotificationDto?
-    suspend fun getAllNotificationsAsync(limit: Int?, offset: Int?): List<NotificationDto>?
-    suspend fun getNotificationByUserAsync(limit: Int?, offset: Int?, userId: Int): List<NotificationDto>?
+    suspend fun getNotificationByIdAsync(notificationId: UUID, userId: Int): NotificationDto?
+    suspend fun getAllNotificationsAsync(limit: Int?, offset: Int?, userId: Int): List<NotificationDto>?
     suspend fun deleteNotificationAsync(notificationId: UUID, userID: Int): Boolean
     suspend fun setNotificationAsReadAsync(notificationId: UUID, userID: Int): Boolean
 }

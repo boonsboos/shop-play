@@ -12,7 +12,7 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
         TODO("Not yet implemented")
     }
 
-    override suspend fun getNotificationByIdAsync(notificationId: UUID): NotificationDto? = coroutineScope {
+    override suspend fun getNotificationByIdAsync(notificationId: UUID, userId: Int): NotificationDto? = coroutineScope {
         async {
             database.connection?.use { connection ->
                 val sql = """SELECT
@@ -44,44 +44,7 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
         }.await()
     }
 
-    override suspend fun getAllNotificationsAsync(limit: Int?, offset: Int?): List<NotificationDto>? {
-        return coroutineScope {
-            async {
-                database.connection?.use { connection ->
-                    val notifications = mutableListOf<NotificationDto>()
-
-                    val sql = """
-                        SELECT
-                              notification_id,
-                              content,
-                              read
-                        FROM notifications
-                        LIMIT ? OFFSET ?""".trimIndent()
-
-                    val statement = connection.prepareStatement(sql)
-                    statement.setInt(1, limit ?: 25)
-                    statement.setInt(2, offset ?: 0)
-                    val resultSet = statement.executeQuery()
-
-                    while (resultSet?.next() == true) {
-                        val notification = NotificationDto(
-                            notificationId = UUID.fromString(resultSet.getString("notification_id")),
-                            content = resultSet.getString("content"),
-                            read = resultSet.getBoolean("read"),
-                        )
-                        notifications.add(notification)
-                    }
-
-                    resultSet.close()
-                    statement.close()
-
-                    return@async notifications.toList()
-                }
-            }.await()
-        }
-    }
-
-    override suspend fun getNotificationByUserAsync(limit: Int?, offset: Int? ,userId: Int): List<NotificationDto>? {
+    override suspend fun getAllNotificationsAsync(limit: Int?, offset: Int? ,userId: Int): List<NotificationDto>? {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
