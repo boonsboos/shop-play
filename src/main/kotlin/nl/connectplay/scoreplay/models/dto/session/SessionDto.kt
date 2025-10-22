@@ -12,7 +12,7 @@ data class SessionDto(
     val gameId: Int,
     val hostId: Int,
     val startTime: LocalDateTime,
-    val endTime: LocalDateTime,
+    val endTime: LocalDateTime?,
     val endOfSessionPictureUrl: String?,
     val visibility: SessionVisibility
 )
