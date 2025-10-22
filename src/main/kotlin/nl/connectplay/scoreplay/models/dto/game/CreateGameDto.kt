@@ -1,7 +1,9 @@
 package nl.connectplay.scoreplay.models.dto
 
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class CreateGameDto(
     val name: String,
     val description: String,

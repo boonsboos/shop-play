@@ -2,10 +2,12 @@ package nl.connectplay.scoreplay.data
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
-import nl.connectplay.scoreplay.models.dto.GameDto
 import nl.connectplay.scoreplay.models.dto.CreateGameDto
+import nl.connectplay.scoreplay.models.dto.GameDto
+import nl.connectplay.scoreplay.models.dto.UpdateGameDto
 import java.sql.Date
 import java.sql.Statement
 
@@ -17,11 +19,11 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
             database.connection?.use { conn ->
                 val sql = """
                     SELECT 
-                        g.game_id, g.name, g.description, g.publisher,
-                        g.minimum_player_count, g.maximum_player_count, g.duration, g.minimum_age, g.release_date
-                    FROM games g
-                    WHERE (? IS NULL OR g.name LIKE ? OR g.publisher LIKE ? OR g.description LIKE ?)
-                    ORDER BY g.game_id
+                        game_id, name, description, publisher,
+                        minimum_player_count, maximum_player_count, duration, minimum_age, release_date
+                    FROM games
+                    WHERE (? IS NULL OR name LIKE ? OR publisher LIKE ? OR description LIKE ?)
+                    ORDER BY game_id
                     LIMIT ? OFFSET ?
                 """.trimIndent()
 
@@ -66,27 +68,27 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
             database.connection?.use { conn ->
                 val sql = """
                     INSERT INTO games
-                      (name, description, publisher, minimum_player_count, maximum_player_count, duration, minimum_age, release_date)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                      (name, description, publisher, minimum_player_count, maximum_player_count, duration, minimum_age, release_date, scoring_method_id)
+                    VALUES (?, ?,  ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent()
 
                 conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
                     stmt.setString(1, create.name)
+
                     stmt.setString(2, create.description)
                     stmt.setString(3, create.publisher)
-                    stmt.setInt(4, create.minPlayers)
-                    stmt.setInt(5, create.maxPlayers)
-                    stmt.setInt(6, create.duration)
-                    stmt.setInt(7, create.minAge)
+                    stmt.setObject(4, create.minPlayers)
+                    stmt.setObject(5, create.maxPlayers)
+                    stmt.setObject(6, create.duration)
+                    stmt.setObject(7, create.minAge)
 
-                    if (create.releaseDate != null) {
-                        // Convert kotlinx.datetime.LocalDate -> java.time.LocalDate -> java.sql.Date
-                        val javaLocal = java.time.LocalDate.of(create.releaseDate.year, create.releaseDate.month, create.releaseDate.day)
-                        stmt.setDate(8, Date.valueOf(javaLocal))
-                    } else {
-                        stmt.setNull(8, java.sql.Types.DATE)
+                    // Convert kotlinx.datetime.LocalDate -> java.time.LocalDate -> java.sql.Date
+                    val date = create.releaseDate?.let {
+                        Date.valueOf(it.toJavaLocalDate())
                     }
 
+                    stmt.setDate(8, date)
+                    stmt.setInt(9, 1) // TODO: propagate from model
                     stmt.executeUpdate()
 
                     // Read generated id
@@ -97,7 +99,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     // Return created GameDto (without re-query; use provided fields + id)
                     GameDto(
                         id = generatedId,
-                        scoringMethodId = null,
+                        scoringMethodId = 1,
                         name = create.name,
                         description = create.description,
                         publisher = create.publisher,
@@ -130,37 +132,23 @@ override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coro
             """.trimIndent()
 
             conn.prepareStatement(sql).use { stmt ->
-                stmt.setInt(1, id)
-                stmt.setString(2, update.name)
-                stmt.setString(3, update.description)
-                stmt.setString(4, update.publisher)
-                stmt.setInt(5, update.minPlayers)
-                stmt.setInt(6, update.maxPlayers)
-                stmt.setInt(7, update.duration)
-                stmt.setInt(8, update.minAge)
-                stmt.setDate(9,  update.releaseDate?.let {
-                    Date.valueOf(it.toLocalDate())
+                stmt.setString(1, update.name)
+                stmt.setString(2, update.description)
+                stmt.setString(3, update.publisher)
+                stmt.setObject(4, update.minPlayers)
+                stmt.setObject(5, update.maxPlayers)
+                stmt.setObject(6, update.duration)
+                stmt.setObject(7, update.minAge)
+                stmt.setObject(8,  update.releaseDate?.let {
+                    Date.valueOf(it.toJavaLocalDate())
                 })
+                stmt.setInt(9, id)
 
                 val updated = stmt.executeUpdate()
                 if (updated == 0) return@use null
             }
 
-            // Re-query updated row
-            val selectSql = """
-                SELECT 
-                  g.game_id, g.name, g.description, g.publisher,
-                  g.minimum_player_count, g.maximum_player_count, g.duration, g.minimum_age, g.release_date
-                FROM games g
-                WHERE g.game_id = ?
-            """.trimIndent()
-
-            conn.prepareStatement(selectSql).use { selectStmt ->
-                selectStmt.setInt(1, id)
-                selectStmt.executeQuery().use { rs ->
-                    if (rs.next()) mapRowToGameDto(rs) else null
-                }
-            }
+            null
         }
     }.await()
 }

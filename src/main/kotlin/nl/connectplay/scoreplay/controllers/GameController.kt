@@ -2,12 +2,13 @@ package nl.connectplay.scoreplay.controllers
 
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.request.*
+import io.ktor.server.response.*
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.models.dto.CreateGameDto
-import kotlinx.datetime.LocalDate
+import nl.connectplay.scoreplay.models.dto.UpdateGameDto
 import java.sql.SQLException
+import java.sql.SQLIntegrityConstraintViolationException
 
 class GameController(private val gameRepository: GameRepository) {
 
@@ -31,15 +32,15 @@ class GameController(private val gameRepository: GameRepository) {
         val createReq = call.receive<CreateGameDto>()
 
         // Validate required fields
-        if (createReq.name.isNullOrBlank()) return call.respond(HttpStatusCode.BadRequest, "Missing name")
-        if (createReq.description.isNullOrBlank()) return call.respond(HttpStatusCode.BadRequest, "Missing description")
-        if (createReq.publisher.isNullOrBlank()) return call.respond(HttpStatusCode.BadRequest, "Missing publisher")
+        if (createReq.name.isBlank()) return call.respond(HttpStatusCode.BadRequest, "Missing name")
+        if (createReq.description.isBlank()) return call.respond(HttpStatusCode.BadRequest, "Missing description")
+        if (createReq.publisher.isBlank()) return call.respond(HttpStatusCode.BadRequest, "Missing publisher")
 
         try {
             // Pass DTO to repository
             val created = gameRepository.addGame(createReq)
             call.respond(HttpStatusCode.Created, created)
-        } catch (e: IllegalArgumentException) {
+        } catch (e: SQLIntegrityConstraintViolationException) {
             call.application.environment.log.error("Conflict", e)
             call.respond(HttpStatusCode.Conflict, e.message ?: "Conflict")
         } catch (e: SQLException) {
@@ -58,7 +59,6 @@ class GameController(private val gameRepository: GameRepository) {
         
         // Checks if anything needs to update
         if (listOf(
-                updateReq.scoringMethodId,
                 updateReq.name,
                 updateReq.description,
                 updateReq.publisher,
