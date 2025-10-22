@@ -8,16 +8,12 @@ import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 
 @ApiRoute
-fun Route.gamePostRoutes() {
+fun Route.gamesUpdateRoute() {
     val gameController by inject<GameController>()
 
-    authenticate(UserIdJWTAuthenticatorName) {
-        post("/games") {
-            gameController.handleCreateAsync(call)
-        }
-
-        post("/games/{gameId}/follow") {
-            gameController.handleFollowGame(call)
+    authenticate (UserIdJWTAuthenticatorName) {
+        patch("/games/{id}") {
+            gameController.handleUpdateAsync(call)
         }
     }
 }
