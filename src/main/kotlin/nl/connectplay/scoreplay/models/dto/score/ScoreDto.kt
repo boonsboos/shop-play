@@ -11,5 +11,5 @@ data class ScoreDto(
     val score: Double,
     val turn: Int,
     val achievedOn: LocalDateTime,
-    val sessionPlayer: SessionPlayerDto? = null
+    val sessionPlayer: SessionPlayerDto
 )

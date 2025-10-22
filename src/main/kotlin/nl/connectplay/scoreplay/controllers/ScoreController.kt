@@ -6,6 +6,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import nl.connectplay.scoreplay.abstraction.services.ScoreService
 import nl.connectplay.scoreplay.exceptions.NotFoundException
+import nl.connectplay.scoreplay.exceptions.UnfinishedSessionException
 import nl.connectplay.scoreplay.models.dto.score.CreateScoreDto
 import nl.connectplay.scoreplay.models.dto.score.UpdateScoreDto
 import nl.connectplay.scoreplay.utilities.getUUIDOrNull
@@ -62,13 +63,16 @@ class ScoreController(private val scoreService: ScoreService) {
         val sessionId = call.getUUIDOrNull("id")
             ?: return call.respond(HttpStatusCode.BadRequest, "Bad session id")
 
-        val newScore = call.receiveNullable<CreateScoreDto>()
+        val newScores = call.receiveNullable<List<CreateScoreDto>>()
             ?: return call.respond(HttpStatusCode.BadRequest)
 
         try {
-            val score = scoreService.uploadScoreAsync(sessionId, userId, newScore)
+            val score = scoreService.bulkUploadScoresAsync(sessionId, userId, newScores)
 
             call.respond(HttpStatusCode.Created, score)
+        } catch (e: UnfinishedSessionException) {
+            logger.error(e.message)
+            call.respond(HttpStatusCode.Forbidden, "Session not yet finished")
         } catch (e: NotFoundException) {
             logger.error("Something was not found while uploading a score", e)
             call.respond(HttpStatusCode.NotFound)
