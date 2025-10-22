@@ -20,7 +20,7 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
                                 content,
                                 read
                              FROM notifications
-                                notification_id = ?
+                             WHERE notification_id = ?
                           """.trimIndent()
 
                 val stmt = connection.prepareStatement(sql)
@@ -91,6 +91,7 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
                 database.connection?.use { connection ->
                     val statement = connection.prepareStatement("DELETE FROM notifications WHERE notification_id = ? AND user_id = ?")
                     statement.setString(1, notificationId.toString())
+                    statement.setInt(2, userId)
 
                     val notificationDeleted = statement.executeUpdate()
                     statement.close()
@@ -100,13 +101,14 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
         }
     }
 
-    override suspend fun setNotificationAsReadAsync(notificationId: UUID, userID: Int): Boolean {
+    override suspend fun setNotificationAsReadAsync(notificationId: UUID, userId: Int): Boolean {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
                     val sql = "UPDATE notifications SET read = b'1' WHERE notification_id = ? AND user_id = ?"
                     val statement = connection.prepareStatement(sql)
                     statement.setString(1, notificationId.toString())
+                    statement.setInt(2, userId)
 
                     val affectedRows = statement.executeUpdate()
                     statement.close()
