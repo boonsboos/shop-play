@@ -11,11 +11,11 @@ import org.koin.ktor.ext.inject
 fun Route.gamePostRoutes() {
     val gameController by inject<GameController>()
 
-    post("/games") {
-        gameController.handleCreateAsync(call)
-    }
-
     authenticate(UserIdJWTAuthenticatorName) {
+        post("/games") {
+            gameController.handleCreateAsync(call)
+        }
+
         post("/games/{gameId}/follow") {
             gameController.handleFollowGame(call)
         }

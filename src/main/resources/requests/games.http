@@ -15,4 +15,25 @@ Content-Type: application/json
 %}
 
 GET http://localhost:8080/games/{{gameId}}/leaderboard
+Accept: application/json
+
+### upload new game
+POST http://localhost:8080/games
 Content-Type: application/json
+
+{
+  "name": "DanceDanceRevolution",
+  "description": "A real-time dancing game with cool electronic beats!",
+  "publisher": "Konami"
+}
+
+### edit game
+< {%
+    request.variables.set("gameId", 6)
+%}
+PATCH http://localhost:8080/games/{{gameId}}
+Content-Type: application/json
+
+{
+  "releaseDate": "1999-01-01"
+}

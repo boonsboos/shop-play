@@ -74,7 +74,6 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
 
                 conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS).use { stmt ->
                     stmt.setString(1, create.name)
-
                     stmt.setString(2, create.description)
                     stmt.setString(3, create.publisher)
                     stmt.setObject(4, create.minPlayers)
@@ -147,10 +146,9 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     val updated = stmt.executeUpdate()
                     if (updated == 0) return@use null
                 }
-
-                null
             }
         }.await()
+        getGameByIdAsync(id)
     }
 
 
@@ -158,7 +156,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
         async {
             database.connection?.use { connection ->
                 val sql = """
-                    SELECT game_id, name, description, publisher, min_players, max_players, duration_minutes, min_age, release_date
+                    SELECT game_id, name, description, publisher, minimum_player_count, maximum_player_count, duration, minimum_age, release_date
                     FROM games
                     WHERE game_id = ?
                 """.trimIndent()
@@ -174,10 +172,10 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                         name = resultSet.getString("name"),
                         description = resultSet.getString("description"),
                         publisher = resultSet.getString("publisher"),
-                        minPlayers = resultSet.getInt("min_players").let { if (it > 0) it else null },
-                        maxPlayers = resultSet.getInt("max_players").let { if (it > 0) it else null },
-                        duration = resultSet.getInt("duration_minutes").let { if (it > 0) it else null },
-                        minAge = resultSet.getInt("min_age").let { if (it > 0) it else null },
+                        minPlayers = resultSet.getInt("minimum_player_count").let { if (it > 0) it else null },
+                        maxPlayers = resultSet.getInt("maximum_player_count").let { if (it > 0) it else null },
+                        duration = resultSet.getInt("duration").let { if (it > 0) it else null },
+                        minAge = resultSet.getInt("minimum_age").let { if (it > 0) it else null },
                         releaseDate = resultSet.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
                     )
                 }
