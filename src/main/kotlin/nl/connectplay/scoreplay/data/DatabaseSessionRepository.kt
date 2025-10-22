@@ -2,7 +2,9 @@ package nl.connectplay.scoreplay.data
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.LocalDateTime
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
+import nl.connectplay.scoreplay.models.Session
 import nl.connectplay.scoreplay.models.SessionPlayer
 import nl.connectplay.scoreplay.models.SessionVisibility
 import nl.connectplay.scoreplay.models.dto.score.SessionPlayerDto
@@ -51,18 +53,19 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
         }
     }
 
-    override suspend fun getSessionByIdAsync(sessionId: UUID): SessionDto? = coroutineScope {
+    override suspend fun getSessionByIdAsync(sessionId: UUID, userId: Int): SessionDto? = coroutineScope {
         async {
             database.connection?.use { connection ->
                 val sql = """
-                    SELECT s.session_id, s.game_id, s.host_user_id, s.session_visibility, p.picture_url as end_of_session_picture
+                    SELECT s.session_id, s.game_id, s.host_user_id, s.start_time, s.end_time,s.session_visibility, p.picture_url as end_of_session_picture
                     FROM sessions as s
                     LEFT JOIN pictures AS p ON s.end_of_session_picture_id = p.picture_id
-                    WHERE session_id = ?
+                    WHERE session_id = ? AND host_user_id = ?
                 """.trimIndent()
 
                 val stmt = connection.prepareStatement(sql)
                 stmt.setObject(1, sessionId)
+                stmt.setInt(2, userId)
 
                 val resultSet = stmt?.executeQuery()
                 var session: SessionDto? = null;
@@ -72,6 +75,8 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                         resultSet.getObject("session_id", UUID::class.java),
                         resultSet.getInt("game_id"),
                         resultSet.getInt("host_user_id"),
+                        resultSet.getObject("start_time", LocalDateTime::class.java),
+                        resultSet.getObject("end_time", LocalDateTime::class.java),
                         resultSet.getString("end_of_session_picture"),
                         SessionVisibility.entries[resultSet.getInt("session_visibility")],
                     )
@@ -83,6 +88,45 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                 session
             }
         }.await()
+    }
+
+    override suspend fun getSessionsAsync(userId: Int): List<SessionDto> = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val sql = """
+                    SELECT s.session_id, s.game_id, s.host_user_id, s.start_time, s.end_time,s.session_visibility, p.picture_url as end_of_session_picture
+                    FROM sessions as s
+                    LEFT JOIN pictures AS p ON s.end_of_session_picture_id = p.picture_id
+                    WHERE host_user_id = ?
+                """.trimIndent()
+
+                val stmt = connection.prepareStatement(sql)
+                stmt.setInt(1, userId)
+
+                val sessions = mutableListOf<SessionDto>()
+
+                val resultSet = stmt?.executeQuery()
+
+                while (resultSet?.next() == true) {
+                    sessions.add(
+                        SessionDto(
+                            resultSet.getObject("session_id", UUID::class.java),
+                            resultSet.getInt("game_id"),
+                            resultSet.getInt("host_user_id"),
+                            resultSet.getObject("start_time", LocalDateTime::class.java),
+                            resultSet.getObject("end_time", LocalDateTime::class.java),
+                            resultSet.getString("end_of_session_picture"),
+                            SessionVisibility.entries[resultSet.getInt("session_visibility")],
+                        )
+                    )
+                }
+
+                stmt?.close()
+                resultSet?.close()
+
+                sessions.toList()
+            }
+        }.await() ?: emptyList()
     }
 
     override suspend fun setEndOfSessionPictureAsync(sessionId: UUID, pictureId: UUID): Boolean = coroutineScope {
@@ -113,7 +157,8 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
         val sessionPlayers: MutableList<SessionPlayer> = mutableListOf()
         async {
             database.connection?.use { connection ->
-                val statement = connection.prepareStatement("""
+                val statement = connection.prepareStatement(
+                    """
                     SELECT session_player_id, user_id, guest_name
                     FROM `session_players`
                     WHERE user_id = ?;
@@ -143,7 +188,8 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
     override suspend fun getSessionPlayerAsync(sessionPlayerId: UUID): SessionPlayer? = coroutineScope {
         async {
             database.connection?.use { connection ->
-                val statement = connection.prepareStatement("""
+                val statement = connection.prepareStatement(
+                    """
                     SELECT session_player_id, user_id, guest_name
                     FROM `session_players`
                     WHERE session_player_id = ?;
@@ -157,7 +203,7 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                 val resultSet = statement.executeQuery()
 
                 var sessionPlayer: SessionPlayer? = null
-                if(resultSet.next()) {
+                if (resultSet.next()) {
                     sessionPlayer = SessionPlayer(
                         UUID.fromString(resultSet.getString("session_player_id")),
                         resultSet.getInt("user_id"),

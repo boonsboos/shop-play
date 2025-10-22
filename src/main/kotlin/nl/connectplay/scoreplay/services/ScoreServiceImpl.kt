@@ -14,9 +14,9 @@ class ScoreServiceImpl(
     private val scoreRepository: ScoreRepository,
     private val sessionRepository: SessionRepository
 ) : ScoreService {
-    override suspend fun uploadScoreAsync(sessionId: UUID, score: CreateScoreDto): ScoreDto {
+    override suspend fun uploadScoreAsync(sessionId: UUID, userId: Int, score: CreateScoreDto): ScoreDto {
         // make sure the session exists
-        val session = sessionRepository.getSessionByIdAsync(sessionId)
+        val session = sessionRepository.getSessionByIdAsync(sessionId, userId)
             ?: throw NotFoundException("Session $sessionId not found")
 
         // check if the session player exists
@@ -43,8 +43,13 @@ class ScoreServiceImpl(
         )
     }
 
-    override suspend fun updateScoreAsync(sessionId: UUID, scoreId: UUID, score: UpdateScoreDto): ScoreDto {
-        sessionRepository.getSessionByIdAsync(sessionId)
+    override suspend fun updateScoreAsync(
+        sessionId: UUID,
+        userId: Int,
+        scoreId: UUID,
+        score: UpdateScoreDto
+    ): ScoreDto {
+        sessionRepository.getSessionByIdAsync(sessionId, userId)
             ?: throw NotFoundException("Session $sessionId not found")
 
         // check score exists and session ID matches
@@ -74,11 +79,8 @@ class ScoreServiceImpl(
      * @throws NotFoundException when session does not exist
      * @throws IllegalArgumentException when
      */
-    override suspend fun getScoreAsync(
-        sessionId: UUID,
-        scoreId: UUID
-    ): ScoreDto {
-        sessionRepository.getSessionByIdAsync(sessionId)
+    override suspend fun getScoreAsync(sessionId: UUID, userId: Int, scoreId: UUID): ScoreDto {
+        sessionRepository.getSessionByIdAsync(sessionId, userId)
             ?: throw NotFoundException("Session $sessionId does not exist")
 
         // check score exists and session ID matches
@@ -100,8 +102,8 @@ class ScoreServiceImpl(
         )
     }
 
-    override suspend fun getScoresAsync(sessionId: UUID): List<ScoreDto> {
-        sessionRepository.getSessionByIdAsync(sessionId)
+    override suspend fun getScoresAsync(sessionId: UUID, userId: Int): List<ScoreDto> {
+        sessionRepository.getSessionByIdAsync(sessionId, userId)
             ?: throw NotFoundException("Session $sessionId does not exist")
 
         val scores = scoreRepository.getScoresAsync(sessionId)

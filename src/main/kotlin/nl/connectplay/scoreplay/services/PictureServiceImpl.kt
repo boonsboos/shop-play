@@ -20,7 +20,7 @@ class PictureServiceImpl(
 ) : PictureService {
 
     override suspend fun uploadImageByUrlAsync(
-        url: String, entityType: PictureService.EntityType, entityId: String
+        url: String, entityType: PictureService.EntityType, entityId: String, userId: Int?
     ): Boolean {
         val pictureId = pictureRepository.addImageAsync(url) ?: return false
 
@@ -31,7 +31,8 @@ class PictureServiceImpl(
             }
 
             PictureService.EntityType.SESSION -> {
-                sessionRepository.getSessionByIdAsync(UUID.fromString(entityId)) ?: return false
+                if (userId == null) return false
+                sessionRepository.getSessionByIdAsync(UUID.fromString(entityId), userId) ?: return false
                 return sessionRepository.setEndOfSessionPictureAsync(UUID.fromString(entityId), pictureId)
             }
 
@@ -46,8 +47,9 @@ class PictureServiceImpl(
         uploadPicture: UploadPictureDto,
         entityType: PictureService.EntityType,
         entityId: String,
+        userId: Int?
     ): Pair<HttpStatusCode, Any> {
-        val success = uploadImageByUrlAsync(uploadPicture.pictureUrl, entityType, entityId)
+        val success = uploadImageByUrlAsync(uploadPicture.pictureUrl, entityType, entityId, userId)
 
         return if (success) {
             Pair(HttpStatusCode.Created, "Image uploaded")
