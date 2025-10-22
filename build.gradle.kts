@@ -44,11 +44,8 @@ dependencies {
     // test dependencies
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.14.0")
-
     testImplementation("io.ktor:ktor-server-test-host")
-
     testImplementation("io.ktor:ktor-client-content-negotiation")
-    testImplementation("io.ktor:ktor-serialization-kotlinx-json")
 }
 
 tasks.test {
