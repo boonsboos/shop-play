@@ -25,7 +25,7 @@ Content-Type: application/json
 %}
 PATCH http://localhost:8080/sessions/{{sessionId}}
 Content-Type: application/json
-Authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJzY29yZS1wbGF5LXVzZXJzIiwiaXNzIjoiaHR0cHM6Ly9hcGkuY29ubmVjdC1lbi1wbGF5Lm5sIiwidXNlcklkIjo0LCJleHAiOjE3NjEyMjE0ODF9.7PvfikTnHzj7IozfmIEIUl629P2msxM1lx_Lg2Alpjw
+Authorization: bearer {{auth_token}}
 
 {
   "endTime": "{{$isoTimestamp}}",

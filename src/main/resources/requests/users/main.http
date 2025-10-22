@@ -26,12 +26,19 @@ Content-Type: application/json
 ### log in
 POST http://localhost:8080/login
 Content-Type: application/json
+Accept: application/json
 
 {
   "username": "Bob",
   "email": "bob@connect-play.nl",
   "password": "Pass1234"
 }
+
+> {%
+    // so you don't have to manually update the token
+    // but set your environment to 'dev' otherwise it won't work
+    client.global.set("auth_token", response.body.token);
+%}
 
 ### Upload a new profile picture with an file
 < {%
