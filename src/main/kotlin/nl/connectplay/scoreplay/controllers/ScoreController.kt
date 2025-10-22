@@ -21,7 +21,7 @@ class ScoreController(private val scoreService: ScoreService) {
         // we don't take offset and limit here
         // because you always want all the scores in your session
         val userId = call.getUserIdFromJWT()
-        val sessionId = call.getUUIDOrNull("id")
+        val sessionId = call.getUUIDOrNull("sessionsId")
             ?: return call.respond(HttpStatusCode.BadRequest, "Bad session ID")
 
         try {
@@ -36,7 +36,7 @@ class ScoreController(private val scoreService: ScoreService) {
 
     suspend fun handleOneAsync(call: ApplicationCall) {
         val userId = call.getUserIdFromJWT()
-        val sessionId = call.getUUIDOrNull("id")
+        val sessionId = call.getUUIDOrNull("sessionsId")
             ?: return call.respond(HttpStatusCode.BadRequest, "Bad session ID")
         val scoreId = call.getUUIDOrNull("scoreId")
             ?: return call.respond(HttpStatusCode.BadRequest, "Bad score ID")
