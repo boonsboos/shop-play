@@ -12,12 +12,12 @@ fun Route.getUserSessionsRoute() {
     val sessionController by inject<SessionController>()
     authenticate(UserIdJWTAuthenticatorName) {
         // Get all sessions that belong to the requested user
-        get("/users/{requestedId}/sessions") {
+        get("/users/{targetId}/sessions") {
             sessionController.handleListAsync(call)
         }
 
         // Get a specific session by ID for the requested user
-        get("/users/{requestedId}/sessions/{sessionId}") {
+        get("/users/{targetId}/sessions/{sessionId}") {
             sessionController.handleOneAsync(call)
         }
     }

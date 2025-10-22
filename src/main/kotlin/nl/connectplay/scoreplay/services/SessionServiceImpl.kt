@@ -81,7 +81,7 @@ class SessionServiceImpl(
             return if (session.visibility == SessionVisibility.PUBLIC
                 || session.visibility == SessionVisibility.ANONYMISED
                 || (friendStatus && session.visibility == SessionVisibility.FRIENDS_ONLY)
-                || (userId == targetId && targetId == session.hostId)
+                || userId == targetId
             )
                 Pair(HttpStatusCode.OK, session)
             else

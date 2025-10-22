@@ -66,23 +66,21 @@ class SessionController(
 
     suspend fun handleListAsync(call: ApplicationCall) {
         val authedUserId = call.getUserIdFromJWT()// id of the authenticated user (from the JWT)
-        val targetUserId = call.parameters["id"]?.toInt() // id of the user whose sessions are being requested
+        val targetUserId = call.parameters["targetId"]?.toInt() // id of the user whose sessions are being requested
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid user id")
         val limit = call.request.getLimitQueryParameter()
         val offset = call.request.getOffsetQueryParameter()
 
-        val (status, message) = sessionService.getSessionsAsync(targetUserId, limit, offset)
+        val (status, message) = sessionService.getSessionsAsync(authedUserId, targetUserId, limit, offset)
         return call.respondNullable(status = status, message = message)
     }
 
     suspend fun handleOneAsync(call: ApplicationCall) {
         val authedUserId = call.getUserIdFromJWT()// id of the authenticated user (from the JWT)
-        val targetUserId = call.parameters["id"]?.toInt() // id of the user whose sessions are being requested
+        val targetUserId = call.parameters["targetId"]?.toInt() // id of the user whose sessions are being requested
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid user id")
         val sessionId = call.parameters["sessionId"]
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
-        val limit = call.request.getLimitQueryParameter()
-        val offset = call.request.getOffsetQueryParameter()
 
         val (status, message) = sessionService.getSessionAsync(authedUserId, targetUserId, UUID.fromString(sessionId))
         return call.respondNullable(status = status, message = message)
