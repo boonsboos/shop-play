@@ -2,86 +2,107 @@ package nl.connectplay.scoreplay.controllers
 
 import io.ktor.http.*
 import io.ktor.server.application.*
-import io.ktor.server.response.*
 import io.ktor.server.request.*
-import nl.connectplay.scoreplay.abstraction.data.ScoreRepository
+import io.ktor.server.response.*
+import nl.connectplay.scoreplay.abstraction.services.ScoreService
+import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.models.dto.score.CreateScoreDto
 import nl.connectplay.scoreplay.models.dto.score.UpdateScoreDto
-import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
-import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
+import nl.connectplay.scoreplay.utilities.getUUIDOrNull
+import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
+import org.slf4j.LoggerFactory
 import java.sql.SQLException
-import java.util.UUID
 
-class ScoreController(
-    private val scoreRepository: ScoreRepository) {
+class ScoreController(private val scoreService: ScoreService) {
 
-    // Get /Scores
+    private val logger = LoggerFactory.getLogger(ScoreController::class.java)
+
     suspend fun handleListAsync(call: ApplicationCall) {
-        val limit = call.request.getLimitQueryParameter()
-        val offset = call.request.getOffsetQueryParameter()
+        // we don't take offset and limit here
+        // because you always want all the scores in your session
+        val userId = call.getUserIdFromJWT()
+        val sessionId = call.getUUIDOrNull("sessionId")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Bad session ID")
 
-        val scores = scoreRepository.getScoresAsync(limit, offset)
-            ?: return call.respond(HttpStatusCode.NotFound)
+        try {
+            val scores = scoreService.getScoresAsync(sessionId, userId)
 
-            call.respond(HttpStatusCode.OK,scores)
+            call.respond(HttpStatusCode.OK, scores)
+        } catch (e: SQLException) {
+            logger.error("DB error while creating a score", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
     }
 
-    //GET /Scored/ID
     suspend fun handleOneAsync(call: ApplicationCall) {
-        val scoreIdParam = call.parameters["scoreId"] ?:
-        return call.respond(HttpStatusCode.NotFound, "Missing score id")
+        val userId = call.getUserIdFromJWT()
+        val sessionId = call.getUUIDOrNull("sessionId")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Bad session ID")
+        val scoreId = call.getUUIDOrNull("scoreId")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Bad score ID")
 
-        val scoreId = UUID.fromString(scoreIdParam)
-
-        val score = scoreRepository.getScoreByIdAsync(scoreId)
-            ?: return call.respond(HttpStatusCode.NotFound)
+        try {
+            val score = scoreService.getScoreAsync(sessionId, userId, scoreId)
 
             call.respond(HttpStatusCode.OK, score)
-    }
-
-    // POST /Scores
-    suspend fun handleCreateAsync(call: ApplicationCall) {
-        val scoreDto = call.receiveNullable<CreateScoreDto>()
-            ?: return call.respond(HttpStatusCode.BadRequest, "Missing score id")
-
-        try {
-            val created = scoreRepository.addScoreAsync(scoreDto)
-
-            if (created) {
-                call.respond(HttpStatusCode.Created, CreateScoreDto)
-            } else {
-                call.respond(HttpStatusCode.InternalServerError)
-            }
-        }catch (e: Exception) {
-            call.application.environment.log.error("Exception", e)
-            return call.respond(HttpStatusCode.InternalServerError)
+        } catch (e: NotFoundException) {
+            logger.error("Something was not found while fetching a single score", e)
+            call.respond(HttpStatusCode.NotFound)
+        } catch (e: IllegalStateException) {
+            logger.error("Encountered illegal state while fetching single score", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        } catch (e: SQLException) {
+            logger.error("DB error while fetching single score", e)
+            call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
-    // PATCH /scores/ID
-    suspend fun handleUpdateAsync(call: ApplicationCall) {
-        val scoreIdParam =
-            call.parameters["scoreId"] ?: return call.respond(HttpStatusCode.BadRequest, "Missing score id")
+    suspend fun handleCreateAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
+        val sessionId = call.getUUIDOrNull("id")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Bad session id")
 
-        val scoreId = UUID.fromString(scoreIdParam)
+        val newScore = call.receiveNullable<CreateScoreDto>()
+            ?: return call.respond(HttpStatusCode.BadRequest)
+
+        try {
+            val score = scoreService.uploadScoreAsync(sessionId, userId, newScore)
+
+            call.respond(HttpStatusCode.Created, score)
+        } catch (e: NotFoundException) {
+            logger.error("Something was not found while uploading a score", e)
+            call.respond(HttpStatusCode.NotFound)
+        } catch (e: IllegalStateException) {
+            logger.error("Encountered illegal state while creating score", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        } catch (e: SQLException) {
+            logger.error("DB error while creating a score", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleUpdateAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
+        val sessionId = call.getUUIDOrNull("id")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Bad session ID")
+        val scoreId = call.getUUIDOrNull("scoreId")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Bad score ID")
 
         val updatedScore = call.receiveNullable<UpdateScoreDto>()
-            ?: return call.respond(HttpStatusCode.BadRequest, "Missing score id")
-
-
-        if (updatedScore.scoreId != scoreId) {
-            return call.respond(HttpStatusCode.BadRequest, "Score ID in path and body do not match")
-        }
+            ?: return call.respond(HttpStatusCode.BadRequest)
 
         try {
-            val updated = scoreRepository.updateScoreAsync(updatedScore)
-            if (updated) {
-                call.respond(HttpStatusCode.OK,UpdateScoreDto)
-            } else {
-                call.respond(HttpStatusCode.InternalServerError)
-            }
+            val score = scoreService.updateScoreAsync(sessionId, userId, scoreId, updatedScore)
+
+            call.respond(HttpStatusCode.OK, score)
+        } catch (e: NotFoundException) {
+            logger.error("Something was not found while updating score", e)
+            call.respond(HttpStatusCode.NotFound)
+        } catch (e: IllegalStateException) {
+            logger.error("Encountered illegal state while updating score", e)
+            call.respond(HttpStatusCode.InternalServerError)
         } catch (e: SQLException) {
-            call.application.environment.log.error("DB error while updating score $scoreId", e)
+            logger.error("DB error while updating a score", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }

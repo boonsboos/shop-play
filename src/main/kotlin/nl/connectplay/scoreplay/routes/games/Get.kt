@@ -13,4 +13,8 @@ fun Route.gamesRoute() {
     get("/games") {
         gameController.handleListAsync(call)
     }
+
+    get("/games/{gameId}/followers") {
+        gameController.handleGetFollowers(call)
+    }
 }

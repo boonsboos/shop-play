@@ -12,11 +12,18 @@ interface PictureService {
         USER, Game, SESSION
     }
 
-    suspend fun uploadImageByUrlAsync(url: String, entityType: EntityType, entityId: String): Boolean
+    suspend fun uploadImageByUrlAsync(
+        url: String,
+        entityType: EntityType,
+        entityId: String,
+        userId: Int? = null
+    ): Boolean
+
     suspend fun handleUploadImageJsonAsync(
         uploadPicture: UploadPictureDto,
         entityType: EntityType,
         entityId: String,
+        userId: Int? = null
     ): Pair<HttpStatusCode, Any>
 
 }
