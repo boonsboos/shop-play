@@ -52,17 +52,20 @@ Content-Type: application/json
 < {%
     request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
 %}
+// make sure the session has ended before you post scores
 POST http://localhost:8080/sessions/{{sessionId}}/scores
 Content-Type: application/json
 
-{
-  "score": 10.0,
-  "turn": 0,
-  "sessionPlayer": {
-    "userId": 1,
-    "guest": "guest2"
-  }
-}
+[
+    {
+      "score": 10.0,
+      "turn": 0,
+      "sessionPlayer": {
+        "userId": 1,
+        "guest": "guest2"
+      }
+    }
+]
 
 ### get score from specific session
 < {%

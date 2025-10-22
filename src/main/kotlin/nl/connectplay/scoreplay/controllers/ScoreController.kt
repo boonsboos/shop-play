@@ -67,9 +67,9 @@ class ScoreController(private val scoreService: ScoreService) {
             ?: return call.respond(HttpStatusCode.BadRequest)
 
         try {
-            val score = scoreService.bulkUploadScoresAsync(sessionId, userId, newScores)
+            val scores = scoreService.bulkUploadScoresAsync(sessionId, userId, newScores)
 
-            call.respond(HttpStatusCode.Created, score)
+            call.respond(HttpStatusCode.Created, scores)
         } catch (e: UnfinishedSessionException) {
             logger.error(e.message)
             call.respond(HttpStatusCode.Forbidden, "Session not yet finished")
