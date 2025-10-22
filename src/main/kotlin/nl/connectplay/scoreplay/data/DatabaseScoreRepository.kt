@@ -38,6 +38,7 @@ class DatabaseScoreRepository(private val database: Database) : ScoreRepository 
                 stmt.setString(1, sessionId.toString())
                 val resultSet = stmt.executeQuery()
 
+
                 while (resultSet.next()) {
                     scores.add(
                         Score(
