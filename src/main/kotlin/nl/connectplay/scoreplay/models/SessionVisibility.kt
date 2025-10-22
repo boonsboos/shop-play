@@ -13,7 +13,6 @@ enum class SessionVisibility {
         PUBLIC -> 3
     }
 
-
     fun isPublic() = this == PUBLIC || this == ANONYMISED
 
     companion object {

@@ -1,5 +1,8 @@
 package nl.connectplay.scoreplay.services
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.toKotlinLocalDateTime
 import nl.connectplay.scoreplay.abstraction.data.LeaderboardRepository
 import nl.connectplay.scoreplay.abstraction.data.ScoreRepository
@@ -35,7 +38,7 @@ class ScoreServiceImpl(
             throw UnfinishedSessionException(userId, sessionId)
         }
 
-        // get snapshot of the top 3 before uploading
+        // take a snapshot of the top 3 before uploading
         // this list is already sorted by score and date
         val leaderboardScores = leaderboardRepository.getTopScoresForGame(session.gameId)
             .take(3)
@@ -45,7 +48,15 @@ class ScoreServiceImpl(
         }
 
         // we can only broadcast the score if the session is publicly viewable
-        if (session.visibility.isPublic()) tryBroadcastHighscore(leaderboardScores, newScores, session)
+        // since deciding whether a score is a high score or not may take a long time depending on how many scores were uploaded,
+        // it should run in a separate coroutine
+        if (session.visibility.isPublic()) {
+            withContext(Dispatchers.Default) {
+                launch {
+                    tryBroadcastHighscore(leaderboardScores, newScores, session)
+                }
+            }
+        }
 
         // map scores to dto
         return newScores.map { (player, score) ->
