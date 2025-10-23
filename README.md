@@ -1,47 +1,37 @@
-# shop-play
+# score-play
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
-
-Here are some useful links to get you started:
-
-- [Ktor Documentation](https://ktor.io/docs/home.html)
-- [Ktor GitHub page](https://github.com/ktorio/ktor)
-- The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need
-  to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
-
-## Features
-
-Here's a list of features included in this project:
-
-| Name                                                                   | Description                                                                        |
-|------------------------------------------------------------------------|------------------------------------------------------------------------------------|
-| [Routing](https://start.ktor.io/p/routing)                             | Provides a structured routing DSL                                                  |
-| [OpenAPI](https://start.ktor.io/p/openapi)                             | Serves OpenAPI documentation                                                       |
-| [Authentication](https://start.ktor.io/p/auth)                         | Provides extension point for handling the Authorization header                     |
-| [Authentication JWT](https://start.ktor.io/p/auth-jwt)                 | Handles JSON Web Token (JWT) bearer authentication scheme                          |
-| [Server-Sent Events (SSE)](https://start.ktor.io/p/sse)                | Support for server push events                                                     |
-| [Content Negotiation](https://start.ktor.io/p/content-negotiation)     | Provides automatic content conversion according to Content-Type and Accept headers |
-| [kotlinx.serialization](https://start.ktor.io/p/kotlinx-serialization) | Handles JSON serialization using kotlinx.serialization library                     |
-| [Dependency Injection](https://start.ktor.io/p/ktor-di)                | Enables dependency injection for your server                                       |
+Backend API for managing games, users, sessions and scores.
 
 ## Building & Running
 
-To build or run the project, use one of the following tasks:
+| Task              | Description                      |
+|-------------------|----------------------------------|
+| `./gradlew test`  | Run the tests                    |
+| `./gradlew build` | Build everything & run the tests |
 
-| Task                          | Description                                                          |
-|-------------------------------|----------------------------------------------------------------------|
-| `./gradlew test`              | Run the tests                                                        |
-| `./gradlew build`             | Build everything                                                     |
-| `buildFatJar`                 | Build an executable JAR of the server with all dependencies included |
-| `buildImage`                  | Build the docker image to use with the fat JAR                       |
-| `publishImageToLocalRegistry` | Publish the docker image locally                                     |
-| `run`                         | Run the server                                                       |
-| `runDocker`                   | Run using the local docker image                                     |
+Our integration tests run a full flow against the application, which requires a running database.
+
+### Database
+
+Use the Docker Compose file to start the database.
+You need to use the `score_play.sql` script in `/resources` to create the schema.
+Optionally, you can seed your database with some test data using the `mockdata.sql` script, also in `/resources`.
+
+Running the application requires a running database.
+
+You can run the application by running the resulting jar directly, or using `./gradlew run`
 
 If the server starts successfully, you'll see the following output:
 
 ```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
+2024-12-04 14:32:45.584 [main] INFO  Application - Application started in w.xyz seconds.
+2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://a.b.c.d:8080
 ```
 
+**Assuming you are using IntelliJ IDEA:**
+To start running requests, run the HTTP scripts in `src/main/resources/users/login.http`
+to register a test user, and log in.
+
+Then set the Environment to `dev` to be able to use the same authentication token for all requests.
+
+![img.png](resources/dev-env.png)

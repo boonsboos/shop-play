@@ -1,8 +1,10 @@
 # This is for all friends endpoint inside of the users endpoint
 
 ### update existing user
+@auth_token = variable valuefghdghjsdbfjsbjdfksjdfbsdjf
 PATCH http://localhost:8080/users/1
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "username": "Luigi",
@@ -12,6 +14,7 @@ Content-Type: application/json
 ### delete user
 DELETE http://localhost:8080/users/2
 Accept: application/json // the accept tells the server that the client expects the response in JSON format
+Authorization: Bearer {{auth_token}}
 
 ### send friend request
 < {%
