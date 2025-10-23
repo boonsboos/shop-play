@@ -2,7 +2,7 @@
 
 ### send friend request
 < {%
-    request.variables.set("userId", 1) // as user 1
+    request.variables.set("userId", 4) // as user 4
     request.variables.set("friendId", 2) // send a friend request to user 2
 %}
 POST http://localhost:8080/users/{{userId}}/friends
@@ -15,7 +15,7 @@ Authorization: Bearer {{auth_token}}
 
 ### get friends
 < {%
-    request.variables.set("userId", 1) // gets friends for user 1
+    request.variables.set("userId", 4) // gets friends for user 4
 %}
 GET http://localhost:8080/users/{{userId}}/friends
 Content-Type: application/json
@@ -24,7 +24,7 @@ Authorization: Bearer {{auth_token}}
 ### accept friend request
 < {%
     request.variables.set("userId", 2) // as user 2
-    request.variables.set("friendId", 1) // accept friend request from user 1
+    request.variables.set("friendId", 4) // accept friend request from user 4
 %}
 PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
@@ -37,7 +37,7 @@ Authorization: Bearer {{auth_token}}
 ### deny friend request
 < {%
     request.variables.set("userId", 2) // as user 2
-    request.variables.set("friendId", 1) // deny friend request from user 1
+    request.variables.set("friendId", 4) // deny friend request from user 4
 %}
 PATCH http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
@@ -50,14 +50,17 @@ Authorization: Bearer {{auth_token}}
 ### remove user as friend
 < {%
     request.variables.set("userId", 2) // as user 2
-    request.variables.set("friendId", 1) // remove friendship from user 1
+    request.variables.set("friendId", 4) // remove friendship from user 4
 %}
 DELETE http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
-### Get followd gameslist
-GET http://localhost:8080/users/1/followed?offset=0&limit=10
+### Get followed gamelist
+< {%
+    request.variables.set("userId", 4)
+%}
+GET http://localhost:8080/users/{{userId}}/followed?offset=0&limit=10
 Accept: application/json
 Authorization: Bearer {{auth_token}}
 
@@ -66,7 +69,6 @@ Authorization: Bearer {{auth_token}}
 < {%
     request.variables.set("gameId", "5");
 %}
-
 POST http://localhost:8080/games/{{gameId}}/follow
 Accept: application/json
 Authorization: Bearer {{auth_token}}

@@ -163,7 +163,7 @@ class UserController(
         if (!(userId == call.getUserIdFromJWT() ||
                     friendService.isFriendsAsync(call.getUserIdFromJWT(), userId) == true)
         ) {
-            return call.respond(HttpStatusCode.Forbidden)
+            return call.respond(HttpStatusCode.Forbidden, "You are not allowed to get this users friends")
         }
 
         // get all friends of the user
@@ -243,6 +243,8 @@ class UserController(
     }
 
     suspend fun handleUpdateUserAsync(call: ApplicationCall) { // the call: Application is a small package that holeds the request and respons
+        val authUserId = call.getUserIdFromJWT()
+        println(authUserId)
         val userId = call.parameters["id"]?.toIntOrNull()
             ?: return call.respond(
                 HttpStatusCode.BadRequest,

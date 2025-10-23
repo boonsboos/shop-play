@@ -48,10 +48,12 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                     statement.setInt(3, createDto.visibility.toInt())
 
                     val resultSet = statement.executeQuery()
+                    if (resultSet.next()) {
+                        val uuid = resultSet.getString("session_id")
 
-                    val uuid = resultSet.getString("session_id")
-
-                    UUID.fromString(uuid)
+                        return@async UUID.fromString(uuid)
+                    }
+                    return@async null
                 }
             }.await()
         }

@@ -107,7 +107,7 @@ class GameController(
             followGameRepository.followGame(userId, gameId)
             call.respond(HttpStatusCode.Created, "Successfully following the game.")
         } catch (e: SQLIntegrityConstraintViolationException) {
-            call.respond(HttpStatusCode.Conflict, "User already follows this game")
+            call.respond(HttpStatusCode.MultiStatus, "User already follows this game or game does not exist")
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while following game", e)
             call.respond(HttpStatusCode.InternalServerError)
@@ -165,9 +165,10 @@ class GameController(
                         async {
                             val (status, body) = pictureService.handleUploadImageJsonAsync(
                                 uploadPicture,
-                                PictureService.EntityType.Game,
+                                PictureService.EntityType.GAME,
                                 sessionId,
                             )
+                            println("Je moeder op een driewheeler")
                             mapOf(
                                 "index" to index,
                                 "status" to status.value,

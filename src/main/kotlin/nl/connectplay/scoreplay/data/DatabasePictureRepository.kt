@@ -5,6 +5,7 @@ import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.PictureRepository
 import nl.connectplay.scoreplay.models.dto.picture.PictureDto
 import java.sql.SQLException
+import java.sql.SQLIntegrityConstraintViolationException
 import java.util.*
 
 class DatabasePictureRepository(private val database: Database) : PictureRepository {

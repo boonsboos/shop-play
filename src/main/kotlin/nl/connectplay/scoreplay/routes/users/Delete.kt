@@ -19,7 +19,7 @@ fun Route.deleteUserRoute() {
         delete("/users/{id}") {
             try {
                 if (call.getUserIdFromJWT() != call.parameters["id"]?.toInt())
-                    return@delete call.respond(HttpStatusCode.Forbidden)
+                    return@delete call.respond(HttpStatusCode.Forbidden, "You are not allowed to delete this user")
             } catch (e: UnauthorizedException) {
                 call.application.environment.log.error("Authorization error while deleting user: ${e.message}")
                 call.respond(HttpStatusCode.Unauthorized)

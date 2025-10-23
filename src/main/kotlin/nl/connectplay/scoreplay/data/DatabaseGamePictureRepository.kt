@@ -12,7 +12,7 @@ class DatabaseGamePictureRepository(private val database: Database) : GamePictur
                 try {
                     val sql =
                         """
-                            INSERT INTO game_picture (game_id, picture_id) VALUES (?, ?)
+                            INSERT INTO game_pictures (game_id, picture_id) VALUES (?, ?)
                         """.trimIndent()
                     val stmt = connection.prepareStatement(sql)
 

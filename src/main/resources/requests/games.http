@@ -2,7 +2,7 @@
 < {%
     request.variables.set("gameId", 1)
 %}
-POST http://localhost:8080/games/{{gameId}}/pictures
+PATCH http://localhost:8080/games/{{gameId}}/pictures
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
@@ -12,9 +12,8 @@ Authorization: Bearer {{auth_token}}
 
 ### Get topscores from a game
 < {%
-    request.variables.set("gameId", 2)
+    request.variables.set("gameId", 1)
 %}
-
 GET http://localhost:8080/games/{{gameId}}/leaderboard
 Accept: application/json
 Authorization: Bearer {{auth_token}}
@@ -32,7 +31,7 @@ Authorization: Bearer {{auth_token}}
 
 ### edit game
 < {%
-    request.variables.set("gameId", 6)
+    request.variables.set("gameId", 1)
 %}
 PATCH http://localhost:8080/games/{{gameId}}
 Content-Type: application/json

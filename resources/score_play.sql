@@ -136,7 +136,7 @@ CREATE TABLE `sessions` (
   `session_id` uuid NOT NULL DEFAULT uuid_v7(),
   `game_id` int(11) NOT NULL,
   `host_user_id` int(11) NOT NULL,
-  `start_time` timestamp NOT NULL,
+  `start_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `end_time` timestamp NULL DEFAULT NULL,
   `end_of_session_picture_id` uuid DEFAULT NULL,
   `session_visibility` tinyint(4) NOT NULL

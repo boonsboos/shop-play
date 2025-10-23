@@ -9,6 +9,7 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.models.dto.picture.PictureDto
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
+import java.sql.SQLIntegrityConstraintViolationException
 import java.util.*
 
 class PictureServiceImpl(
@@ -36,7 +37,7 @@ class PictureServiceImpl(
                 return sessionRepository.setEndOfSessionPictureAsync(UUID.fromString(entityId), pictureId)
             }
 
-            PictureService.EntityType.Game -> {
+            PictureService.EntityType.GAME -> {
                 gameRepository.getGameByIdAsync(entityId.toInt()) ?: return false
                 return gamePictureRepository.addGamePicture(entityId.toInt(), pictureId)
             }
@@ -49,7 +50,11 @@ class PictureServiceImpl(
         entityId: String,
         userId: Int?
     ): Pair<HttpStatusCode, Any> {
-        val success = uploadImageByUrlAsync(uploadPicture.pictureUrl, entityType, entityId, userId)
+        val success = try {
+             uploadImageByUrlAsync(uploadPicture.pictureUrl, entityType, entityId, userId)
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            return Pair(HttpStatusCode.Conflict, "Image already exists")
+        }
 
         return if (success) {
             Pair(HttpStatusCode.Created, "Image uploaded")
