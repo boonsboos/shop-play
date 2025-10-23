@@ -2,9 +2,13 @@
 
 ### get a list of all users
 GET http://localhost:8080/users
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 ### get a list of all users with query-params
-GET http://localhost:8080/users?limit=10&offset=5
+GET http://localhost:8080/users?limit=10&offset=0&query=Bob
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 ### get user with id '1'
 # this is a pre-request script
@@ -12,33 +16,8 @@ GET http://localhost:8080/users?limit=10&offset=5
     request.variables.set("userId", 1) // this is a per-request variable
 %}
 GET http://localhost:8080/users/{{userId}}
-
-### register new user
-POST http://localhost:8080/register
 Content-Type: application/json
-
-{
-  "username": "Bob",
-  "email": "bob@connect-play.nl",
-  "password": "Pass1234"
-}
-
-### log in
-POST http://localhost:8080/login
-Content-Type: application/json
-Accept: application/json
-
-{
-  "username": "Bob",
-  "email": "bob@connect-play.nl",
-  "password": "Pass1234"
-}
-
-> {%
-    // so you don't have to manually update the token
-    // but set your environment to 'dev' otherwise it won't work
-    client.global.set("auth_token", response.body.token);
-%}
+Authorization: Bearer {{auth_token}}
 
 ### Upload a new profile picture with an file
 < {%
@@ -46,6 +25,7 @@ Accept: application/json
 %}
 PATCH http://localhost:8080/users/{{userId}}/picture
 Content-Type: multipart/form-data; boundary=boundary
+Authorization: Bearer {{auth_token}}
 
 --boundary
 Content-Disposition: form-data; name="profile-picture"; filename="picture2.jpg"
@@ -61,7 +41,23 @@ Content-Type: image/jpeg
 %}
 PATCH http://localhost:8080/users/{{userId}}/picture
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "pictureUrl": "https://picsum.photos/256/256"
 }
+
+### update existing user
+PATCH http://localhost:8080/users/1
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "username": "Luigi",
+  "email": "luigi@connect-play.nl"
+}
+
+### delete user
+DELETE http://localhost:8080/users/2
+Accept: application/json // the accept tells the server that the client expects the response in JSON format
+Authorization: Bearer {{auth_token}}

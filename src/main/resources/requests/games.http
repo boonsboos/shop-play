@@ -4,6 +4,7 @@
 %}
 POST http://localhost:8080/games/{{gameId}}/pictures
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "pictureData": ["https://google.com"]
@@ -16,6 +17,7 @@ Content-Type: application/json
 
 GET http://localhost:8080/games/{{gameId}}/leaderboard
 Accept: application/json
+Authorization: Bearer {{auth_token}}
 
 ### upload new game
 POST http://localhost:8080/games
@@ -34,6 +36,7 @@ Authorization: Bearer {{auth_token}}
 %}
 PATCH http://localhost:8080/games/{{gameId}}
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "releaseDate": "1999-01-01"

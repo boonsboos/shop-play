@@ -9,17 +9,16 @@ import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 
 @ApiRoute
-fun Route.getUserRoute() {
-    val notificationController: NotificationController by inject() // with the injection can we get an instance of the userController by Koin dependency
-    authenticate(UserIdJWTAuthenticatorName) {
-    // GET /notifications/{notificationId} — Get notification by ID
-    get("/notifications/{notificationId}") {
-        notificationController.handleGetNotificationById(call)
-    }
+fun Route.getNotificationRoutes() {
+    val notificationController: NotificationController by inject()
 
-    // GET /notifications — List of notifications by user ID
-    get("/notifications") {
-        notificationController.handleGetAllNotifications(call)
+    authenticate(UserIdJWTAuthenticatorName) {
+        get("/notifications/{notificationId}") {
+            notificationController.handleGetNotificationById(call)
+        }
+
+        get("/notifications") {
+            notificationController.handleGetAllNotifications(call)
         }
     }
 }

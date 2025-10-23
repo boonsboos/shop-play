@@ -17,4 +17,3 @@ fun Route.usersRegisterRoute() {
         userController.handleLoginAsync(call)
     }
 }
-

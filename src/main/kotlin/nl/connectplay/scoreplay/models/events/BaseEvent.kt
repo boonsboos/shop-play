@@ -10,4 +10,4 @@ import kotlin.time.Instant
  */
 @OptIn(ExperimentalTime::class)
 @Serializable
-sealed class BaseEvent(val created: Instant = Clock.System.now())
+abstract class BaseEvent(val created: Instant = Clock.System.now())

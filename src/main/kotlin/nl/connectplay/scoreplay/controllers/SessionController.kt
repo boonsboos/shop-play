@@ -8,13 +8,12 @@ import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.SessionService
-import nl.connectplay.scoreplay.models.SessionVisibility
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
-import nl.connectplay.scoreplay.models.dto.session.SessionDto
 import nl.connectplay.scoreplay.models.dto.session.UpdateSessionDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
+import nl.connectplay.scoreplay.utilities.getUUIDOrNull
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
 import java.sql.SQLException
 import java.util.*
@@ -79,19 +78,18 @@ class SessionController(
         val authedUserId = call.getUserIdFromJWT()// id of the authenticated user (from the JWT)
         val targetUserId = call.parameters["targetId"]?.toInt() // id of the user whose sessions are being requested
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid user id")
-        val sessionId = call.parameters["sessionId"]
+        val sessionId = call.getUUIDOrNull("sessionId")
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
 
-        val (status, message) = sessionService.getSessionAsync(authedUserId, targetUserId, UUID.fromString(sessionId))
+        val (status, message) = sessionService.getSessionAsync(authedUserId, targetUserId, sessionId)
         return call.respondNullable(status = status, message = message)
     }
 
     suspend fun handleUpdateSessionAsync(call: ApplicationCall) {
         val userId = call.getUserIdFromJWT()
-        val sessionId = UUID.fromString(
-            call.parameters["sessionId"]
-                ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
-        )
+        val sessionId = call.getUUIDOrNull("sessionId")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
+
         var updateSession = call.receiveNullable<UpdateSessionDto>()
             ?: return call.respond(HttpStatusCode.BadRequest, "Body is incorrect or empty")
 

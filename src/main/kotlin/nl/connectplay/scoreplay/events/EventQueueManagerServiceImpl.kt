@@ -44,7 +44,8 @@ class EventQueueManagerServiceImpl : EventQueueManagerService {
         }
 
         // we must delegate responsibility over the channel to the programmer
-        return queues[userId] ?: throw IllegalStateException("Attempted to get queue for user $userId, but the queue was removed!")
+        return queues[userId]
+            ?: throw IllegalStateException("Attempted to get queue for user $userId, but the queue was removed!")
     }
 
     /**

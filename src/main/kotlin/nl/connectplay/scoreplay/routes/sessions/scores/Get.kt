@@ -10,6 +10,7 @@ import org.koin.ktor.ext.inject
 @ApiRoute
 fun Route.getScoresRoute() {
     val scoreController by inject<ScoreController>()
+
     authenticate(UserIdJWTAuthenticatorName) {
         // GET /scores — List of scores
         get("/sessions/{sessionId}/scores") {

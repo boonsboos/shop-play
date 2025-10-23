@@ -1,7 +1,8 @@
 package nl.connectplay.scoreplay.routes.users
 
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
+import io.ktor.server.auth.*
+import io.ktor.server.routing.*
+import nl.connectplay.scoreplay.UserIdJWTAuthenticatorName
 import nl.connectplay.scoreplay.controllers.UserController
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
@@ -10,15 +11,17 @@ import org.koin.ktor.ext.inject
 fun Route.usersRoute() {
     val userController by inject<UserController>()
 
-    get("/users") {
-        userController.handleListAsync(call)
-    }
+    authenticate(UserIdJWTAuthenticatorName) {
+        get("/users") {
+            userController.handleListAsync(call)
+        }
 
-    get("/users/{id}") {
-        userController.handleOneAsync(call)
-    }
+        get("/users/{id}") {
+            userController.handleOneAsync(call)
+        }
 
-    get("/users/{id}/followed") {
-        userController.handleFollowedGamesAsync(call)
+        get("/users/{id}/followed") {
+            userController.handleFollowedGamesAsync(call)
+        }
     }
 }

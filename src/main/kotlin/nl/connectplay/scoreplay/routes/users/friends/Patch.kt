@@ -1,17 +1,30 @@
 package nl.connectplay.scoreplay.routes.users.friends
 
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.patch
+import io.ktor.http.*
+import io.ktor.server.auth.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import nl.connectplay.scoreplay.UserIdJWTAuthenticatorName
 import nl.connectplay.scoreplay.controllers.UserController
+import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.routes.ApiRoute
+import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
 import org.koin.ktor.ext.inject
-import kotlin.getValue
 
 @ApiRoute
 fun Route.updateFriendRequest() {
     val userController by inject<UserController>()
 
-    patch("/users/{id}/friends/{friendId}") {
-        userController.handlePatchFriendRequest(call)
+    authenticate(UserIdJWTAuthenticatorName) {
+        patch("/users/{id}/friends/{friendId}") {
+            try {
+                if (call.getUserIdFromJWT() != call.parameters["id"]?.toInt())
+                    return@patch call.respond(HttpStatusCode.Forbidden)
+            } catch (e: UnauthorizedException) {
+                call.application.environment.log.error("Authorization error while updating friend request status: ${e.message}")
+                call.respond(HttpStatusCode.Unauthorized)
+            }
+            userController.handlePatchFriendRequest(call)
+        }
     }
 }

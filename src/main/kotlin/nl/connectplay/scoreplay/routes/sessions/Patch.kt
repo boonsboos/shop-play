@@ -11,6 +11,7 @@ import org.koin.ktor.ext.inject
 @ApiRoute
 fun Route.patchSessionsRoutes() {
     val sessionController by inject<SessionController>()
+
     authenticate(UserIdJWTAuthenticatorName) {
         patch("/sessions/{sessionId}") {
             sessionController.handleUpdateSessionAsync(call)
