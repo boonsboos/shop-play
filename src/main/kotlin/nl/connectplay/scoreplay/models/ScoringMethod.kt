@@ -29,6 +29,7 @@ enum class ScoringMethod {
             3 -> LAST_TO_X_SCORE_WINS
             4 -> FINISHING_ON_POSITION_Y_WINS
             5 -> LAST_MAN_STANDING_WINS
+            else -> HIGHEST_SCORE_WINS
         }
     }
 }
