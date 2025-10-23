@@ -1,6 +1,7 @@
 ### Create game session
 POST http://localhost:8080/sessions
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "gameId": "1",
@@ -14,6 +15,7 @@ Content-Type: application/json
 %}
 PATCH http://localhost:8080/sessions/{{sessionId}}/picture
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "pictureUrl": "https://picsum.photos/256/256"
@@ -47,6 +49,7 @@ Authorization: bearer {{auth_token}}
 %}
 GET http://localhost:8080/sessions/{{sessionId}}/scores
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 ### upload score to session
 < {%
@@ -55,6 +58,7 @@ Content-Type: application/json
 // make sure the session has ended before you post scores
 POST http://localhost:8080/sessions/{{sessionId}}/scores
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 [
     {
@@ -74,6 +78,7 @@ Content-Type: application/json
 %}
 GET http://localhost:8080/sessions/{{sessionId}}/scores/{{scoreId}}
 Accept: application/json
+Authorization: Bearer {{auth_token}}
 
 ### update score
 < {%
@@ -82,6 +87,7 @@ Accept: application/json
 %}
 PATCH http://localhost:8080/sessions/{{sessionId}}/scores/{{scoreId}}
 Content-Type: application/json
+Authorization: Bearer {{auth_token}}
 
 {
   "score": 100.0,
