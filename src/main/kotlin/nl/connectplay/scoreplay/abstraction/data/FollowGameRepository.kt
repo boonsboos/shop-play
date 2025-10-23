@@ -1,6 +1,6 @@
 package nl.connectplay.scoreplay.abstraction.data
 
-import nl.connectplay.scoreplay.models.dto.GameDto
+import nl.connectplay.scoreplay.models.dto.game.GameDto
 import nl.connectplay.scoreplay.models.dto.user.UserDto
 
 interface FollowGameRepository {

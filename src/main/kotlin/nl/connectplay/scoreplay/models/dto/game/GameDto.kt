@@ -1,4 +1,4 @@
-package nl.connectplay.scoreplay.models.dto
+package nl.connectplay.scoreplay.models.dto.game
 
 import kotlinx.datetime.LocalDate
 import nl.connectplay.scoreplay.models.Game
