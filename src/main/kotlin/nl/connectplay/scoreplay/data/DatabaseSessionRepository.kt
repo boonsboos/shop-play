@@ -3,7 +3,6 @@ package nl.connectplay.scoreplay.data
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.toKotlinLocalDateTime
-import java.time.LocalDateTime
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.models.SessionPlayer
 import nl.connectplay.scoreplay.models.SessionVisibility
@@ -59,19 +58,18 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
         }
     }
 
-    override suspend fun getSessionByIdAsync(sessionId: UUID, userId: Int): SessionDto? = coroutineScope {
+    override suspend fun getSessionByIdAsync(sessionId: UUID): SessionDto? = coroutineScope {
         async {
             database.connection?.use { connection ->
                 val sql = """
                     SELECT s.session_id, s.game_id, s.host_user_id, s.start_time, s.end_time,s.session_visibility, p.picture_url as end_of_session_picture
                     FROM sessions as s
                     LEFT JOIN pictures AS p ON s.end_of_session_picture_id = p.picture_id
-                    WHERE session_id = ? AND host_user_id = ?
+                    WHERE session_id = ?
                 """.trimIndent()
 
                 val stmt = connection.prepareStatement(sql)
                 stmt.setObject(1, sessionId)
-                stmt.setInt(2, userId)
 
                 val resultSet = stmt?.executeQuery()
                 var session: SessionDto? = null;
