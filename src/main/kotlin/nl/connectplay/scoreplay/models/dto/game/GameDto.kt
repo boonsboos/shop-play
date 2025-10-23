@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class GameDto(
     val id: Int,
-    val scoringMethodId: Int? = null,
+    val scoringMethodId: Int = 1, // defaults to "Highest score wins"
     val name: String,
     val description: String,
     val publisher: String,
