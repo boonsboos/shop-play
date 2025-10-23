@@ -151,4 +151,32 @@ class DatabaseFollowGameRepository(private val database: Database) : FollowGameR
             }.await()
         }
     }
+
+    override suspend fun getAllFollowerUserIdsAsync(gameId: Int): List<Int> = coroutineScope{
+        val followerUserIds = mutableListOf<Int>()
+        async {
+            database.connection?.use {
+                val statement = it.prepareStatement("""
+                    SELECT user_id
+                    FROM game_followers
+                    WHERE game_id = ?
+                """.trimIndent())
+
+                statement.setInt(1, gameId)
+
+                val resultSet = statement.executeQuery()
+
+                while (resultSet.next()) {
+                    followerUserIds.add(
+                        resultSet.getInt("user_id")
+                    )
+                }
+
+                resultSet.close()
+                statement.close()
+            }
+        }.await()
+
+        followerUserIds.toList()
+    }
 }

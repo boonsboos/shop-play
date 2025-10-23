@@ -1,46 +1,124 @@
 package nl.connectplay.scoreplay.services
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.toKotlinLocalDateTime
+import nl.connectplay.scoreplay.abstraction.data.LeaderboardRepository
 import nl.connectplay.scoreplay.abstraction.data.ScoreRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
+import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.abstraction.services.ScoreService
 import nl.connectplay.scoreplay.exceptions.NotFoundException
+import nl.connectplay.scoreplay.exceptions.UnfinishedSessionException
+import nl.connectplay.scoreplay.models.Score
+import nl.connectplay.scoreplay.models.SessionPlayer
+import nl.connectplay.scoreplay.models.SessionVisibility
+import nl.connectplay.scoreplay.models.dto.leaderboard.LeaderboardEntryDto
 import nl.connectplay.scoreplay.models.dto.score.CreateScoreDto
 import nl.connectplay.scoreplay.models.dto.score.ScoreDto
+import nl.connectplay.scoreplay.models.dto.score.SessionPlayerDto
 import nl.connectplay.scoreplay.models.dto.score.UpdateScoreDto
+import nl.connectplay.scoreplay.models.dto.session.SessionDto
+import nl.connectplay.scoreplay.models.events.HighscoreEvent
 import java.util.*
 
 class ScoreServiceImpl(
     private val scoreRepository: ScoreRepository,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val leaderboardRepository: LeaderboardRepository,
+    private val eventRouter: EventRoutingService
 ) : ScoreService {
-    override suspend fun uploadScoreAsync(sessionId: UUID, userId: Int, score: CreateScoreDto): ScoreDto {
+    override suspend fun bulkUploadScoresAsync(sessionId: UUID, userId: Int, scores: List<CreateScoreDto>): List<ScoreDto> {
         // make sure the session exists
         val session = sessionRepository.getSessionByIdAsync(sessionId, userId)
             ?: throw NotFoundException("Session $sessionId not found")
 
-        // check if the session player exists
+        if (session.endTime == null) {
+            throw UnfinishedSessionException(userId, sessionId)
+        }
+
+        // take a snapshot of the top 3 before uploading
+        // this list is already sorted by score and date
+        val leaderboardScores = leaderboardRepository.getTopScoresForGame(session.gameId)
+            .take(3)
+
+        val newScores: Map<SessionPlayer, Score> = scores.associate { score ->
+            uploadScoreAsync(session, score)
+        }
+
+        // we can only broadcast the score if the session is publicly viewable
+        // since deciding whether a score is a high score or not may take a long time depending on how many scores were uploaded,
+        // it should run in a separate coroutine
+        if (session.visibility.isPublic()) {
+            withContext(Dispatchers.Default) {
+                launch {
+                    tryBroadcastHighscore(leaderboardScores, newScores, session)
+                }
+            }
+        }
+
+        // map scores to dto
+        return newScores.map { (player, score) ->
+            ScoreDto(
+                score.scoreId,
+                score.score,
+                score.turn,
+                score.achievedOn.toKotlinLocalDateTime(),
+                player.toDto(), // we don't need to anonymize here since the user uploading is the owner of the session
+            )
+        }
+    }
+
+    private suspend fun tryBroadcastHighscore(
+        leaderboardScores: List<LeaderboardEntryDto>,
+        playerScores: Map<SessionPlayer, Score>,
+        session: SessionDto
+    ) {
+        for ((player, score) in playerScores) {
+            for ((index, leaderboardScore) in leaderboardScores.withIndex()) {
+                // not this high a score if less than or equal
+                if (leaderboardScore.score >= score.score) continue
+
+                // anonymise the player that set the score if applicable
+                val processedPlayer = when (session.visibility) {
+                    SessionVisibility.PUBLIC -> player.toDto()
+                    SessionVisibility.ANONYMISED -> SessionPlayerDto(player.userId, "Anonymous")
+                    else -> throw IllegalStateException("Broadcasting a highscore event from a session with non-public visibility is not allowed. " +
+                            "(Session: ${session.sessionId})")
+                }
+
+                // we route the event, because this is a high score
+                eventRouter.routeEventAsync(
+                    HighscoreEvent(
+                        gameId = session.gameId,
+                        score = ScoreDto(
+                            score.scoreId,
+                            score.score,
+                            score.turn,
+                            score.achievedOn.toKotlinLocalDateTime(),
+                            processedPlayer
+                        ),
+                        podium = index + 1 // index starts from 0
+                    )
+                )
+                break
+            }
+        }
+    }
+
+    private suspend fun uploadScoreAsync(session: SessionDto, score: CreateScoreDto): Pair<SessionPlayer, Score> {
+        // get the right session player or create a new one if it does not exist yet
         val sessionPlayers = sessionRepository.getSessionPlayers(score.sessionPlayer.userId)
         val currentSessionPlayer = sessionPlayers.firstOrNull { it.guest == score.sessionPlayer.guest }
-
-        val sessionPlayerId = currentSessionPlayer?.sessionPlayerId
-            ?: sessionRepository.createSessionPlayerAsync(score.sessionPlayer)?.sessionPlayerId
-            ?: throw IllegalStateException("Somehow, we were unable to create a new session player")
+            ?: sessionRepository.createSessionPlayerAsync(score.sessionPlayer)
+            ?: throw NotFoundException("Somehow, we were unable to find a fitting session player")
 
         // add the score to the database
-        val createdScore = scoreRepository.addScoreAsync(sessionId, sessionPlayerId, session.gameId, score)
-            ?: throw IllegalStateException("Failed to add score for ${score.sessionPlayer} to session $sessionId")
+        val score = scoreRepository.addScoreAsync(session.sessionId, currentSessionPlayer.sessionPlayerId, session.gameId, score)
+            ?: throw IllegalStateException("Failed to add score for ${score.sessionPlayer} to session ${session.sessionId}")
 
-        // TODO: FSA-20 Een gebruiker krijgt een notificatie als het leaderboard updatet
-
-        // map score to dto
-        return ScoreDto(
-            createdScore.scoreId,
-            createdScore.score,
-            createdScore.turn,
-            createdScore.achievedOn.toKotlinLocalDateTime(),
-            score.sessionPlayer,
-        )
+        return (currentSessionPlayer to score)
     }
 
     override suspend fun updateScoreAsync(
@@ -92,13 +170,14 @@ class ScoreServiceImpl(
         }
 
         val sessionPlayer = sessionRepository.getSessionPlayerAsync(score.sessionPlayerId)
+            ?: throw NotFoundException("SessionPlayer ${score.sessionPlayerId} not found")
 
         return ScoreDto(
             score.scoreId,
             score.score,
             score.turn,
             score.achievedOn.toKotlinLocalDateTime(),
-            sessionPlayer?.toDto()
+            sessionPlayer.toDto()
         )
     }
 
@@ -110,13 +189,14 @@ class ScoreServiceImpl(
 
         return scores.map { score ->
             val sessionPlayer = sessionRepository.getSessionPlayerAsync(score.sessionPlayerId)
+                ?: throw NotFoundException("SessionPlayer ${score.sessionPlayerId} not found")
 
             ScoreDto(
                 score.scoreId,
                 score.score,
                 score.turn,
                 score.achievedOn.toKotlinLocalDateTime(),
-                sessionPlayer?.toDto()
+                sessionPlayer.toDto()
             )
         }
     }

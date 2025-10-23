@@ -13,8 +13,8 @@ import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.models.dto.CreateUserDto
-import nl.connectplay.scoreplay.models.dto.LoginUserDto
+import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.user.LoginUserDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto

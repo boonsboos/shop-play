@@ -1,6 +1,7 @@
 package nl.connectplay.scoreplay.data
 
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.toKotlinLocalDateTime
 import nl.connectplay.scoreplay.abstraction.data.LeaderboardRepository
 import nl.connectplay.scoreplay.models.dto.leaderboard.LeaderboardEntryDto
 
@@ -36,7 +37,7 @@ class DatabaseLeaderboardRepository(private val database: Database) : Leaderboar
                 // these fields are the base for the leaderboardentety
                 val playerName = resultSet.getString("playersName")
                 val score = resultSet.getDouble("score")
-                val achievedOn = resultSet.getString("achieved_on")
+                val achievedOn = resultSet.getObject("achieved_on", java.time.LocalDateTime::class.java)
 
                 // these fields are used to check if de playersname is visable ore not
                 val sessionVisibility = resultSet.getInt("session_visibility")
@@ -54,7 +55,7 @@ class DatabaseLeaderboardRepository(private val database: Database) : Leaderboar
                     LeaderboardEntryDto(
                         playerName = finalName,
                         score = score,
-                        achievedAt = achievedOn
+                        achievedAt = achievedOn.toKotlinLocalDateTime()
                     )
                 )
             }
