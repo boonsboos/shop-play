@@ -8,7 +8,7 @@ import kotlinx.datetime.LocalDate
  */
 open class Game(
     val id: Int,
-    val scoringMethodId: Int,
+    val scoringMethodId: Int,	
     val name: String,
     val description: String,
     val publisher: String,

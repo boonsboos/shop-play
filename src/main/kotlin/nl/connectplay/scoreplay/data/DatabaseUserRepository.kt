@@ -6,7 +6,7 @@ import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.User
 import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
-import nl.connectplay.scoreplay.models.dto.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
 import java.util.UUID
 import java.sql.SQLException

@@ -11,6 +11,7 @@ import nl.connectplay.scoreplay.options.JWTOptions
 import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.services.PictureServiceImpl
 import nl.connectplay.scoreplay.services.ScoreServiceImpl
+import nl.connectplay.scoreplay.services.SessionServiceImpl
 import nl.connectplay.scoreplay.services.UserAccountServiceImpl
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.createdAtStart
@@ -31,7 +32,7 @@ fun repositories() = module {
     singleOf(::DatabasePictureRepository) { bind<PictureRepository>() }
     singleOf(::DatabaseGamePictureRepository) { bind<GamePictureRepository>() }
     singleOf(::DatabaseNotificationRepository) { bind<NotificationRepository>() }
-    singleOf(::DatabaseFollowGameRepository) {bind<FollowGameRepository>() }
+    singleOf(::DatabaseFollowGameRepository) { bind<FollowGameRepository>() }
     singleOf(::DatabaseLeaderboardRepository) { bind<LeaderboardRepository>() }
 }
 
@@ -57,6 +58,7 @@ fun services() = module {
     singleOf(::UserAccountServiceImpl) { bind<UserAccountService>() }
     singleOf(::PictureServiceImpl) { bind<PictureService>() }
     singleOf(::ScoreServiceImpl) { bind<ScoreService>() }
+    singleOf(::SessionServiceImpl) { bind<SessionService>() }
 
     // events
     singleOf(::EventRouter) { bind<EventRoutingService>() }

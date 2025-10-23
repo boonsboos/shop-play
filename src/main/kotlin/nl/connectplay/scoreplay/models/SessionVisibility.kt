@@ -13,11 +13,15 @@ enum class SessionVisibility {
         PUBLIC -> 3
     }
 
-    fun fromInt(visibility: Int) = when(visibility) {
-        0 -> PRIVATE
-        1 -> FRIENDS_ONLY
-        2 -> ANONYMISED
-        3 -> PUBLIC
-        else -> ANONYMISED
+    fun isPublic() = this == PUBLIC || this == ANONYMISED
+
+    companion object {
+        fun fromInt(visibility: Int) = when (visibility) {
+            0 -> PRIVATE
+            1 -> FRIENDS_ONLY
+            2 -> ANONYMISED
+            3 -> PUBLIC
+            else -> ANONYMISED
+        }
     }
 }

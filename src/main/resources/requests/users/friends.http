@@ -64,16 +64,6 @@ Content-Type: application/json
 DELETE http://localhost:8080/users/{{userId}}/friends/{{friendId}}
 Content-Type: application/json
 
-### log in
-POST http://localhost:8080/login
-Content-Type: application/json
-
-{
-  "username": "Bob",
-  "email": "bob@connect-play.nl",
-  "password": "Pass1234"
-}
-
 ### Get followd gameslist
 GET http://localhost:8080/users/1/followed?offset=0&limit=10
 Accept: application/json

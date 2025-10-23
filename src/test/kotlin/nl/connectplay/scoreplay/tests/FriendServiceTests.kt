@@ -8,9 +8,11 @@ import nl.connectplay.scoreplay.services.FriendServiceImpl
 import nl.connectplay.scoreplay.tests.testhelpers.TestEventRouter
 import nl.connectplay.scoreplay.tests.testhelpers.TestFriendRepository
 import nl.connectplay.scoreplay.tests.testhelpers.TestUserRepository
-import org.junit.Assert.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 
 class FriendServiceTests {
