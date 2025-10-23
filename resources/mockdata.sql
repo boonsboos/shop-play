@@ -1,24 +1,27 @@
 /* ===== 1) Scoring methods ===== */
-INSERT INTO scoring_methods (name) VALUES
-                                       ('Highest score wins'),
-                                       ('Lowest score wins'),
-                                       ('First to X score wins')
-                                       ('Finishing on position Y wins')
-                                       ('Last man standing wins');
+INSERT INTO scoring_methods (name)
+VALUES
+('Highest score wins'),
+('Lowest score wins'),
+('First to X score wins'),
+('Finishing on position Y wins'),
+('Last man standing wins');
 
 /* ===== 2) Users (realistisch) ===== */
-INSERT INTO users (user_name, email, password_hash, profile_picture) VALUES
-                                                                         ('Sven Jansen',       'sven.jansen@example.nl',     '$2b$12$examplehashforSven1xxxxxxxxxxxxxxx', NULL),
-                                                                         ('Lieke de Vries',    'lieke.de.vries@example.nl',  '$2b$12$examplehashforLieke2xxxxxxxxxxxx',   NULL),
-                                                                         ('Ahmed El Idrissi',  'ahmed.elidrissi@example.nl', '$2b$12$examplehashforAhmed3xxxxxxxxxxx',   NULL);
+INSERT INTO users (user_name, email, password_hash, profile_picture)
+VALUES
+('Sven Jansen',       'sven.jansen@example.nl',     '$2b$12$examplehashforSven1xxxxxxxxxxxxxxx', NULL),
+('Lieke de Vries',    'lieke.de.vries@example.nl',  '$2b$12$examplehashforLieke2xxxxxxxxxxxx',   NULL),
+('Ahmed El Idrissi',  'ahmed.elidrissi@example.nl', '$2b$12$examplehashforAhmed3xxxxxxxxxxx',   NULL);
 
 /* ===== 3) Pictures (covers) ===== */
-INSERT INTO pictures (picture_url) VALUES
-                                       ('https://cdn.example.com/images/neon_drift.jpg'),
-                                       ('https://cdn.example.com/images/tower_siege.jpg'),
-                                       ('https://cdn.example.com/images/pixel_rally.jpg'),
-                                       ('https://cdn.example.com/images/silent_run.jpg'),
-                                       ('https://cdn.example.com/images/galactic_harvest.jpg');
+INSERT INTO pictures (picture_url)
+VALUES
+('https://cdn.example.com/images/neon_drift.jpg'),
+('https://cdn.example.com/images/tower_siege.jpg'),
+('https://cdn.example.com/images/pixel_rally.jpg'),
+('https://cdn.example.com/images/silent_run.jpg'),
+('https://cdn.example.com/images/galactic_harvest.jpg');
 
 /* ===== 4) Games (5 stuks) ===== */
 INSERT INTO games (scoring_method_id, name, description, publisher, minimum_player_count, maximum_player_count, duration, minimum_age, release_date)
@@ -97,14 +100,16 @@ VALUES
 
 /* ===== 7) Session Players ===== */
 /* PUBLIC: echte users (2 per sessie) */
-INSERT INTO session_players (session_player_id, user_id, guest_name) VALUES
+INSERT INTO session_players (session_player_id, user_id, guest_name)
+VALUES
 (UUID(), @u_sven,  NULL),
 (UUID(), @u_lieke, NULL),
 (UUID(), @u_ahmed, NULL),
 (UUID(), @u_sven,  'Bert');
 
 /* ANON: gastspelers (G1A → per sessie opnieuw: “Gast speler 1/2”) */
-INSERT INTO session_players (session_player_id, user_id, guest_name) VALUES
+INSERT INTO session_players (session_player_id, user_id, guest_name)
+VALUES
 (UUID(), @u_sven, 'Gast speler 1'),
 (UUID(), @u_sven, 'Gast speler 2'),
 (UUID(), @u_ahmed, 'Gast speler 1'),

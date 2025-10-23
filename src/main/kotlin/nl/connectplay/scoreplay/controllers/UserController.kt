@@ -13,16 +13,17 @@ import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
-import nl.connectplay.scoreplay.models.dto.user.LoginUserDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
+import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.user.LoginUserDto
 import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
+import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
 import org.slf4j.LoggerFactory
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
@@ -158,8 +159,12 @@ class UserController(
         val limit = call.request.getLimitQueryParameter()
         val offset = call.request.getOffsetQueryParameter()
 
-        // TODO: we should check if the user is a friend,
-        //  we want only friends of users to be able to see a user's friend
+        // not friends or not the actual user
+        if (!(userId == call.getUserIdFromJWT() ||
+                    friendService.isFriendsAsync(call.getUserIdFromJWT(), userId) == true)
+        ) {
+            return call.respond(HttpStatusCode.Forbidden)
+        }
 
         // get all friends of the user
         try {
@@ -239,9 +244,15 @@ class UserController(
 
     suspend fun handleUpdateUserAsync(call: ApplicationCall) { // the call: Application is a small package that holeds the request and respons
         val userId = call.parameters["id"]?.toIntOrNull()
-            ?: return call.respond(HttpStatusCode.BadRequest, "User ID is not a number")// read the id and cover it to int if possible if null badrequest
+            ?: return call.respond(
+                HttpStatusCode.BadRequest,
+                "User ID is not a number"
+            )// read the id and cover it to int if possible if null badrequest
         val updateDto = call.receiveNullable<UserUpdateDto>()
-            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid or no update date") // receiveNullable checks if the UserUpdateDto is valid
+            ?: return call.respond(
+                HttpStatusCode.BadRequest,
+                "Invalid or no update date"
+            ) // receiveNullable checks if the UserUpdateDto is valid
 
         try {
             userRepository.updateUserAsync(userId, updateDto) // send the update to the UserRepository
@@ -249,7 +260,10 @@ class UserController(
             // null is not allowed for JSON respond
             val updatedUser = userRepository.getUserByIdAsync(userId)
                 ?: return call.respond(HttpStatusCode.NotFound, "No user found after update")
-            call.respond(HttpStatusCode.OK, updatedUser) // send a HTTP Ok response back to the client with the updated user data
+            call.respond(
+                HttpStatusCode.OK,
+                updatedUser
+            ) // send a HTTP Ok response back to the client with the updated user data
         } catch (e: SQLIntegrityConstraintViolationException) {
             // check if the error message is about UNIQUE or duplicate values in the database
             call.respond(HttpStatusCode.Conflict, "Username or email already exists")
@@ -271,7 +285,10 @@ class UserController(
                 userRepository.deleteUser(userId) // call the repository to start fun deleteUser and return boolean
 
             if (!isDeleted) {
-                return call.respond(HttpStatusCode.NotFound, "User not found") // 404 code, return wil stop the action, so it will not continue
+                return call.respond(
+                    HttpStatusCode.NotFound,
+                    "User not found"
+                ) // 404 code, return wil stop the action, so it will not continue
             }
 
             call.respond(HttpStatusCode.OK, "Account deleted successfully")

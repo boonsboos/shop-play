@@ -10,6 +10,7 @@ import org.koin.ktor.ext.inject
 @ApiRoute
 fun Route.getUserSessionsRoute() {
     val sessionController by inject<SessionController>()
+
     authenticate(UserIdJWTAuthenticatorName) {
         // Get all sessions that belong to the requested user
         get("/users/{targetId}/sessions") {

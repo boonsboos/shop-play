@@ -10,12 +10,12 @@ import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 
 @ApiRoute
-fun Route.patchUserRoute() {
-    val notificationController: NotificationController by inject() // with the injection can we get an instance of the userController by Koin dependency
+fun Route.patchNotificationRoute() {
+    val notificationController: NotificationController by inject()
+
     authenticate(UserIdJWTAuthenticatorName) {
-    // PATCH /notifications/{notificationId} Mark notification as read
-    patch("/notifications/{notificationId}"){
-        notificationController.handleMarkAsReadAsync(call)
+        patch("/notifications/{notificationId}"){
+            notificationController.handleMarkAsReadAsync(call)
         }
     }
 }

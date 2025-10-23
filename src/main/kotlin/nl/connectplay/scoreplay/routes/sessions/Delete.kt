@@ -11,6 +11,7 @@ import org.koin.ktor.ext.inject
 @ApiRoute
 fun Route.deleteSessionRoutes() {
     val sessionController by inject<SessionController>()
+
     authenticate(UserIdJWTAuthenticatorName){
         delete("/sessions/{sessionId}"){
             sessionController.handleDeleteSessionAsync(call)

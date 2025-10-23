@@ -9,10 +9,10 @@ import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
 
 @ApiRoute
-fun Route.deleteUserRoute() {
-    val notificationController: NotificationController by inject() // with the injection can we get an instance of the userController by Koin dependency
+fun Route.deleteNotificationRoute() {
+    val notificationController: NotificationController by inject()
+
     authenticate(UserIdJWTAuthenticatorName) {
-        // DELETE /notifications/{notificationId} Delete a notification
         delete("/notifications/{notificationId}") {
             notificationController.handleDeleteNotificationAsync(call)
         }

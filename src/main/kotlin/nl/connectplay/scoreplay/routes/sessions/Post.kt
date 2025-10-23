@@ -1,7 +1,9 @@
 package nl.connectplay.scoreplay.routes.sessions
 
+import io.ktor.server.auth.authenticate
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
+import nl.connectplay.scoreplay.UserIdJWTAuthenticatorName
 import nl.connectplay.scoreplay.controllers.SessionController
 import nl.connectplay.scoreplay.routes.ApiRoute
 import org.koin.ktor.ext.inject
@@ -10,7 +12,9 @@ import org.koin.ktor.ext.inject
 fun Route.createSession() {
     val sessionController by inject<SessionController>()
 
-    post("/sessions") {
-        sessionController.handleSessionCreation(call)
+    authenticate(UserIdJWTAuthenticatorName) {
+        post("/sessions") {
+            sessionController.handleSessionCreation(call)
+        }
     }
 }

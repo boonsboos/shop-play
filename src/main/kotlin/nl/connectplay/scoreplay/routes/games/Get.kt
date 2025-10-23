@@ -11,6 +11,7 @@ import org.koin.ktor.ext.inject
 fun Route.gamesRoute() {
     val gameController by inject<GameController>()
 
+    // everyone can see what games we have, so we do not need to add authentication here
     get("/games") {
         gameController.handleListAsync(call)
     }
