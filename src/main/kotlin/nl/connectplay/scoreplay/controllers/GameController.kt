@@ -12,8 +12,7 @@ import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.models.dto.CreateGameDto
-import nl.connectplay.scoreplay.models.dto.UpdateGameDto
+import nl.connectplay.scoreplay.models.dto.game.*
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException

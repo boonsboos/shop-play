@@ -5,9 +5,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
-import nl.connectplay.scoreplay.models.dto.CreateGameDto
-import nl.connectplay.scoreplay.models.dto.GameDto
-import nl.connectplay.scoreplay.models.dto.UpdateGameDto
+import nl.connectplay.scoreplay.models.dto.game.*
 import java.sql.Date
 import java.sql.Statement
 
@@ -19,7 +17,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
             database.connection?.use { conn ->
                 val sql = """
                     SELECT 
-                        game_id, name, description, publisher,
+                        game_id, name, description, publisher, scoring_method_id,
                         minimum_player_count, maximum_player_count, duration, minimum_age, release_date
                     FROM games
                     WHERE (? IS NULL OR name LIKE ? OR publisher LIKE ? OR description LIKE ?)
@@ -44,6 +42,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                 GameDto(
                                     id = rs.getInt("game_id"),
                                     name = rs.getString("name"),
+                                    scoringMethodId = rs.getInt("scoring_method_id"),
                                     description = rs.getString("description"),
                                     publisher = rs.getString("publisher"),
                                     // getInt() returns 0 if value is SQL NULL, so we need to make sure it's mapped back to null
@@ -87,7 +86,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     }
 
                     stmt.setDate(8, date)
-                    stmt.setInt(9, 1) // TODO: propagate from model
+                    stmt.setInt(9, create.scoringMethod) // TODO: propagate from model
                     stmt.executeUpdate()
 
                     // Read generated id
@@ -126,7 +125,8 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                         maximum_player_count = COALESCE(?, maximum_player_count),
                         duration = COALESCE(?, duration),
                         minimum_age = COALESCE(?, minimum_age),
-                        release_date = COALESCE(?, release_date)
+                        release_date = COALESCE(?, release_date),
+                        scoring_method_id = COALESCE(?, scoring_method_id)
                     WHERE game_id = ?
                 """.trimIndent()
 
@@ -141,7 +141,8 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     stmt.setObject(8,  update.releaseDate?.let {
                         Date.valueOf(it.toJavaLocalDate())
                     })
-                    stmt.setInt(9, id)
+                    stmt.setObject(9, update.scoringMethod)
+                    stmt.setInt(10, id)
 
                     val updated = stmt.executeUpdate()
                     if (updated == 0) return@use null

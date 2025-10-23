@@ -1,4 +1,4 @@
-package nl.connectplay.scoreplay.models.dto
+package nl.connectplay.scoreplay.models.dto.game
 
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
@@ -8,6 +8,7 @@ data class CreateGameDto(
     val name: String,
     val description: String,
     val publisher: String,
+    val scoringMethod: Int = 1,
     val minPlayers: Int? = null,
     val maxPlayers: Int? = null,
     val duration: Int? = null,
