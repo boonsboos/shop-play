@@ -8,6 +8,7 @@ import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.SessionService
+import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import nl.connectplay.scoreplay.models.dto.session.UpdateSessionDto
@@ -30,7 +31,10 @@ class SessionController(
 
     suspend fun handleSessionCreation(call: ApplicationCall) {
         val body: CreateSessionDto =
-            call.receiveNullable<CreateSessionDto>() ?: return call.respond(HttpStatusCode.BadRequest, "Invalid request body")
+            call.receiveNullable<CreateSessionDto>() ?: return call.respond(
+                HttpStatusCode.BadRequest,
+                "Invalid request body"
+            )
 
         try {
             val uuid: UUID =
@@ -51,10 +55,16 @@ class SessionController(
         when {
             contentType.match(ContentType.Application.Json) -> {
                 val uploadPicture = call.receive<UploadPictureDto>()
-                val res = pictureService.handleUploadImageJsonAsync(
-                    uploadPicture, PictureService.EntityType.SESSION, sessionId, userId
-                )
-                call.respond(res.first, res.second)
+
+                try {
+                    val res = pictureService.handleUploadImageJsonAsync(
+                        uploadPicture, PictureService.EntityType.SESSION, sessionId, userId
+                    )
+                    call.respond(res.first, res.second)
+                } catch (e: UnauthorizedException) {
+                    call.application.environment.log.error("User $userId tried to upload picture to session $sessionId but they are not the host")
+                    call.respond(HttpStatusCode.Forbidden, "You are not the host")
+                }
             }
 
             else -> {
@@ -94,8 +104,13 @@ class SessionController(
             ?: return call.respond(HttpStatusCode.BadRequest, "Body is incorrect or empty")
 
         try {
-            val existingSession = repository.getSessionByIdAsync(sessionId, userId)
+            val existingSession = repository.getSessionByIdAsync(sessionId)
                 ?: return call.respond(HttpStatusCode.NotFound, "Session not found")
+
+            if (existingSession.hostId != userId) {
+                return call.respond(HttpStatusCode.Forbidden, "You are not the host")
+            }
+
             // check if session already has an endTime, if so remove it from the UpdateSessionDto
             if (existingSession.endTime != null) {
                 updateSession = UpdateSessionDto(endTime = null, visibility = updateSession.visibility) // Omit endTime

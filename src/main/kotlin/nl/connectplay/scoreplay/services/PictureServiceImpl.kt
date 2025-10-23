@@ -1,13 +1,9 @@
 package nl.connectplay.scoreplay.services
 
 import io.ktor.http.*
-import nl.connectplay.scoreplay.abstraction.data.GamePictureRepository
-import nl.connectplay.scoreplay.abstraction.data.GameRepository
-import nl.connectplay.scoreplay.abstraction.data.PictureRepository
-import nl.connectplay.scoreplay.abstraction.data.SessionRepository
-import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.abstraction.data.*
 import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.models.dto.picture.PictureDto
+import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import java.sql.SQLIntegrityConstraintViolationException
 import java.util.*
@@ -33,7 +29,12 @@ class PictureServiceImpl(
 
             PictureService.EntityType.SESSION -> {
                 if (userId == null) return false
-                sessionRepository.getSessionByIdAsync(UUID.fromString(entityId), userId) ?: return false
+                val session = sessionRepository.getSessionByIdAsync(UUID.fromString(entityId)) ?: return false
+
+                if (session.hostId != userId) {
+                    throw UnauthorizedException("You are not the host")
+                }
+
                 return sessionRepository.setEndOfSessionPictureAsync(UUID.fromString(entityId), pictureId)
             }
 
@@ -51,7 +52,7 @@ class PictureServiceImpl(
         userId: Int?
     ): Pair<HttpStatusCode, Any> {
         val success = try {
-             uploadImageByUrlAsync(uploadPicture.pictureUrl, entityType, entityId, userId)
+            uploadImageByUrlAsync(uploadPicture.pictureUrl, entityType, entityId, userId)
         } catch (e: SQLIntegrityConstraintViolationException) {
             return Pair(HttpStatusCode.Conflict, "Image already exists")
         }
