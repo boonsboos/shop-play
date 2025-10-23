@@ -14,6 +14,7 @@ import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.models.dto.game.*
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
+import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
 
@@ -52,8 +53,8 @@ class GameController(
             val created = gameRepository.addGame(createReq)
             call.respond(HttpStatusCode.Created, created)
         } catch (e: SQLIntegrityConstraintViolationException) {
-            call.application.environment.log.error("Conflict", e)
-            call.respond(HttpStatusCode.Conflict, e.message ?: "Conflict")
+            call.application.environment.log.error("Conflict while creating new game", e)
+            call.respond(HttpStatusCode.Conflict)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while creating game", e)
             call.respond(HttpStatusCode.InternalServerError)
@@ -109,7 +110,7 @@ class GameController(
             call.respond(HttpStatusCode.Conflict, "User already follows this game")
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while following game", e)
-            call.respond(HttpStatusCode.InternalServerError, "Database error")
+            call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
@@ -117,17 +118,14 @@ class GameController(
         val gameId = call.parameters["gameId"]?.toIntOrNull()
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid gameId")
 
-        val principal = call.principal<JWTPrincipal>()
-        val userId = principal?.payload
-            ?.getClaim("userId")?.asInt()
-            ?: return call.respond(HttpStatusCode.Unauthorized, "User not authenticated")
+        val userId = call.getUserIdFromJWT()
 
         try {
             followGameRepository.unfollowGame(userId, gameId)
             call.respond(HttpStatusCode.OK, "Successfully unfollowed the game")
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while unfollowing game", e)
-            call.respond(HttpStatusCode.InternalServerError, "Database error")
+            call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
@@ -142,7 +140,7 @@ class GameController(
             call.respond(HttpStatusCode.OK, followers)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while getting followers", e)
-            call.respond(HttpStatusCode.InternalServerError, "Database error")
+            call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
