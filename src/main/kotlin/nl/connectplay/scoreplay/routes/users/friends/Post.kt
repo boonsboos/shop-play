@@ -19,7 +19,7 @@ fun Route.addFriend() {
         post("/users/{id}/friends") {
             try {
                 if (call.getUserIdFromJWT() != call.parameters["id"]?.toInt())
-                    return@post call.respond(HttpStatusCode.Forbidden)
+                    return@post call.respond(HttpStatusCode.Forbidden, "You are not allowed to make a friend request for this user")
             } catch (e: UnauthorizedException) {
                 call.application.environment.log.error("Authorization error while making a friend request: ${e.message}")
                 call.respond(HttpStatusCode.Unauthorized)

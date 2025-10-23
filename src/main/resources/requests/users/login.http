@@ -14,7 +14,6 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "Bob",
   "email": "bob@connect-play.nl",
   "password": "Pass1234"
 }

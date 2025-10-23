@@ -10,36 +10,20 @@ GET http://localhost:8080/users?limit=10&offset=0&query=Bob
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
-### get user with id '1'
+### get user with id '4'
 # this is a pre-request script
 < {%
-    request.variables.set("userId", 1) // this is a per-request variable
+    request.variables.set("userId", 4) // this is a per-request variable
 %}
 GET http://localhost:8080/users/{{userId}}
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
-### Upload a new profile picture with an file
-< {%
-    request.variables.set("userId", 1)
-%}
-PATCH http://localhost:8080/users/{{userId}}/picture
-Content-Type: multipart/form-data; boundary=boundary
-Authorization: Bearer {{auth_token}}
-
---boundary
-Content-Disposition: form-data; name="profile-picture"; filename="picture2.jpg"
-Content-Type: image/jpeg
-
-# route to the picture
-< ../../../../../resources/picture.jpg
---boundary--
-
 ### Upload an new profile picture with an URL
 < {%
-    request.variables.set("userId", 1)
+    request.variables.set("userId", 4)
 %}
-PATCH http://localhost:8080/users/{{userId}}/picture
+POST http://localhost:8080/users/{{userId}}/picture
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
@@ -48,7 +32,10 @@ Authorization: Bearer {{auth_token}}
 }
 
 ### update existing user
-PATCH http://localhost:8080/users/1
+< {%
+    request.variables.set("userId", 4)
+%}
+PATCH http://localhost:8080/users/{{userId}}
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
@@ -58,6 +45,9 @@ Authorization: Bearer {{auth_token}}
 }
 
 ### delete user
-DELETE http://localhost:8080/users/2
+< {%
+    request.variables.set("userId", 4)
+%}
+DELETE http://localhost:8080/users/{{userId}}
 Accept: application/json // the accept tells the server that the client expects the response in JSON format
 Authorization: Bearer {{auth_token}}

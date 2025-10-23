@@ -8,7 +8,9 @@ interface PictureService {
      *
      */
     enum class EntityType {
-        USER, Game, SESSION
+        USER,
+        GAME,
+        SESSION
     }
 
     /**

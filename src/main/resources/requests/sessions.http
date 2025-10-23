@@ -5,13 +5,13 @@ Authorization: Bearer {{auth_token}}
 
 {
   "gameId": "1",
-  "userId": "1",
+  "userId": "4",
   "visibility": 0
 }
 
 ### Upload end of session picture
 < {%
-    request.variables.set("sessionId", "35fdabd3-a853-11f0-9709-c6f05388f105")
+    request.variables.set("sessionId", "019a1217-6cca-75c4-acce-ea5bcb30ba54") // update sessionId with current sessionId
 %}
 PATCH http://localhost:8080/sessions/{{sessionId}}/picture
 Content-Type: application/json
@@ -23,7 +23,7 @@ Authorization: Bearer {{auth_token}}
 
 ### Update session
 < {%
-    request.variables.set("sessionId", "fd3fb025-af3e-11f0-8e78-f6e891eb1b7a")
+    request.variables.set("sessionId", "019a1217-6cca-75c4-acce-ea5bcb30ba54") // update sessionId with current sessionId
 %}
 PATCH http://localhost:8080/sessions/{{sessionId}}
 Content-Type: application/json
@@ -31,12 +31,12 @@ Authorization: bearer {{auth_token}}
 
 {
   "endTime": "{{$isoTimestamp}}",
-  "visibility": 2
+  "visibility": 4
 }
 
 ### Delete session
 < {%
-    request.variables.set("sessionId", "fd3fb025-af3e-11f0-8e78-f6e891eb1b7a")
+    request.variables.set("sessionId", "019a1217-6cca-75c4-acce-ea5bcb30ba54") // update sessionId with current sessionId
 %}
 DELETE http://localhost:8080/sessions/{{sessionId}}
 Content-Type: application/json
@@ -45,7 +45,7 @@ Authorization: bearer {{auth_token}}
 
 ### get scores for session
 < {%
-    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
+    request.variables.set("sessionId", "53582ea1-b02c-11f0-a5e6-6e5509172b8d") // update sessionId with current sessionId
 %}
 GET http://localhost:8080/sessions/{{sessionId}}/scores
 Content-Type: application/json
@@ -53,7 +53,7 @@ Authorization: Bearer {{auth_token}}
 
 ### upload score to session
 < {%
-    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
+    request.variables.set("sessionId", "53582ea1-b02c-11f0-a5e6-6e5509172b8d") // update sessionId with current sessionId
 %}
 // make sure the session has ended before you post scores
 POST http://localhost:8080/sessions/{{sessionId}}/scores
@@ -73,8 +73,8 @@ Authorization: Bearer {{auth_token}}
 
 ### get score from specific session
 < {%
-    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
-    request.variables.set("scoreId", "0199fd79-c4cf-7c8c-8730-c4125a171e6d")
+    request.variables.set("sessionId", "53582ea1-b02c-11f0-a5e6-6e5509172b8d") // update sessionId with current sessionId
+    request.variables.set("scoreId", "019a122c-3f02-7db4-8e66-42805a0218ce") // update scoreId with current scoreId that is linked to the sessionId
 %}
 GET http://localhost:8080/sessions/{{sessionId}}/scores/{{scoreId}}
 Accept: application/json
@@ -82,8 +82,8 @@ Authorization: Bearer {{auth_token}}
 
 ### update score
 < {%
-    request.variables.set("sessionId", "b010cb2c-ad00-11f0-8bdd-0242ac140003")
-    request.variables.set("scoreId", "0199fd79-c4cf-7c8c-8730-c4125a171e6d")
+    request.variables.set("sessionId", "53582ea1-b02c-11f0-a5e6-6e5509172b8d") // update sessionId with current sessionId
+    request.variables.set("scoreId", "019a122c-3f02-7db4-8e66-42805a0218ce") // update scoreId with current scoreId that is linked to the sessionId
 %}
 PATCH http://localhost:8080/sessions/{{sessionId}}/scores/{{scoreId}}
 Content-Type: application/json

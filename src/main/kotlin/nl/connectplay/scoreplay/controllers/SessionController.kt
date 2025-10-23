@@ -30,13 +30,13 @@ class SessionController(
 
     suspend fun handleSessionCreation(call: ApplicationCall) {
         val body: CreateSessionDto =
-            call.receiveNullable<CreateSessionDto>() ?: return call.respond(HttpStatusCode.BadRequest)
+            call.receiveNullable<CreateSessionDto>() ?: return call.respond(HttpStatusCode.BadRequest, "Invalid request body")
 
         try {
             val uuid: UUID =
                 repository.createSessionAsync(body) ?: return call.respond(HttpStatusCode.InternalServerError)
 
-            call.respond(HttpStatusCode.Created, uuid)
+            call.respond(HttpStatusCode.Created, uuid.toString())
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while creating session", e)
             call.respond(HttpStatusCode.InternalServerError)

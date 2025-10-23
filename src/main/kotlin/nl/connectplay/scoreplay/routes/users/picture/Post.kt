@@ -16,10 +16,10 @@ fun Route.userUploadPictureRoute() {
     val userController by inject<UserController>()
 
     authenticate(UserIdJWTAuthenticatorName) {
-        patch("/users/{id}/picture") {
+        post("/users/{id}/picture") {
             try {
                 if (call.getUserIdFromJWT() != call.parameters["id"]?.toInt())
-                    return@patch call.respond(HttpStatusCode.Forbidden)
+                    return@post call.respond(HttpStatusCode.Forbidden, "You are not allowed to upload a picture for this user")
             } catch (e: UnauthorizedException) {
                 call.application.environment.log.error("Authorization error while uploading user picture: ${e.message}")
                 call.respond(HttpStatusCode.Unauthorized)
