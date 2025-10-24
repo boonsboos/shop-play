@@ -35,9 +35,9 @@ class SessionServiceImpl(
             } else {
                 sessions.filter {
                     it.visibility == SessionVisibility.PUBLIC
-                        || it.visibility == SessionVisibility.ANONYMISED
-                        || (friendStatus && it.visibility == SessionVisibility.FRIENDS_ONLY)
-                        || userId == it.hostId
+                            || it.visibility == SessionVisibility.ANONYMISED
+                            || (friendStatus && it.visibility == SessionVisibility.FRIENDS_ONLY)
+                            || userId == it.hostId
                 }
             }
 
@@ -72,8 +72,13 @@ class SessionServiceImpl(
         sessionId: UUID
     ): Pair<HttpStatusCode, SessionDto?> {
         try {
-            val session: SessionDto = sessionRepository.getSessionByIdAsync(sessionId, userId)
+            val session: SessionDto = sessionRepository.getSessionByIdAsync(sessionId)
                 ?: return HttpStatusCode.NotFound to null
+
+            // if the target user is not the host of the session, we also return not found
+            if (session.hostId != targetId) {
+                return HttpStatusCode.NotFound to null
+            }
 
             val friendStatus = friendService.isFriendsAsync(userId, targetId)
                 ?: false

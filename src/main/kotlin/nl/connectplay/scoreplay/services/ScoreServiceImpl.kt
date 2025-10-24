@@ -10,6 +10,7 @@ import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.abstraction.services.ScoreService
 import nl.connectplay.scoreplay.exceptions.NotFoundException
+import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.exceptions.UnfinishedSessionException
 import nl.connectplay.scoreplay.models.Score
 import nl.connectplay.scoreplay.models.SessionPlayer
@@ -29,10 +30,18 @@ class ScoreServiceImpl(
     private val leaderboardRepository: LeaderboardRepository,
     private val eventRouter: EventRoutingService
 ) : ScoreService {
-    override suspend fun bulkUploadScoresAsync(sessionId: UUID, userId: Int, scores: List<CreateScoreDto>): List<ScoreDto> {
+    override suspend fun bulkUploadScoresAsync(
+        sessionId: UUID,
+        userId: Int,
+        scores: List<CreateScoreDto>
+    ): List<ScoreDto> {
         // make sure the session exists
-        val session = sessionRepository.getSessionByIdAsync(sessionId, userId)
+        val session = sessionRepository.getSessionByIdAsync(sessionId)
             ?: throw NotFoundException("Session $sessionId not found")
+
+        if (session.hostId != userId) {
+            throw UnauthorizedException("You are not the host")
+        }
 
         if (session.endTime == null) {
             throw UnfinishedSessionException(userId, sessionId)
@@ -84,8 +93,10 @@ class ScoreServiceImpl(
                 val processedPlayer = when (session.visibility) {
                     SessionVisibility.PUBLIC -> player.toDto()
                     SessionVisibility.ANONYMISED -> SessionPlayerDto(player.userId, "Anonymous")
-                    else -> throw IllegalStateException("Broadcasting a highscore event from a session with non-public visibility is not allowed. " +
-                            "(Session: ${session.sessionId})")
+                    else -> throw IllegalStateException(
+                        "Broadcasting a highscore event from a session with non-public visibility is not allowed. " +
+                                "(Session: ${session.sessionId})"
+                    )
                 }
 
                 // we route the event, because this is a high score
@@ -115,7 +126,12 @@ class ScoreServiceImpl(
             ?: throw NotFoundException("Somehow, we were unable to find a fitting session player")
 
         // add the score to the database
-        val score = scoreRepository.addScoreAsync(session.sessionId, currentSessionPlayer.sessionPlayerId, session.gameId, score)
+        val score = scoreRepository.addScoreAsync(
+            session.sessionId,
+            currentSessionPlayer.sessionPlayerId,
+            session.gameId,
+            score
+        )
             ?: throw IllegalStateException("Failed to add score for ${score.sessionPlayer} to session ${session.sessionId}")
 
         return (currentSessionPlayer to score)
@@ -127,8 +143,12 @@ class ScoreServiceImpl(
         scoreId: UUID,
         score: UpdateScoreDto
     ): ScoreDto {
-        sessionRepository.getSessionByIdAsync(sessionId, userId)
+        val session = sessionRepository.getSessionByIdAsync(sessionId)
             ?: throw NotFoundException("Session $sessionId not found")
+
+        if (session.hostId != userId) {
+            throw UnauthorizedException("You are not the host")
+        }
 
         // check score exists and session ID matches
         val check = scoreRepository.getScoreByIdAsync(scoreId)
@@ -158,7 +178,7 @@ class ScoreServiceImpl(
      * @throws IllegalArgumentException when
      */
     override suspend fun getScoreAsync(sessionId: UUID, userId: Int, scoreId: UUID): ScoreDto {
-        sessionRepository.getSessionByIdAsync(sessionId, userId)
+        val session = sessionRepository.getSessionByIdAsync(sessionId)
             ?: throw NotFoundException("Session $sessionId does not exist")
 
         // check score exists and session ID matches
@@ -182,7 +202,7 @@ class ScoreServiceImpl(
     }
 
     override suspend fun getScoresAsync(sessionId: UUID, userId: Int): List<ScoreDto> {
-        sessionRepository.getSessionByIdAsync(sessionId, userId)
+        sessionRepository.getSessionByIdAsync(sessionId)
             ?: throw NotFoundException("Session $sessionId does not exist")
 
         val scores = scoreRepository.getScoresAsync(sessionId)
