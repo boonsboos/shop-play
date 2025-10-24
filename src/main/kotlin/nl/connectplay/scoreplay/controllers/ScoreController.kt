@@ -30,10 +30,11 @@ class ScoreController(private val scoreService: ScoreService) {
             val scores = scoreService.getScoresAsync(sessionId, userId)
 
             call.respond(HttpStatusCode.OK, scores)
-        } catch (e: NotFoundException) {
+        } catch (_: NotFoundException) {
+            logger.error("User $userId requested scores from session $sessionId, but it does not exist")
             call.respond(HttpStatusCode.NotFound)
         } catch (e: SQLException) {
-            logger.error("DB error while creating a score", e)
+            logger.error("DB error while fetching scores from session $sessionId", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
     }
@@ -78,7 +79,7 @@ class ScoreController(private val scoreService: ScoreService) {
             call.respond(HttpStatusCode.Forbidden, "Session not yet finished")
         } catch (e: UnauthorizedException) {
             logger.error("User $userId tried to upload scores to session $sessionId, but they are not the host of the session")
-            call.respond(HttpStatusCode.Forbidden, "${e.message}")
+            call.respond(HttpStatusCode.Forbidden, "${e.message}") // "You are not the host"
         } catch (e: NotFoundException) {
             logger.error("Something was not found while uploading a score", e)
             call.respond(HttpStatusCode.NotFound)
@@ -108,6 +109,9 @@ class ScoreController(private val scoreService: ScoreService) {
         } catch (e: NotFoundException) {
             logger.error("Something was not found while updating score", e)
             call.respond(HttpStatusCode.NotFound)
+        } catch (e: UnauthorizedException) {
+            logger.error("User $userId tried to update score $scoreId in session $sessionId, but they are not the host of the session")
+            call.respond(HttpStatusCode.Forbidden, "${e.message}") // "You are not the host"
         } catch (e: IllegalStateException) {
             logger.error("Encountered illegal state while updating score", e)
             call.respond(HttpStatusCode.InternalServerError)
