@@ -7,15 +7,10 @@ import nl.connectplay.scoreplay.controllers.*
 import nl.connectplay.scoreplay.data.*
 import nl.connectplay.scoreplay.events.EventQueueManagerServiceImpl
 import nl.connectplay.scoreplay.events.EventRouter
+import nl.connectplay.scoreplay.options.DBOptions
 import nl.connectplay.scoreplay.options.JWTOptions
-import nl.connectplay.scoreplay.services.FriendServiceImpl
-import nl.connectplay.scoreplay.services.PictureServiceImpl
-import nl.connectplay.scoreplay.services.ScoreServiceImpl
-import nl.connectplay.scoreplay.services.SessionServiceImpl
-import nl.connectplay.scoreplay.services.UserAccountServiceImpl
+import nl.connectplay.scoreplay.services.*
 import org.koin.core.module.dsl.bind
-import org.koin.core.module.dsl.createdAtStart
-import org.koin.core.module.dsl.onClose
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
@@ -66,9 +61,9 @@ fun services() = module {
 }
 
 /**
- * Set the global application configuration for JWT tokens
+ * Set the global application configuration for options classes
  */
-fun jwtOptions(config: ApplicationConfig) = module {
+fun options(config: ApplicationConfig) = module {
     single<JWTOptions> {
         JWTOptions(
             config.property("jwt.secret").getString(),
@@ -77,11 +72,13 @@ fun jwtOptions(config: ApplicationConfig) = module {
             config.property("jwt.realm").getString(),
         )
     }
+    single<DBOptions> {
+        DBOptions(
+            config.property("db.url").getString(),
+        )
+    }
 }
 
 fun database() = module {
-    singleOf(::Database) {
-        createdAtStart() // make sure our database is available directly when we start receiving requests
-        onClose { it?.close() } // clean up on program shutdown
-    }
+    single<Database>(createdAtStart = true) { Database(get<DBOptions>()) }
 }
