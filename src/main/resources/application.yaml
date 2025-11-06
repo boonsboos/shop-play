@@ -4,6 +4,8 @@ ktor:
       - nl.connectplay.scoreplay.ApplicationKt.module
   deployment:
     port: 8080
+db:
+  url: "jdbc:mariadb://localhost:3306/score_play?user=root&password="
 jwt:
   issuer: "https://api.connect-en-play.nl"
   audience: "score-play-users"
