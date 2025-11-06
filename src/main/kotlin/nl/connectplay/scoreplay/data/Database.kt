@@ -8,7 +8,7 @@ class Database {
     // local DB only
     // pool the database connections to reuse connections
     private var _pool: MariaDbPoolDataSource = MariaDbPoolDataSource(
-        "jdbc:mariadb://localhost:3306/score_play?user=root&password="
+        "jdbc:mariadb://db.connectplay.local/score_play?user=root&password="
     )
 
     val connection: Connection? get() = _pool.connection
