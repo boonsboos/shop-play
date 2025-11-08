@@ -16,4 +16,3 @@ services:
       - mariadb
     environment:
       PMA_HOST: mariadb # dit geeft aan dat dit de container is waarop de database runt.
-      PMA_PORT: 3307
