@@ -16,3 +16,4 @@ services:
       - mariadb
     environment:
       PMA_HOST: mariadb # dit geeft aan dat dit de container is waarop de database runt.
+      PMA_ABSOLUTE_URI: https://pma.connectplay.local/
