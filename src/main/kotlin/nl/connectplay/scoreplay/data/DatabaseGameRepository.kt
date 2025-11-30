@@ -46,10 +46,10 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                                     description = rs.getString("description"),
                                     publisher = rs.getString("publisher"),
                                     // getInt() returns 0 if value is SQL NULL, so we need to make sure it's mapped back to null
-                                    minPlayers = rs.getInt("min_players").let { if (it > 0) it else null },
-                                    maxPlayers = rs.getInt("max_players").let { if (it > 0) it else null },
-                                    duration = rs.getInt("duration_minutes").let { if (it > 0) it else null },
-                                    minAge = rs.getInt("min_age").let { if (it > 0) it else null },
+                                    minPlayers = rs.getInt("minimum_player_count").let { if (it > 0) it else null },
+                                    maxPlayers = rs.getInt("maximum_player_count").let { if (it > 0) it else null },
+                                    duration = rs.getInt("duration").let { if (it > 0) it else null },
+                                    minAge = rs.getInt("minimum_age").let { if (it > 0) it else null },
                                     releaseDate = rs.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
                                 )
                             )
