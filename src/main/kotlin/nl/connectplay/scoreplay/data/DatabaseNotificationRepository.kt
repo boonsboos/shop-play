@@ -17,23 +17,25 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
         VALUES (?, ?)
     """.trimIndent()
 
-    override suspend fun saveNotificationAsync(notification: NewNotificationDto): Boolean = withContext(Dispatchers.Default) {
-        database.connection?.use { connection ->
-            val statement = connection.prepareStatement(insertNotificationSql).apply {
-                setInt(1, notification.userId)
-                setString(2, Json.encodeToString(notification.notification))
-            }
-
-            val result = statement.execute()
-            statement.close()
-            result
-        } ?: false
-    }
-
-    override suspend fun getNotificationByIdAsync(notificationId: UUID, userId: Int): NotificationDto? = coroutineScope {
-        async {
+    override suspend fun saveNotificationAsync(notification: NewNotificationDto): Boolean =
+        withContext(Dispatchers.Default) {
             database.connection?.use { connection ->
-                val sql = """SELECT
+                val statement = connection.prepareStatement(insertNotificationSql).apply {
+                    setInt(1, notification.userId)
+                    setString(2, Json.encodeToString(notification.notification))
+                }
+
+                val result = statement.execute()
+                statement.close()
+                result
+            } ?: false
+        }
+
+    override suspend fun getNotificationByIdAsync(notificationId: UUID, userId: Int): NotificationDto? =
+        coroutineScope {
+            async {
+                database.connection?.use { connection ->
+                    val sql = """SELECT
                                 notification_id,
                                 content,
                                 read
@@ -41,48 +43,47 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
                              WHERE notification_id = ?
                           """.trimIndent()
 
-                val stmt = connection.prepareStatement(sql)
-                stmt.setString(1, notificationId.toString())
+                    val stmt = connection.prepareStatement(sql)
+                    stmt.setString(1, notificationId.toString())
 
-                val resultSet = stmt.executeQuery()
-                var notification: NotificationDto? = null;
-                if (resultSet?.next() == true) {
-                    notification = NotificationDto(
-                        notificationId = UUID.fromString(resultSet.getString("notification_id")),
-                        content = resultSet.getString("content"),
-                        read = resultSet.getBoolean("read")
-                    )
+                    val resultSet = stmt.executeQuery()
+                    var notification: NotificationDto? = null;
+                    if (resultSet?.next() == true) {
+                        notification = NotificationDto(
+                            notificationId = UUID.fromString(resultSet.getString("notification_id")),
+                            content = resultSet.getString("content"),
+                            read = resultSet.getBoolean("read")
+                        )
+                    }
+
+                    stmt?.close()
+                    resultSet?.close()
+
+                    notification
                 }
+            }.await()
+        }
 
-                stmt?.close()
-                resultSet?.close()
-
-                notification
-            }
-        }.await()
-    }
-
-    override suspend fun getAllNotificationsAsync(limit: Int, offset: Int ,userId: Int): List<NotificationDto>? {
+    override suspend fun getAllNotificationsAsync(userId: Int, limit: Int, offset: Int): List<NotificationDto>? {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
                     val notifications = mutableListOf<NotificationDto>()
 
                     val sql = """
-                        SELECT
-                            notification_id,
-                            user_id,
-                            content,
-                            read
+                        SELECT `notification_id`, `user_id`, `content`, `read`
                         FROM notifications
                         WHERE user_id = ?
-                        LIMIT ? OFFSET ?""".trimIndent()
+                        LIMIT ? OFFSET ?
+                    """.trimIndent()
 
                     val statement = connection.prepareStatement(sql)
                     statement.setInt(1, userId)
-                    statement.setInt(2, limit ?: 25)
-                    statement.setInt(3, offset ?: 0)
+                    statement.setInt(2, limit)
+                    statement.setInt(3, offset)
                     val resultSet = statement.executeQuery()
+
+                    println(resultSet.statement)
 
                     while (resultSet?.next() == true) {
                         val notification = NotificationDto(
@@ -107,7 +108,8 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
-                    val statement = connection.prepareStatement("DELETE FROM notifications WHERE notification_id = ? AND user_id = ?")
+                    val statement =
+                        connection.prepareStatement("DELETE FROM notifications WHERE notification_id = ? AND user_id = ?")
                     statement.setString(1, notificationId.toString())
                     statement.setInt(2, userId)
 
