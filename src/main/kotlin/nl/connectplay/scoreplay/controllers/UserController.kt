@@ -78,21 +78,68 @@ class UserController(
 
     suspend fun handleRegisterAsync(call: ApplicationCall) {
         val params = call.receive<Map<String, String>>() // read the JSON body as key-value pairs
-        val username = params["username"] ?: return call.respond(HttpStatusCode.BadRequest, "Missing username")
-        val email = params["email"] ?: return call.respond(HttpStatusCode.BadRequest, "Missing email")
-        val password = params["password"] ?: return call.respond(HttpStatusCode.BadRequest, "Missing password")
+        val username = params["username"]
+        val email = params["email"]
+        val password = params["password"]
+
+        if (username.isNullOrBlank()) {
+            return call.respond(
+                HttpStatusCode.BadRequest,
+                RegisterResponse(
+                    data = null,
+                    message = "Missing username"
+                )
+            )
+        }
+
+        if (email.isNullOrBlank()) {
+            return call.respond(
+                HttpStatusCode.BadRequest,
+                RegisterResponse(
+                    data = null,
+                    message = "Missing email"
+                )
+            )
+        }
+
+        if (password.isNullOrBlank()) {
+            return call.respond(
+                HttpStatusCode.BadRequest,
+                RegisterResponse(
+                    data = null,
+                    message = "Missing password"
+                )
+            )
+        }
+
         val user = CreateUserDto(username, email, password) // create new User object
 
         try {
             userRepository.addUser(user) // try to save new user
-            call.respond(HttpStatusCode.Created, user) // send the 201 code as text and the data of the user
+            val response = RegisterResponse(
+                data = createdUser,
+                message = "User created"
+            )
+            call.respond(HttpStatusCode.Created, response) // send the 201 code as text and the data of the user
         } catch (_: SQLIntegrityConstraintViolationException) { // catch the Exception from the UserRepository
             // handle duplicate or invalid user data
-            call.respond(HttpStatusCode.Conflict, "User already exists")
+            call.respond(
+                HttpStatusCode.Conflict,
+                RegisterResponse(
+                    data = null,
+                    message = "User already exists"
+                )
+            )
         } catch (e: SQLException) {
             // handle unexpected database errors
-            logger.error("DB error while adding user", e)
-            call.respond(HttpStatusCode.InternalServerError)
+             logger.error("DB error while adding user", e)
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                RegisterResponse(
+                    data = null,
+                    message = "Unexpected database error"
+                )
+            )
         }
     }
 
