@@ -118,7 +118,7 @@ class UserController(
         try {
             userRepository.addUser(user) // try to save new user
             val response = RegisterResponse(
-                data = createdUser,
+                data = user,
                 message = "User created"
             )
             call.respond(HttpStatusCode.Created, response) // send the 201 code as text and the data of the user
