@@ -13,6 +13,7 @@ import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
+import nl.connectplay.scoreplay.models.RegisterResponse
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestReplyDto
 import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
@@ -132,14 +133,10 @@ class UserController(
             )
         } catch (e: SQLException) {
             // handle unexpected database errors
-             logger.error("DB error while adding user", e)
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                RegisterResponse(
-                    data = null,
-                    message = "Unexpected database error"
-                )
-            )
+            logger.error("DB error while adding user", e)
+            call.respond(HttpStatusCode.InternalServerError)
+
+
         }
     }
 
