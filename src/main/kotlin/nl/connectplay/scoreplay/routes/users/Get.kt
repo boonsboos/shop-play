@@ -23,5 +23,9 @@ fun Route.usersRoute() {
         get("/users/{id}/followed") {
             userController.handleFollowedGamesAsync(call)
         }
+
+        get("/users/me") {
+            userController.handleMeAsync(call)
+        }
     }
 }

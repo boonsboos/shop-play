@@ -140,9 +140,9 @@ class DatabaseFollowGameRepository(private val database: Database) : FollowGameR
                     while (resultSet.next()) {
                         users.add(
                             UserDto(
+                                userId = resultSet.getInt("user_id"),
                                 username = resultSet.getString("user_name"),
-                                email = resultSet.getString("email"),
-                                profilePicture = resultSet.getString("profile_picture")
+                                profilePicture = resultSet.getString("picture_url"),
                             )
                         )
                     }
@@ -152,15 +152,17 @@ class DatabaseFollowGameRepository(private val database: Database) : FollowGameR
         }
     }
 
-    override suspend fun getAllFollowerUserIdsAsync(gameId: Int): List<Int> = coroutineScope{
+    override suspend fun getAllFollowerUserIdsAsync(gameId: Int): List<Int> = coroutineScope {
         val followerUserIds = mutableListOf<Int>()
         async {
             database.connection?.use {
-                val statement = it.prepareStatement("""
+                val statement = it.prepareStatement(
+                    """
                     SELECT user_id
                     FROM game_followers
                     WHERE game_id = ?
-                """.trimIndent())
+                """.trimIndent()
+                )
 
                 statement.setInt(1, gameId)
 

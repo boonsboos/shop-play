@@ -9,7 +9,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.engine.*
 import io.ktor.server.testing.*
-import nl.connectplay.scoreplay.models.dto.user.UserDto
+import nl.connectplay.scoreplay.models.dto.user.FullUserDto
 import nl.connectplay.scoreplay.module
 import org.junit.jupiter.api.*
 import kotlin.test.Test
@@ -90,7 +90,7 @@ class UserRoutesTests {
 
         // parse the response to a UserDto
         // check if the response data match
-        val responseBody = patchResponse.body<UserDto>()
+        val responseBody = patchResponse.body<FullUserDto>()
         assertEquals("Luigi", responseBody.username)
         assertEquals("luigi@connect-play.nl", responseBody.email)
     }
