@@ -35,8 +35,8 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                 // `use` ensures the connection is automatically closed after the block,
                 // even if an exception occurs.
                 database.connection?.use { connection ->
-                    var sql = """
-                        SELECT u.user_name, u.email, p.picture_url FROM users AS u
+                    val sql = """
+                        SELECT u.user_id, user_name, email, p.picture_url FROM users AS u
                         LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
                         WHERE u.user_name LIKE ?
                         LIMIT ? OFFSET ?
@@ -82,8 +82,8 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
     override suspend fun getUserByIdAsync(userId: Int): FullUserDto? = coroutineScope {
         async {
             database.connection?.use { connection ->
-                var sql = """
-                    SELECT u.user_name, u.email, p.picture_url FROM users AS u
+                val sql = """
+                    SELECT u.user_id, user_name, email, p.picture_url FROM users AS u
                     LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
                     WHERE u.user_id = ?
                 """.trimIndent()
