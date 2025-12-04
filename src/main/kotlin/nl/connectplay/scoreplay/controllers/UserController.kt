@@ -19,8 +19,8 @@ import nl.connectplay.scoreplay.models.dto.friend.FriendRequestResponseDto
 import nl.connectplay.scoreplay.models.dto.friend.NewFriendRequestDto
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.user.FullUserDto
 import nl.connectplay.scoreplay.models.dto.user.LoginUserDto
-import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
@@ -51,11 +51,11 @@ class UserController(
         try {
             // Get the users from the repository.
             // If no users are found (repository returns null), respond with 204 No Content.
-            val users: List<UserDto> =
+            val users: List<FullUserDto> =
                 userRepository.getUsersAsync(limit, offset, query) ?: return call.respond(HttpStatusCode.NoContent)
 
             // If users are found, respond with 200 OK and the list of users as JSON.
-            call.respond(HttpStatusCode.OK, users)
+            call.respond(HttpStatusCode.OK, users.map { it.toUserDto() })
         } catch (e: SQLException) {
             // Log the SQL error and respond with 500 Internal Server Error.
             call.application.environment.log.error("DB error while getting users", e)
@@ -67,8 +67,21 @@ class UserController(
         // Try to read the "id" path parameter from the route (e.g. /users/5 → id = 5)
         // If it's missing or not a valid number, immediately respond with 400 Bad Request.
         val userId = call.parameters["id"]?.toIntOrNull() ?: return call.respond(
-            HttpStatusCode.BadRequest, "{'message': 'User Id must be a number'}"
+            HttpStatusCode.BadRequest, "User Id must be a number"
         )
+
+        val user = userRepository.getUserByIdAsync(userId) ?: return call.respond(
+            HttpStatusCode.NotFound, "User not found"
+        )
+
+        call.respond(HttpStatusCode.OK, user.toUserDto())
+    }
+
+    /**
+     * Get the current authenticated user
+     */
+    suspend fun handleMeAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
 
         val user = userRepository.getUserByIdAsync(userId) ?: return call.respond(
             HttpStatusCode.NotFound, "User not found"

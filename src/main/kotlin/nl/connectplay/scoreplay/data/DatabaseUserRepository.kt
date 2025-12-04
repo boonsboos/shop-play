@@ -4,12 +4,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.models.User
+import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
+import nl.connectplay.scoreplay.models.dto.user.FullUserDto
 import nl.connectplay.scoreplay.models.dto.user.UserDto
 import nl.connectplay.scoreplay.models.dto.user.UserUpdateDto
-import nl.connectplay.scoreplay.models.dto.user.CreateUserDto
 import org.mindrot.jbcrypt.BCrypt
-import java.util.UUID
 import java.sql.SQLException
+import java.util.*
 
 class DatabaseUserRepository(private val database: Database) : UserRepository {
 
@@ -24,7 +25,7 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
      */
     override suspend fun getUsersAsync(
         limit: Int?, offset: Int?, query: String?
-    ): List<UserDto>? {
+    ): List<FullUserDto>? {
         // coroutineScope ensures that any child coroutine (like async)
         // will complete before this function returns, and exceptions are properly propagated.
         return coroutineScope {
@@ -48,10 +49,11 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
 
                     val resultSet = stmt?.executeQuery()
 
-                    val users = mutableListOf<UserDto>()
+                    val users = mutableListOf<FullUserDto>()
 
                     while (resultSet?.next() == true) {
-                        val user = UserDto(
+                        val user = FullUserDto(
+                            userId = resultSet.getInt("user_id"),
                             username = resultSet.getString("user_name"),
                             email = resultSet.getString("email"),
                             profilePicture = resultSet.getString("picture_url"),
@@ -77,36 +79,35 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
      * @return a [UserDto] object matching the ID, or null if no user is found
      * @throws java.sql.SQLException if a database error occurs
      */
-    override suspend fun getUserByIdAsync(userId: Int): UserDto? {
-        return coroutineScope {
-            async {
-                database.connection?.use { connection ->
-                    var sql = """
-                        SELECT u.user_name, u.email, p.picture_url FROM users AS u
-                        LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
-                        WHERE u.user_id = ?
-                    """.trimIndent()
+    override suspend fun getUserByIdAsync(userId: Int): FullUserDto? = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                var sql = """
+                    SELECT u.user_name, u.email, p.picture_url FROM users AS u
+                    LEFT JOIN pictures AS p ON u.profile_picture = p.picture_id
+                    WHERE u.user_id = ?
+                """.trimIndent()
 
-                    val stmt = connection.prepareStatement(sql)
-                    stmt.setInt(1, userId)
+                val stmt = connection.prepareStatement(sql)
+                stmt.setInt(1, userId)
 
-                    val resultSet = stmt?.executeQuery()
-                    var user: UserDto? = null;
-                    if (resultSet?.next() == true) {
-                        user = UserDto(
-                            username = resultSet.getString("user_name"),
-                            email = resultSet.getString("email"),
-                            profilePicture = resultSet.getString("picture_url"),
-                        )
-                    }
-
-                    stmt?.close()
-                    resultSet?.close()
-
-                    user
+                val resultSet = stmt?.executeQuery()
+                var user: FullUserDto? = null;
+                if (resultSet?.next() == true) {
+                    user = FullUserDto(
+                        userId = resultSet.getInt("user_id"),
+                        username = resultSet.getString("user_name"),
+                        email = resultSet.getString("email"),
+                        profilePicture = resultSet.getString("picture_url"),
+                    )
                 }
-            }.await()
-        }
+
+                stmt?.close()
+                resultSet?.close()
+
+                user
+            }
+        }.await()
     }
 
     val getUserByNameOrEmailSql = """
@@ -191,13 +192,15 @@ class DatabaseUserRepository(private val database: Database) : UserRepository {
                 database.connection?.use { connection ->
                     // only update the fields that are changed
                     // use the COALESCE for the new value that is not null, else leave old data untouched
-                    val updateStmt = connection.prepareStatement("UPDATE users SET " +
-                            "user_name = COALESCE(?, user_name), " +
-                            "email = COALESCE(?, email), " +
-                            "password_hash = COALESCE(?, password_hash) " +
-                            "WHERE user_id = ?")
+                    val updateStmt = connection.prepareStatement(
+                        "UPDATE users SET " +
+                                "user_name = COALESCE(?, user_name), " +
+                                "email = COALESCE(?, email), " +
+                                "password_hash = COALESCE(?, password_hash) " +
+                                "WHERE user_id = ?"
+                    )
 
-                    // the password wil only be hased if password is NOT null, else keep it null.
+                    // the password wil only be hashed if password is NOT null, else keep it null so COALESCE handles it properly.
                     val hashedPassword = if (updateDto.password != null)
                         BCrypt.hashpw(updateDto.password, BCrypt.gensalt())
                     else null
