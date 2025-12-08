@@ -2,10 +2,12 @@ package nl.connectplay.scoreplay.data
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.datetime.toKotlinLocalDate
 import kotlinx.datetime.toKotlinLocalDateTime
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.models.SessionPlayer
 import nl.connectplay.scoreplay.models.SessionVisibility
+import nl.connectplay.scoreplay.models.dto.game.GameDto
 import nl.connectplay.scoreplay.models.dto.score.SessionPlayerDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import nl.connectplay.scoreplay.models.dto.session.SessionDto
@@ -34,7 +36,7 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
      * Creates a new session for a user
      * @param createDto the required data for making a new session
      * @return the ID of the newly created session
-     * @throws java.sql.SQLException if data incorrect
+     * @throws SQLException if data incorrect
      */
     override suspend fun createSessionAsync(createDto: CreateSessionDto): UUID? {
         return coroutineScope {
@@ -62,9 +64,20 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
         async {
             database.connection?.use { connection ->
                 val sql = """
-                    SELECT s.session_id, s.game_id, s.host_user_id, s.start_time, s.end_time,s.session_visibility, p.picture_url as end_of_session_picture
+                    SELECT s.session_id, s.host_user_id, s.start_time, s.end_time, s.session_visibility,
+                        p.picture_url as end_of_session_picture,
+                        g.game_id, g.scoring_method_id as game_scoring_method,
+                        g.name as game_name,
+                        g.description as game_description,
+                        g.publisher as game_publisher,
+                        g.minimum_player_count as game_min_players,
+                        g.maximum_player_count as game_max_players,
+                        g.duration as game_duration,
+                        g.minimum_age as game_min_age,
+                        g.release_date as game_release_date
                     FROM sessions as s
                     LEFT JOIN pictures AS p ON s.end_of_session_picture_id = p.picture_id
+                    LEFT JOIN games AS g ON s.game_id = g.game_id
                     WHERE session_id = ?
                 """.trimIndent()
 
@@ -75,14 +88,27 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                 var session: SessionDto? = null;
 
                 if (resultSet?.next() == true) {
+                    println("Found session")
                     session = SessionDto(
-                        resultSet.getObject("session_id", UUID::class.java),
-                        resultSet.getInt("game_id"),
-                        resultSet.getInt("host_user_id"),
-                        resultSet.getTimestamp("start_time").toLocalDateTime().toKotlinLocalDateTime(),
-                        resultSet.getTimestamp("end_time")?.toLocalDateTime()?.toKotlinLocalDateTime(),
-                        resultSet.getString("end_of_session_picture"),
-                        SessionVisibility.fromInt(resultSet.getInt("session_visibility")),
+                        sessionId = resultSet.getObject("session_id", UUID::class.java),
+                        game = GameDto(
+                            id = resultSet.getInt("game_id"),
+                            scoringMethodId = resultSet.getInt("game_scoring_method"),
+                            name = resultSet.getString("game_name"),
+                            description = resultSet.getString("game_description"),
+                            publisher = resultSet.getString("game_publisher"),
+                            minPlayers = resultSet.getInt("game_min_players"),
+                            maxPlayers = resultSet.getInt("game_max_players"),
+                            duration = resultSet.getInt("game_duration"),
+                            minAge = resultSet.getInt("game_min_age"),
+                            releaseDate = resultSet.getDate("game_release_date")?.toLocalDate()
+                                ?.toKotlinLocalDate(),
+                        ),
+                        hostId = resultSet.getInt("host_user_id"),
+                        startTime = resultSet.getTimestamp("start_time").toLocalDateTime().toKotlinLocalDateTime(),
+                        endTime = resultSet.getTimestamp("end_time")?.toLocalDateTime()?.toKotlinLocalDateTime(),
+                        endOfSessionPictureUrl = resultSet.getString("end_of_session_picture"),
+                        visibility = SessionVisibility.fromInt(resultSet.getInt("session_visibility")),
                     )
                 }
 
@@ -98,9 +124,20 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
         async {
             database.connection?.use { connection ->
                 val sql = """
-                    SELECT s.session_id, s.game_id, s.host_user_id, s.start_time, s.end_time,s.session_visibility, p.picture_url as end_of_session_picture
+                    SELECT s.session_id, s.host_user_id, s.start_time, s.end_time, s.session_visibility,
+                        p.picture_url as end_of_session_picture,
+                        g.game_id, g.scoring_method_id as game_scoring_method,
+                        g.name as game_name,
+                        g.description as game_description,
+                        g.publisher as game_publisher,
+                        g.minimum_player_count as game_min_players,
+                        g.maximum_player_count as game_max_players,
+                        g.duration as game_duration,
+                        g.minimum_age as game_min_age,
+                        g.release_date as game_release_date
                     FROM sessions as s
                     LEFT JOIN pictures AS p ON s.end_of_session_picture_id = p.picture_id
+                    LEFT JOIN games AS g ON s.game_id = g.game_id   
                     WHERE host_user_id = ?
                 """.trimIndent()
 
@@ -114,13 +151,25 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
                 while (resultSet?.next() == true) {
                     sessions.add(
                         SessionDto(
-                            resultSet.getObject("session_id", UUID::class.java),
-                            resultSet.getInt("game_id"),
-                            resultSet.getInt("host_user_id"),
-                            resultSet.getTimestamp("start_time").toLocalDateTime().toKotlinLocalDateTime(),
-                            resultSet.getTimestamp("end_time")?.toLocalDateTime()?.toKotlinLocalDateTime(),
-                            resultSet.getString("end_of_session_picture"),
-                            SessionVisibility.fromInt(resultSet.getInt("session_visibility")),
+                            sessionId = resultSet.getObject("session_id", UUID::class.java),
+                            game = GameDto(
+                                id = resultSet.getInt("game_id"),
+                                scoringMethodId = resultSet.getInt("game_scoring_method"),
+                                name = resultSet.getString("game_name"),
+                                description = resultSet.getString("game_description"),
+                                publisher = resultSet.getString("game_publisher"),
+                                minPlayers = resultSet.getInt("game_min_players"),
+                                maxPlayers = resultSet.getInt("game_max_players"),
+                                duration = resultSet.getInt("game_duration"),
+                                minAge = resultSet.getInt("game_min_age"),
+                                releaseDate = resultSet.getDate("game_release_date")?.toLocalDate()
+                                    ?.toKotlinLocalDate(),
+                            ),
+                            hostId = resultSet.getInt("host_user_id"),
+                            startTime = resultSet.getTimestamp("start_time").toLocalDateTime().toKotlinLocalDateTime(),
+                            endTime = resultSet.getTimestamp("end_time")?.toLocalDateTime()?.toKotlinLocalDateTime(),
+                            endOfSessionPictureUrl = resultSet.getString("end_of_session_picture"),
+                            visibility = SessionVisibility.fromInt(resultSet.getInt("session_visibility")),
                         )
                     )
                 }

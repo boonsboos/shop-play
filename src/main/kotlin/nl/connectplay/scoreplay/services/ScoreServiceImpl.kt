@@ -49,7 +49,7 @@ class ScoreServiceImpl(
 
         // take a snapshot of the top 3 before uploading
         // this list is already sorted by score and date
-        val leaderboardScores = leaderboardRepository.getTopScoresForGame(session.gameId)
+        val leaderboardScores = leaderboardRepository.getTopScoresForGame(session.game.id)
             .take(3)
 
         val newScores: Map<SessionPlayer, Score> = scores.associate { score ->
@@ -102,7 +102,7 @@ class ScoreServiceImpl(
                 // we route the event, because this is a high score
                 eventRouter.routeEventAsync(
                     HighscoreEvent(
-                        gameId = session.gameId,
+                        gameId = session.game.id,
                         score = ScoreDto(
                             score.scoreId,
                             score.score,
@@ -129,7 +129,7 @@ class ScoreServiceImpl(
         val score = scoreRepository.addScoreAsync(
             session.sessionId,
             currentSessionPlayer.sessionPlayerId,
-            session.gameId,
+            session.game.id,
             score
         )
             ?: throw IllegalStateException("Failed to add score for ${score.sessionPlayer} to session ${session.sessionId}")
