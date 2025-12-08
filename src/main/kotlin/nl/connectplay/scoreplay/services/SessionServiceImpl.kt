@@ -44,20 +44,11 @@ class SessionServiceImpl(
             if (filteredSessions.isEmpty()) return HttpStatusCode.NoContent to null
 
             // return the index of the last element in the filtered list if possible
-            val computedOffset = if (offset > filteredSessions.size) {
-                filteredSessions.size - 1
-            } else {
-                offset
-            }
+            if (offset >= filteredSessions.size)
+                return HttpStatusCode.OK to emptyList()
 
-            // the limit should be 1 if we are were to go over the limit
-            val computedLimit = if (computedOffset + limit > filteredSessions.size) {
-                1
-            } else {
-                limit
-            }
-
-            val sessionsSlice = filteredSessions.subList(computedOffset, computedLimit)
+            val end = minOf(filteredSessions.size, offset + limit)
+            val sessionsSlice = filteredSessions.subList(offset, end)
 
             return Pair(HttpStatusCode.OK, sessionsSlice)
         } catch (e: Exception) {
