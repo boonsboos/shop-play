@@ -37,4 +37,6 @@ interface FriendRepository {
      * @return list of user Ids
      */
     suspend fun getFriendsAsync(userId: Int, limit: Int, offset: Int): List<Int>?
+    suspend fun getPendingFriendRequestsAsync(userId: Int): List<Int>?
+    suspend fun getOutstandingFriendRequestsAsync(userId: Int): List<Int>?
 }

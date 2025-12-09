@@ -19,6 +19,9 @@ enum class FriendshipStatus {
     @SerialName("pending")
     PENDING,
 
+    @SerialName("accepted")
+    ACCEPTED,
+
     /**
      * Active friendship.
      * The users can see things meant only for friends.

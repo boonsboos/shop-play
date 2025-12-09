@@ -24,8 +24,14 @@ fun Route.usersRoute() {
             userController.handleFollowedGamesAsync(call)
         }
 
-        get("/users/me") {
-            userController.handleMeAsync(call)
+        route("/users/me") {
+            get{
+                userController.handleMeAsync(call)
+            }
+
+            get("/friendrequests") {
+                userController.handleGetFriendRequestsForUserAsync(call)
+            }
         }
     }
 }

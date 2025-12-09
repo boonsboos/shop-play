@@ -1,10 +1,16 @@
 package nl.connectplay.scoreplay.services
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.models.FriendshipStatus
+import nl.connectplay.scoreplay.models.dto.friend.FriendRequestListResponse
 import nl.connectplay.scoreplay.models.dto.friend.UserFriendDto
 import nl.connectplay.scoreplay.models.events.FriendRequestEvent
 import nl.connectplay.scoreplay.models.events.FriendRequestReplyEvent
@@ -118,21 +124,43 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
     ): List<UserFriendDto>?  {
         val friendIds = friendRepository.getFriendsAsync(userId, limit, offset) ?: return null
 
-        val userList = mutableListOf<UserFriendDto>()
-        for (friendId in friendIds) {
-            val user = userRepository.getUserByIdAsync(friendId)
-                ?: return null // we failed to fetch every user, stop executing
-
-            // add users to list with friendship status
-            userList.add(
-                UserFriendDto(
-                    user.username,
-                    user.profilePicture,
-                    FriendshipStatus.FRIENDS // we only have friends in this list
-                )
-            )
-        }
-
-        return userList.toList()
+        return mapToUserFriendDto(friendIds)
     }
+
+    /**
+     * Gets the open friend requests for the user.
+     *
+     * @param userId the user to get friend requests for
+     * @return [FriendRequestListResponse] containing pending (incoming) and outstanding (outgoing) friend requests
+     */
+    override suspend fun getFriendRequestsAsync(userId: Int): FriendRequestListResponse {
+        var pendingIds = friendRepository.getPendingFriendRequestsAsync(userId) ?: listOf()
+        var outstandingIds = friendRepository.getOutstandingFriendRequestsAsync(userId) ?: listOf()
+
+        val friendIds = friendRepository.getFriendsAsync(userId) ?: listOf()
+
+        pendingIds = pendingIds.filter { !friendIds.contains(it) }
+        outstandingIds = outstandingIds.filter { !friendIds.contains(it) }
+
+        return FriendRequestListResponse(
+            mapToUserFriendDto(pendingIds, FriendshipStatus.PENDING),
+            mapToUserFriendDto(outstandingIds, FriendshipStatus.PENDING)
+        )
+    }
+
+    private suspend fun mapToUserFriendDto(friendIds: List<Int>, status: FriendshipStatus = FriendshipStatus.FRIENDS) =
+        friendIds.asFlow().map { friendId ->
+            coroutineScope {
+                async {
+                    val user = userRepository.getUserByIdAsync(friendId)
+                        ?: throw IllegalArgumentException("Cannot fetch user for this friend") // we failed to fetch every user, stop executing
+
+                    // add users to list with friendship status
+                    UserFriendDto(
+                        user.toUserDto(),
+                        status
+                    )
+                }.await()
+            }
+        }.toList()
 }

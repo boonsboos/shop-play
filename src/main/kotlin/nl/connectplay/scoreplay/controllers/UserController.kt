@@ -233,6 +233,23 @@ class UserController(
         }
     }
 
+    suspend fun handleGetFriendRequestsForUserAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
+
+        // get all friends of the user
+        try {
+            val friendsAsUsers = friendService.getFriendRequestsAsync(userId)
+
+            call.respond(HttpStatusCode.OK, friendsAsUsers)
+        } catch (e: IllegalArgumentException) {
+            call.application.environment.log.error("Failed to get users while getting friend requests for user $userId", e)
+            call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while getting friend requests for user $userId", e)
+            call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
+        }
+    }
+
     suspend fun handlePatchFriendRequest(call: ApplicationCall) {
         val userId = call.parameters["id"]?.toIntOrNull()
             ?: return call.respond(HttpStatusCode.BadRequest) // user ID is required
