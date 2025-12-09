@@ -25,7 +25,13 @@ fun Route.usersRoute() {
         }
 
         get("/users/me") {
-            userController.handleMeAsync(call)
+            get{
+                userController.handleMeAsync(call)
+            }
+
+            get("/friendrequests") {
+                userController.handleGetFriendRequestsForUserAsync(call)
+            }
         }
     }
 }

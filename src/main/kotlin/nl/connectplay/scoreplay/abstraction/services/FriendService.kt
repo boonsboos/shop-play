@@ -1,6 +1,7 @@
 package nl.connectplay.scoreplay.abstraction.services
 
 import nl.connectplay.scoreplay.models.FriendshipStatus
+import nl.connectplay.scoreplay.models.dto.friend.FriendRequestListResponse
 import nl.connectplay.scoreplay.models.dto.friend.UserFriendDto
 
 interface FriendService {
@@ -54,4 +55,9 @@ interface FriendService {
      * @param offset standard offset parameter
      */
     suspend fun getFriendsAsync(userId: Int, limit: Int, offset: Int): List<UserFriendDto>?
+
+    /**
+     * Gets the open friend requests for the user
+     */
+    suspend fun getFriendRequestsAsync(userId: Int): FriendRequestListResponse
 }

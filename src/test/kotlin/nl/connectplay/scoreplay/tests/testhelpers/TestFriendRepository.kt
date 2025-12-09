@@ -24,4 +24,12 @@ class TestFriendRepository : FriendRepository {
         limit: Int,
         offset: Int
     ): List<Int> = getFriendsAsync(userId)
+
+    override suspend fun getPendingFriendRequestsAsync(userId: Int): List<Int>? {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getOutstandingFriendRequestsAsync(userId: Int): List<Int>? {
+        TODO("Not yet implemented")
+    }
 }

@@ -3,7 +3,7 @@
 ### send friend request
 < {%
     request.variables.set("userId", 4) // as user 4
-    request.variables.set("friendId", 2) // send a friend request to user 2
+    request.variables.set("friendId", 3) // send a friend request to user 2
 %}
 POST http://localhost:8080/users/{{userId}}/friends
 Content-Type: application/json
@@ -18,6 +18,14 @@ Authorization: Bearer {{auth_token}}
     request.variables.set("userId", 4) // gets friends for user 4
 %}
 GET http://localhost:8080/users/{{userId}}/friends
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+### get friend reqs
+< {%
+    request.variables.set("userId", 4) // gets friends for user 4
+%}
+GET http://localhost:8080/users/me/friendrequests
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 

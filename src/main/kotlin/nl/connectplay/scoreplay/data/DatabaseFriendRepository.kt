@@ -52,8 +52,11 @@ class DatabaseFriendRepository(private val database: Database) : FriendRepositor
     }
 
     private val getFriendsSql = """
-        SELECT friend_id FROM friends
-        WHERE user_id = ?;
+       SELECT DISTINCT(f1.friend_id)
+        FROM friends f1
+        JOIN friends f2 ON f1.user_id = f2.friend_id AND f1.friend_id = f2.user_id
+        WHERE f1.friend_id <> ?
+        AND f1.user_id = ?;
     """.trimIndent()
 
     override suspend fun getFriendsAsync(userId: Int): List<Int>? = coroutineScope {
@@ -62,15 +65,70 @@ class DatabaseFriendRepository(private val database: Database) : FriendRepositor
             database.connection?.use { connection ->
                 val statement = connection.prepareStatement(getFriendsSql)
                 statement.setInt(1, userId)
+                statement.setInt(2, userId)
 
                 executeGetFriendIdsQuery(statement)
             }
         }.await()
     }
 
+    private val getOutstandingFriendRequestsSql = """
+        SELECT friend_id
+        FROM friends
+        WHERE user_id = ?;
+    """.trimIndent()
+
+    override suspend fun getOutstandingFriendRequestsAsync(userId: Int): List<Int>? = coroutineScope {
+        async {
+            // autoclose connection after leaving scope
+            database.connection?.use { connection ->
+                val statement = connection.prepareStatement(getOutstandingFriendRequestsSql)
+                statement.setInt(1, userId)
+
+                executeGetFriendIdsQuery(statement)
+            }
+        }.await()
+    }
+
+    private val getPendingFriendRequestsSql = """
+        SELECT user_id
+        FROM friends
+        WHERE friend_id = ?;
+    """.trimIndent()
+
+    override suspend fun getPendingFriendRequestsAsync(userId: Int): List<Int>? = coroutineScope {
+        async {
+            // autoclose connection after leaving scope
+            database.connection?.use { connection ->
+                val statement = connection.prepareStatement(getPendingFriendRequestsSql)
+                statement.setInt(1, userId)
+
+                val resultSet = statement.executeQuery()
+
+                val friendIds = mutableListOf<Int>()
+
+                // get all friend ids
+                while (resultSet.next()) {
+                    friendIds.add(
+                        resultSet.getInt("user_id")
+                    )
+                }
+
+                // close open resources
+                resultSet.close()
+                statement.close()
+
+                friendIds.toList()
+            }
+        }.await()
+    }
+
     private val getFriendsWithOffsetSql = """
-        SELECT friend_id FROM friends
-        WHERE user_id = ?
+        SELECT DISTINCT(f1.friend_id)
+        FROM friends f1
+        JOIN friends f2 ON f1.user_id = f2.friend_id AND f1.friend_id = f2.user_id
+        WHERE f1.friend_id <> ?
+        AND f1.user_id = ?
         LIMIT ? OFFSET ?;
     """.trimIndent()
 
@@ -80,8 +138,9 @@ class DatabaseFriendRepository(private val database: Database) : FriendRepositor
             database.connection?.use { connection ->
                 val statement = connection.prepareStatement(getFriendsWithOffsetSql)
                 statement.setInt(1, userId)
-                statement.setInt(2, limit)
-                statement.setInt(3, offset)
+                statement.setInt(2, userId)
+                statement.setInt(3, limit)
+                statement.setInt(4, offset)
 
                 executeGetFriendIdsQuery(statement)
             }
