@@ -241,8 +241,11 @@ class UserController(
             val friendsAsUsers = friendService.getFriendRequestsAsync(userId)
 
             call.respond(HttpStatusCode.OK, friendsAsUsers)
+        } catch (e: IllegalArgumentException) {
+            call.application.environment.log.error("Failed to get users while getting friend requests for user $userId", e)
+            call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
         } catch (e: SQLException) {
-            call.application.environment.log.error("DB error while getting friends for user $userId", e)
+            call.application.environment.log.error("DB error while getting friend requests for user $userId", e)
             call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
         }
     }

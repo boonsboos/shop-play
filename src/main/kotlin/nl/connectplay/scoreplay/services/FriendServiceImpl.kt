@@ -128,7 +128,10 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
     }
 
     /**
-     * Gets pending friend requests for a user
+     * Gets the open friend requests for the user.
+     *
+     * @param userId the user to get friend requests for
+     * @return [FriendRequestListResponse] containing pending (incoming) and outstanding (outgoing) friend requests
      */
     override suspend fun getFriendRequestsAsync(userId: Int): FriendRequestListResponse {
         var pendingIds = friendRepository.getPendingFriendRequestsAsync(userId) ?: listOf()
