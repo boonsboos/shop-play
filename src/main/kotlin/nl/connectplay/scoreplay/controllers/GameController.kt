@@ -156,7 +156,7 @@ class GameController(
 
     suspend fun handleUploadPictureAsync(call: ApplicationCall) {
         val gameId = call.parameters["id"]
-            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid game id")
         val contentType = call.request.contentType()
 
         when {
@@ -250,7 +250,7 @@ class GameController(
             }
         } catch (e: Exception) {
             call.application.environment.log.error("CDN error while uploading image", e)
-            throw e;
+            throw e
         } finally {
             // dispose and ignore the rest of the items
             formData.dispose()
