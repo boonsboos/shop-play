@@ -1,7 +1,6 @@
 package nl.connectplay.scoreplay.controllers
 
 import io.ktor.client.*
-import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
@@ -24,10 +23,8 @@ import nl.connectplay.scoreplay.models.dto.game.CreateGameDto
 import nl.connectplay.scoreplay.models.dto.game.UpdateGameDto
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
-import java.security.cert.X509Certificate
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
-import javax.net.ssl.X509TrustManager
 
 class GameController(
     private val gameRepository: GameRepository,
@@ -35,17 +32,7 @@ class GameController(
     private val pictureService: PictureService
 ) {
 
-    private val httpClient = HttpClient(CIO) {
-        engine {
-            https {
-                trustManager = object : X509TrustManager {
-                    override fun getAcceptedIssuers(): Array<X509Certificate?> = arrayOf()
-                    override fun checkClientTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
-                    override fun checkServerTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
-                }
-            }
-        }
-    }
+    private val httpClient = HttpClient()
 
     suspend fun handleListAsync(call: ApplicationCall) {
         val limit = call.request.queryParameters["limit"]?.toIntOrNull()
