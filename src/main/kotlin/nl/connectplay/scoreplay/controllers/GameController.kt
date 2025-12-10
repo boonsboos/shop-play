@@ -1,28 +1,51 @@
 package nl.connectplay.scoreplay.controllers
 
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.io.buffered
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.models.dto.game.*
+import nl.connectplay.scoreplay.models.dto.game.CreateGameDto
+import nl.connectplay.scoreplay.models.dto.game.UpdateGameDto
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
+import java.security.cert.X509Certificate
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
+import javax.net.ssl.X509TrustManager
 
 class GameController(
     private val gameRepository: GameRepository,
     private val followGameRepository: FollowGameRepository,
     private val pictureService: PictureService
 ) {
+
+    private val httpClient = HttpClient(CIO) {
+        engine {
+            https {
+                trustManager = object : X509TrustManager {
+                    override fun getAcceptedIssuers(): Array<X509Certificate?> = arrayOf()
+                    override fun checkClientTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
+                    override fun checkServerTrusted(certs: Array<X509Certificate?>?, authType: String?) {}
+                }
+            }
+        }
+    }
 
     suspend fun handleListAsync(call: ApplicationCall) {
         val limit = call.request.queryParameters["limit"]?.toIntOrNull()
@@ -145,7 +168,7 @@ class GameController(
     }
 
     suspend fun handleUploadPictureAsync(call: ApplicationCall) {
-        val sessionId = call.parameters["id"]
+        val gameId = call.parameters["id"]
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
         val contentType = call.request.contentType()
 
@@ -166,9 +189,9 @@ class GameController(
                             val (status, body) = pictureService.handleUploadImageJsonAsync(
                                 uploadPicture,
                                 PictureService.EntityType.GAME,
-                                sessionId,
+                                gameId
                             )
-                            println("Je moeder op een driewheeler")
+
                             mapOf(
                                 "index" to index,
                                 "status" to status.value,
@@ -188,9 +211,91 @@ class GameController(
                 call.respond(overallStatus, results)
             }
 
+            contentType.match(ContentType.MultiPart.FormData) -> {
+                val parts = call.receiveMultipart()
+
+                val formData = parts.readPart() ?: return call.respond(HttpStatusCode.BadRequest)
+                if ((formData.contentType != ContentType.Image.JPEG && formData.contentType != ContentType.Image.PNG) || formData !is PartData.FileItem) {
+                    return call.respond(HttpStatusCode.BadRequest, "Please upload PNG or JPEG images only")
+                }
+
+                val response = forwardImageToCdn(formData, formData.contentType, call, parts)
+
+                if (response.status != HttpStatusCode.OK) {
+                    call.application.environment.log.warn("Failed to upload picture: ${response.status}")
+                    return call.respond(HttpStatusCode.BadRequest, "Failed to upload picture")
+                }
+
+                val pictureUrl = "http://cdn.connectplay.local/images/${response.headers["Location"]}"
+
+                saveUrl(pictureUrl, gameId, call)
+            }
+
             else -> {
                 return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
             }
+        }
+    }
+
+    private suspend fun forwardImageToCdn(
+        formData: PartData.FileItem,
+        contentType: ContentType?,
+        call: ApplicationCall,
+        parts: MultiPartData
+    ): HttpResponse {
+        try {
+            val forwardableBody = MultiPartFormDataContent(formData {
+                appendInput(key = "Game_Image", headers = Headers.build {
+                    append(
+                        HttpHeaders.ContentDisposition,
+                        "form-data; name=\"${formData.name ?: "Game_Image"}\"; filename=\"${formData.originalFileName ?: "Game_Image"}\""
+                    )
+                    append(HttpHeaders.ContentType, contentType ?: ContentType.Image.JPEG)
+                }) {
+                    // read the file data to a buffered stream
+                    formData.provider().asSource().buffered()
+                }
+            })
+
+            return httpClient.post("http://cdn.connectplay.local/images") {
+                contentType(ContentType.MultiPart.FormData)
+                setBody(forwardableBody)
+            }
+        } catch (e: Exception) {
+            call.application.environment.log.error("CDN error while uploading image", e)
+            throw e;
+        } finally {
+            // dispose and ignore the rest of the items
+            formData.dispose()
+            parts.forEachPart { part -> part.dispose() }
+        }
+    }
+
+    private suspend fun saveUrl(
+        pictureUrl: String,
+        gameId: String,
+        call: ApplicationCall
+    ) {
+        try {
+            return if (pictureService.uploadImageByUrlAsync(
+                    pictureUrl,
+                    PictureService.EntityType.GAME,
+                    gameId
+                )
+            ) {
+                call.respond(HttpStatusCode.Created)
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Failed to upload picture")
+            }
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            call.application.environment.log.error(
+                "Duplicate in the database error while uploading image URL $pictureUrl",
+                e
+            )
+            return call.respond(HttpStatusCode.Conflict)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while uploading picture", e)
+            return call.respond(HttpStatusCode.InternalServerError)
         }
     }
 }
