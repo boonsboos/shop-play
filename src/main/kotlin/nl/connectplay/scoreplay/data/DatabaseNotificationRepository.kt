@@ -125,7 +125,7 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
-                    val sql = "UPDATE notifications SET read = b'1' WHERE notification_id = ? AND user_id = ?"
+                    val sql = "UPDATE notifications SET `read` = b'1' WHERE `notification_id` = ? AND `user_id` = ?"
                     val statement = connection.prepareStatement(sql)
                     statement.setString(1, notificationId.toString())
                     statement.setInt(2, userId)
