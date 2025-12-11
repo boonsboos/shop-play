@@ -54,6 +54,7 @@ fun services() = module {
     singleOf(::PictureServiceImpl) { bind<PictureService>() }
     singleOf(::ScoreServiceImpl) { bind<ScoreService>() }
     singleOf(::SessionServiceImpl) { bind<SessionService>() }
+    singleOf(::HttpCdnService) { bind<CdnService>() }
 
     // events
     singleOf(::EventRouter) { bind<EventRoutingService>() }

@@ -28,4 +28,32 @@ class DatabaseGamePictureRepository(private val database: Database) : GamePictur
             }
         }.await() ?: false
     }
+
+    private val getGamePictureUrlsSql =
+        """
+        SELECT picture_url FROM pictures
+        JOIN game_pictures ON pictures.picture_id = game_pictures.picture_id
+        WHERE game_id = ?;
+        """.trimIndent()
+
+    override suspend fun getGamePictureUrls(gameId: Int): List<String> = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val stmt = connection.prepareStatement(getGamePictureUrlsSql)
+                    .apply { setInt(1, gameId) }
+
+                val resultSet = stmt.executeQuery()
+
+                val urls = mutableListOf<String>()
+                while (resultSet.next()) {
+                    urls.add(resultSet.getString("picture_url"))
+                }
+
+                resultSet.close()
+                stmt.close()
+
+                urls
+            }
+        }.await() ?: listOf()
+    }
 }

@@ -1,6 +1,7 @@
 package nl.connectplay.scoreplay.controllers
 
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -9,11 +10,22 @@ import io.ktor.server.response.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
+import nl.connectplay.scoreplay.abstraction.data.GamePictureRepository
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
+import nl.connectplay.scoreplay.abstraction.services.CdnService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
-import nl.connectplay.scoreplay.models.dto.game.*
+import nl.connectplay.scoreplay.models.Game
+import nl.connectplay.scoreplay.models.dto.game.CreateGameDto
+import nl.connectplay.scoreplay.models.dto.game.GameDto
+import nl.connectplay.scoreplay.models.dto.game.UpdateGameDto
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
+import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
+import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
+import nl.connectplay.scoreplay.utilities.getSearchQueryParameter
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
 import java.sql.SQLException
 import java.sql.SQLIntegrityConstraintViolationException
@@ -21,17 +33,21 @@ import java.sql.SQLIntegrityConstraintViolationException
 class GameController(
     private val gameRepository: GameRepository,
     private val followGameRepository: FollowGameRepository,
-    private val pictureService: PictureService
+    private val pictureService: PictureService,
+    private val gamePictureRepository: GamePictureRepository,
+    private val cdnService: CdnService
 ) {
-
     suspend fun handleListAsync(call: ApplicationCall) {
-        val limit = call.request.queryParameters["limit"]?.toIntOrNull()
-        val offset = call.request.queryParameters["offset"]?.toIntOrNull()
-        val query = call.request.queryParameters["query"]
+        val limit = call.request.getLimitQueryParameter()
+        val offset = call.request.getOffsetQueryParameter()
+        val query = call.request.getSearchQueryParameter()
         // Try getting all games from db shows NoContent if empty or InternalServerError if something went wrong in catch
         try {
-            val games = gameRepository.getGamesAsync(limit, offset, query)
-                ?: return call.respond(HttpStatusCode.NoContent)
+            val games = gameRepository.getGamesAsync(limit, offset, query).asFlow().map { game ->
+                val pictures = gamePictureRepository.getGamePictureUrls(game.id).firstOrNull()
+
+                game.withPictures(listOfNotNull(pictures))
+            }.toList()
             call.respond(HttpStatusCode.OK, games)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while getting games", e)
@@ -51,7 +67,9 @@ class GameController(
         try {
             // Pass DTO to repository
             val created = gameRepository.addGame(createReq)
-            call.respond(HttpStatusCode.Created, created)
+                ?: return call.respond(HttpStatusCode.InternalServerError, "Try again later")
+
+            call.respond<Game>(HttpStatusCode.Created, created)
         } catch (e: SQLIntegrityConstraintViolationException) {
             call.application.environment.log.error("Conflict while creating new game", e)
             call.respond(HttpStatusCode.Conflict)
@@ -145,8 +163,8 @@ class GameController(
     }
 
     suspend fun handleUploadPictureAsync(call: ApplicationCall) {
-        val sessionId = call.parameters["id"]
-            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
+        val gameId = call.parameters["id"]
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid game id")
         val contentType = call.request.contentType()
 
         when {
@@ -166,9 +184,9 @@ class GameController(
                             val (status, body) = pictureService.handleUploadImageJsonAsync(
                                 uploadPicture,
                                 PictureService.EntityType.GAME,
-                                sessionId,
+                                gameId
                             )
-                            println("Je moeder op een driewheeler")
+
                             mapOf(
                                 "index" to index,
                                 "status" to status.value,
@@ -188,9 +206,78 @@ class GameController(
                 call.respond(overallStatus, results)
             }
 
+            contentType.match(ContentType.MultiPart.FormData) -> {
+                val parts = call.receiveMultipart()
+
+                val formData = parts.readPart() ?: return call.respond(HttpStatusCode.BadRequest)
+                if ((formData.contentType != ContentType.Image.JPEG && formData.contentType != ContentType.Image.PNG) || formData !is PartData.FileItem) {
+                    return call.respond(HttpStatusCode.BadRequest, "Please upload PNG or JPEG images only")
+                }
+
+                val response = try {
+                    cdnService.forwardImage(formData)
+                } catch (e: Exception) {
+                    // always log if anything goes wrong during the upload
+                    call.application.environment.log.error("CDN error while uploading image", e)
+                    return call.respond(HttpStatusCode.InternalServerError)
+                } finally {
+                    // always dispose the rest of the form data parts after forwarding the image to the CDN
+                    parts.forEachPart { part -> part.dispose() }
+                }
+
+                if (response.status != HttpStatusCode.OK) {
+                    call.application.environment.log.warn("Failed to upload picture: ${response.status}")
+                    return call.respond(HttpStatusCode.BadRequest, "Failed to upload picture")
+                }
+
+                val pictureUrl = "https://api.connect-en-play.nl/images/${response.headers["Location"]}"
+
+                saveUrl(pictureUrl, gameId, call)
+            }
+
             else -> {
                 return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
             }
+        }
+    }
+
+    private suspend fun saveUrl(
+        pictureUrl: String,
+        gameId: String,
+        call: ApplicationCall
+    ) {
+        try {
+            return if (pictureService.uploadImageByUrlAsync(
+                    pictureUrl,
+                    PictureService.EntityType.GAME,
+                    gameId
+                )
+            ) {
+                call.respond(HttpStatusCode.Created)
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Failed to upload picture")
+            }
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            call.application.environment.log.warn("Encountered duplicate while uploading image URL $pictureUrl")
+            return call.respond(HttpStatusCode.Conflict)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while uploading picture", e)
+            return call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
+
+    suspend fun handleSingleAsync(call: ApplicationCall) {
+        val gameId = call.parameters["gameId"]?.toIntOrNull()
+            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid game id")
+
+        try {
+            val game = gameRepository.getGameByIdAsync(gameId) ?: return call.respond(HttpStatusCode.NotFound)
+
+            val pictures = gamePictureRepository.getGamePictureUrls(gameId)
+            return call.respond<GameDto>(status = HttpStatusCode.OK, message = game.withPictures(pictures))
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while fetching game", e)
+            return call.respond(HttpStatusCode.InternalServerError)
         }
     }
 }

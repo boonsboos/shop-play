@@ -2,6 +2,7 @@ package nl.connectplay.scoreplay.controllers
 
 import com.auth0.jwt.exceptions.JWTCreationException
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -9,6 +10,7 @@ import io.ktor.server.response.*
 import io.ktor.util.logging.*
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
+import nl.connectplay.scoreplay.abstraction.services.CdnService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.UserAccountService
@@ -34,7 +36,8 @@ class UserController(
     private val friendService: FriendService,
     private val userAccountService: UserAccountService,
     private val followGameRepository: FollowGameRepository,
-    private val pictureService: PictureService
+    private val pictureService: PictureService,
+    private val cdnService: CdnService
 ) {
 
     private val logger = LoggerFactory.getLogger(UserController::class.java)
@@ -242,7 +245,10 @@ class UserController(
 
             call.respond(HttpStatusCode.OK, friendsAsUsers)
         } catch (e: IllegalArgumentException) {
-            call.application.environment.log.error("Failed to get users while getting friend requests for user $userId", e)
+            call.application.environment.log.error(
+                "Failed to get users while getting friend requests for user $userId",
+                e
+            )
             call.respond(HttpStatusCode.InternalServerError) // we failed to fetch all users
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while getting friend requests for user $userId", e)
@@ -307,9 +313,63 @@ class UserController(
                 call.respond(res.first, res.second)
             }
 
+            contentType.match(ContentType.MultiPart.FormData) -> {
+                val parts = call.receiveMultipart()
+
+                val formData = parts.readPart() ?: return call.respond(HttpStatusCode.BadRequest)
+                if ((formData.contentType != ContentType.Image.JPEG && formData.contentType != ContentType.Image.PNG) || formData !is PartData.FileItem) {
+                    return call.respond(HttpStatusCode.BadRequest, "Please upload PNG or JPEG images only")
+                }
+
+                val response = try {
+                    cdnService.forwardImage(formData)
+                } catch (e: Exception) {
+                    // always log if anything goes wrong during the upload
+                    call.application.environment.log.error("CDN error while uploading image", e)
+                    return call.respond(HttpStatusCode.InternalServerError)
+                } finally {
+                    // always dispose the rest of the form data parts after forwarding the image to the CDN
+                    parts.forEachPart { part -> part.dispose() }
+                }
+
+                if (response.status != HttpStatusCode.OK) {
+                    call.application.environment.log.warn("Failed to upload picture: ${response.status}")
+                    return call.respond(HttpStatusCode.BadRequest, "Failed to upload picture")
+                }
+
+                val pictureUrl = "https://api.connect-en-play.nl/images/${response.headers["Location"]}"
+
+                saveUrl(pictureUrl, userId, call)
+            }
+
             else -> {
                 return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
             }
+        }
+    }
+
+    private suspend fun saveUrl(
+        pictureUrl: String,
+        userId: String,
+        call: ApplicationCall
+    ) {
+        try {
+            return if (pictureService.uploadImageByUrlAsync(
+                    pictureUrl,
+                    PictureService.EntityType.USER,
+                    userId
+                )
+            ) {
+                call.respond(HttpStatusCode.Created)
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Failed to upload picture")
+            }
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            call.application.environment.log.warn("Encountered duplicate while uploading image URL $pictureUrl")
+            return call.respond(HttpStatusCode.Conflict)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while uploading picture", e)
+            return call.respond(HttpStatusCode.InternalServerError)
         }
     }
 
