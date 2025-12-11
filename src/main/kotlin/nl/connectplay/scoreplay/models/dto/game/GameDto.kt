@@ -1,7 +1,6 @@
 package nl.connectplay.scoreplay.models.dto.game
 
 import kotlinx.datetime.LocalDate
-import nl.connectplay.scoreplay.models.Game
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -15,10 +14,6 @@ data class GameDto(
     val maxPlayers: Int? = null,
     val duration: Int? = null,
     val minAge: Int? = null,
-    val releaseDate: LocalDate? = null
-)
-
-// simple mapper
-fun Game.toDto() = GameDto(
-    id, scoringMethodId, name, description, publisher, minPlayers, maxPlayers, duration, minAge, releaseDate
+    val releaseDate: LocalDate? = null,
+    val pictures: List<String> = listOf(),
 )

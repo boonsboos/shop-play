@@ -5,13 +5,15 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.datetime.toJavaLocalDate
 import kotlinx.datetime.toKotlinLocalDate
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
-import nl.connectplay.scoreplay.models.dto.game.*
+import nl.connectplay.scoreplay.models.Game
+import nl.connectplay.scoreplay.models.dto.game.CreateGameDto
+import nl.connectplay.scoreplay.models.dto.game.UpdateGameDto
 import java.sql.Date
 import java.sql.Statement
 
 class DatabaseGameRepository(private val database: Database) : GameRepository {
 
-    override suspend fun getGamesAsync(limit: Int?, offset: Int?, query: String?): List<GameDto>? = coroutineScope {
+    override suspend fun getGamesAsync(limit: Int?, offset: Int?, query: String?): List<Game> = coroutineScope {
         async {
             // SQL Statement to db
             database.connection?.use { conn ->
@@ -36,10 +38,10 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
 
                     // Creates mutable list of Games using GameDto
                     stmt.executeQuery().use { rs ->
-                        val list = mutableListOf<GameDto>()
+                        val list = mutableListOf<Game>()
                         while (rs.next()) {
                             list.add(
-                                GameDto(
+                                Game(
                                     id = rs.getInt("game_id"),
                                     name = rs.getString("name"),
                                     scoringMethodId = rs.getInt("scoring_method_id"),
@@ -58,10 +60,10 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     }
                 }
             }
-        }.await()
+        }.await() ?: listOf()
     }
 
-    override suspend fun addGame(create: CreateGameDto): GameDto = coroutineScope {
+    override suspend fun addGame(create: CreateGameDto): Game? = coroutineScope {
         async {
             // SQL Statement to db
             database.connection?.use { conn ->
@@ -91,11 +93,12 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
 
                     // Read generated id
                     val rs = stmt.generatedKeys
-                    val generatedId = if (rs.next()) rs.getInt(1) else throw IllegalStateException("Failed to retrieve generated id")
+                    val generatedId =
+                        if (rs.next()) rs.getInt(1) else throw IllegalStateException("Failed to retrieve generated id")
                     rs.close()
 
                     // Return created GameDto (without re-query; use provided fields + id)
-                    GameDto(
+                    Game(
                         id = generatedId,
                         scoringMethodId = 1,
                         name = create.name,
@@ -112,7 +115,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
         }.await()
     }
 
-    override suspend fun updateGame(id: Int, update: UpdateGameDto): GameDto? = coroutineScope {
+    override suspend fun updateGame(id: Int, update: UpdateGameDto): Game? = coroutineScope {
         async {
             database.connection?.use { conn ->
                 val sql = """
@@ -138,7 +141,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     stmt.setObject(5, update.maxPlayers)
                     stmt.setObject(6, update.duration)
                     stmt.setObject(7, update.minAge)
-                    stmt.setObject(8,  update.releaseDate?.let {
+                    stmt.setObject(8, update.releaseDate?.let {
                         Date.valueOf(it.toJavaLocalDate())
                     })
                     stmt.setObject(9, update.scoringMethod)
@@ -153,11 +156,11 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
     }
 
 
-    override suspend fun getGameByIdAsync(gameId: Int): GameDto? = coroutineScope {
+    override suspend fun getGameByIdAsync(gameId: Int): Game? = coroutineScope {
         async {
             database.connection?.use { connection ->
                 val sql = """
-                    SELECT game_id, name, description, publisher, minimum_player_count, maximum_player_count, duration, minimum_age, release_date
+                    SELECT game_id, name, scoring_method_id, description, publisher, minimum_player_count, maximum_player_count, duration, minimum_age, release_date
                     FROM games
                     WHERE game_id = ?
                 """.trimIndent()
@@ -166,11 +169,12 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                 stmt.setInt(1, gameId)
 
                 val resultSet = stmt?.executeQuery()
-                var game: GameDto? = null;
+                var game: Game? = null;
                 if (resultSet?.next() == true) {
-                    game = GameDto(
+                    game = Game(
                         id = resultSet.getInt("game_id"),
                         name = resultSet.getString("name"),
+                        scoringMethodId = resultSet.getInt("scoring_method_id"),
                         description = resultSet.getString("description"),
                         publisher = resultSet.getString("publisher"),
                         minPlayers = resultSet.getInt("minimum_player_count").let { if (it > 0) it else null },

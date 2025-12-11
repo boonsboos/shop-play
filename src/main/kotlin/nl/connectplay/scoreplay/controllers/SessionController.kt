@@ -1,11 +1,12 @@
 package nl.connectplay.scoreplay.controllers
 
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
-import nl.connectplay.scoreplay.abstraction.services.FriendService
+import nl.connectplay.scoreplay.abstraction.services.CdnService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.abstraction.services.SessionService
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
@@ -17,6 +18,7 @@ import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
 import nl.connectplay.scoreplay.utilities.getUUIDOrNull
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
 import java.sql.SQLException
+import java.sql.SQLIntegrityConstraintViolationException
 import java.util.*
 
 /**
@@ -25,7 +27,7 @@ import java.util.*
 class SessionController(
     private val repository: SessionRepository,
     private val pictureService: PictureService,
-    private val friendService: FriendService,
+    private val cdnService: CdnService,
     private val sessionService: SessionService
 ) {
 
@@ -67,9 +69,63 @@ class SessionController(
                 }
             }
 
+            contentType.match(ContentType.MultiPart.FormData) -> {
+                val parts = call.receiveMultipart()
+
+                val formData = parts.readPart() ?: return call.respond(HttpStatusCode.BadRequest)
+                if ((formData.contentType != ContentType.Image.JPEG && formData.contentType != ContentType.Image.PNG) || formData !is PartData.FileItem) {
+                    return call.respond(HttpStatusCode.BadRequest, "Please upload PNG or JPEG images only")
+                }
+
+                val response = try {
+                    cdnService.forwardImage(formData)
+                } catch (e: Exception) {
+                    // always log if anything goes wrong during the upload
+                    call.application.environment.log.error("CDN error while uploading image", e)
+                    return call.respond(HttpStatusCode.InternalServerError)
+                } finally {
+                    // always dispose the rest of the form data parts after forwarding the image to the CDN
+                    parts.forEachPart { part -> part.dispose() }
+                }
+
+                if (response.status != HttpStatusCode.OK) {
+                    call.application.environment.log.warn("Failed to upload picture: ${response.status}")
+                    return call.respond(HttpStatusCode.BadRequest, "Failed to upload picture")
+                }
+
+                val pictureUrl = "https://api.connect-en-play.nl/images/${response.headers["Location"]}"
+
+                saveUrl(pictureUrl, sessionId, call)
+            }
+
             else -> {
                 return call.respond(HttpStatusCode.UnsupportedMediaType, "Unsupported content type")
             }
+        }
+    }
+
+    private suspend fun saveUrl(
+        pictureUrl: String,
+        gameId: String,
+        call: ApplicationCall
+    ) {
+        try {
+            return if (pictureService.uploadImageByUrlAsync(
+                    pictureUrl,
+                    PictureService.EntityType.SESSION,
+                    gameId
+                )
+            ) {
+                call.respond(HttpStatusCode.Created)
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Failed to upload picture")
+            }
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            call.application.environment.log.warn("Encountered duplicate while uploading image URL $pictureUrl")
+            return call.respond(HttpStatusCode.Conflict)
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while uploading picture", e)
+            return call.respond(HttpStatusCode.InternalServerError)
         }
     }
 

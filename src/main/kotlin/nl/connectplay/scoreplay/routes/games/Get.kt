@@ -20,5 +20,9 @@ fun Route.gamesRoute() {
         get("/games/{gameId}/followers") {
             gameController.handleGetFollowers(call)
         }
+
+        get("/games/{gameId}") {
+            gameController.handleSingleAsync(call)
+        }
     }
 }
