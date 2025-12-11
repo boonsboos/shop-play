@@ -160,9 +160,9 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
         async {
             database.connection?.use { connection ->
                 val sql = """
-                    SELECT game_id, name, scoring_method_id, description, publisher, minimum_player_count, maximum_player_count, duration, minimum_age, release_date
-                    FROM games
-                    WHERE game_id = ?
+                    SELECT `game_id`, `name`, `scoring_method_id`, `description`, `publisher`, `minimum_player_count`, `maximum_player_count`, `duration`, `minimum_age`, `release_date`
+                    FROM `games`
+                    WHERE `game_id` = ?
                 """.trimIndent()
 
                 val stmt = connection.prepareStatement(sql)
