@@ -350,14 +350,14 @@ class UserController(
 
     private suspend fun saveUrl(
         pictureUrl: String,
-        gameId: String,
+        userId: String,
         call: ApplicationCall
     ) {
         try {
             return if (pictureService.uploadImageByUrlAsync(
                     pictureUrl,
                     PictureService.EntityType.USER,
-                    gameId
+                    userId
                 )
             ) {
                 call.respond(HttpStatusCode.Created)
@@ -365,7 +365,7 @@ class UserController(
                 call.respond(HttpStatusCode.InternalServerError, "Failed to upload picture")
             }
         } catch (e: SQLIntegrityConstraintViolationException) {
-            call.application.environment.log.warn("Encountered uplicate while uploading image URL $pictureUrl")
+            call.application.environment.log.warn("Encountered duplicate while uploading image URL $pictureUrl")
             return call.respond(HttpStatusCode.Conflict)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while uploading picture", e)

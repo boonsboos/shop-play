@@ -106,14 +106,14 @@ class SessionController(
 
     private suspend fun saveUrl(
         pictureUrl: String,
-        gameId: String,
+        sessionId: String,
         call: ApplicationCall
     ) {
         try {
             return if (pictureService.uploadImageByUrlAsync(
                     pictureUrl,
                     PictureService.EntityType.SESSION,
-                    gameId
+                    sessionId
                 )
             ) {
                 call.respond(HttpStatusCode.Created)

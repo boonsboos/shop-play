@@ -15,7 +15,7 @@ import nl.connectplay.scoreplay.abstraction.services.CdnService
 class HttpCdnService : CdnService {
     private val cdnClient = HttpClient(CIO) {
         defaultRequest {
-            url("http://cdn.connectplay.local")
+            url("http://cdn.connectplay.local/images")
         }
     }
 
@@ -36,7 +36,7 @@ class HttpCdnService : CdnService {
                 }
             })
 
-            return this.cdnClient.post("http://cdn.connectplay.local/images") {
+            return this.cdnClient.post {
                 contentType(ContentType.MultiPart.FormData)
                 setBody(forwardableBody)
             }

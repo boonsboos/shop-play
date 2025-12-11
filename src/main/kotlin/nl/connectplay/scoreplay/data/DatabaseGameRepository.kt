@@ -100,7 +100,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     // Return created GameDto (without re-query; use provided fields + id)
                     Game(
                         id = generatedId,
-                        scoringMethodId = 1,
+                        scoringMethodId = create.scoringMethod,
                         name = create.name,
                         description = create.description,
                         publisher = create.publisher,

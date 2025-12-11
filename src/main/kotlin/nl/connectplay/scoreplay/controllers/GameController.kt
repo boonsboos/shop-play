@@ -267,7 +267,7 @@ class GameController(
     }
 
     suspend fun handleSingleAsync(call: ApplicationCall) {
-        val gameId = call.parameters["id"]?.toIntOrNull()
+        val gameId = call.parameters["gameId"]?.toIntOrNull()
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid game id")
 
         try {
