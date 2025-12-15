@@ -376,11 +376,6 @@ class UserController(
     suspend fun handleUpdateUserAsync(call: ApplicationCall) { // the call: Application is a small package that holeds the request and respons
         val authUserId = call.getUserIdFromJWT()
         println(authUserId)
-        val userId = call.parameters["id"]?.toIntOrNull()
-            ?: return call.respond(
-                HttpStatusCode.BadRequest,
-                "User ID is not a number"
-            )// read the id and cover it to int if possible if null badrequest
         val updateDto = call.receiveNullable<UserUpdateDto>()
             ?: return call.respond(
                 HttpStatusCode.BadRequest,
@@ -388,10 +383,10 @@ class UserController(
             ) // receiveNullable checks if the UserUpdateDto is valid
 
         try {
-            userRepository.updateUserAsync(userId, updateDto) // send the update to the UserRepository
+            userRepository.updateUserAsync(authUserId, updateDto) // send the update to the UserRepository
             // if there is no user found trow NotFound message 404
             // null is not allowed for JSON respond
-            val updatedUser = userRepository.getUserByIdAsync(userId)
+            val updatedUser = userRepository.getUserByIdAsync(authUserId)
                 ?: return call.respond(HttpStatusCode.NotFound, "No user found after update")
             call.respond(
                 HttpStatusCode.OK,
