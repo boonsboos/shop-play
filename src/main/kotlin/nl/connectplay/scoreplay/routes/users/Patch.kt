@@ -17,13 +17,6 @@ fun Route.userPatchRoute() {
 
     authenticate(UserIdJWTAuthenticatorName) {
         patch("/users/me") {
-            try {
-                if (call.getUserIdFromJWT() != call.parameters["id"]?.toInt())
-                    return@patch call.respond(HttpStatusCode.Forbidden, "You are not allowed to change this users information")
-            } catch (e: UnauthorizedException) {
-                call.application.environment.log.error("Authorization error while deleting user: ${e.message}")
-                call.respond(HttpStatusCode.Unauthorized)
-            }
             userController.handleUpdateUserAsync(call)  // call is a Ktor-object from the type ApplicationCall
         }
     }
