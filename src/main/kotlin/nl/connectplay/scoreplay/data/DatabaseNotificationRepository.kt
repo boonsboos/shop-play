@@ -1,14 +1,14 @@
 package nl.connectplay.scoreplay.data
 
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import nl.connectplay.scoreplay.abstraction.data.NotificationRepository
 import nl.connectplay.scoreplay.models.dto.notifications.NewNotificationDto
 import nl.connectplay.scoreplay.models.dto.notifications.NotificationDto
-import kotlinx.coroutines.async
-import java.util.UUID
+import java.util.*
 
 class DatabaseNotificationRepository(private val database: Database) : NotificationRepository {
 
@@ -36,11 +36,11 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
             async {
                 database.connection?.use { connection ->
                     val sql = """SELECT
-                                notification_id,
-                                content,
-                                read
-                             FROM notifications
-                             WHERE notification_id = ?
+                                `notification_id`,
+                                `content`,
+                                `read`
+                             FROM `notifications`
+                             WHERE `notification_id` = ?
                           """.trimIndent()
 
                     val stmt = connection.prepareStatement(sql)
@@ -82,8 +82,6 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
                     statement.setInt(2, limit)
                     statement.setInt(3, offset)
                     val resultSet = statement.executeQuery()
-
-                    println(resultSet.statement)
 
                     while (resultSet?.next() == true) {
                         val notification = NotificationDto(

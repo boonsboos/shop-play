@@ -375,7 +375,6 @@ class UserController(
 
     suspend fun handleUpdateUserAsync(call: ApplicationCall) { // the call: Application is a small package that holeds the request and respons
         val authUserId = call.getUserIdFromJWT()
-        println(authUserId)
         val updateDto = call.receiveNullable<UserUpdateDto>()
             ?: return call.respond(
                 HttpStatusCode.BadRequest,
