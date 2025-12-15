@@ -16,7 +16,7 @@ fun Route.userPatchRoute() {
     val userController by inject<UserController>()
 
     authenticate(UserIdJWTAuthenticatorName) {
-        patch("/users/{id}") {
+        patch("/users/me") {
             try {
                 if (call.getUserIdFromJWT() != call.parameters["id"]?.toInt())
                     return@patch call.respond(HttpStatusCode.Forbidden, "You are not allowed to change this users information")
