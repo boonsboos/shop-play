@@ -300,8 +300,7 @@ class UserController(
     }
 
     suspend fun handleUploadPictureAsync(call: ApplicationCall) {
-        val userId = call.parameters["id"]
-            ?: return call.respond(HttpStatusCode.BadRequest, "Invalid user id")
+        val userId = call.getUserIdFromJWT()
 
         val contentType = call.request.contentType()
 
@@ -309,7 +308,7 @@ class UserController(
             contentType.match(ContentType.Application.Json) -> {
                 val uploadPicture = call.receive<UploadPictureDto>()
                 val res =
-                    pictureService.handleUploadImageJsonAsync(uploadPicture, PictureService.EntityType.USER, userId)
+                    pictureService.handleUploadImageJsonAsync(uploadPicture, PictureService.EntityType.USER, userId.toString())
                 call.respond(res.first, res.second)
             }
 
@@ -339,7 +338,7 @@ class UserController(
 
                 val pictureUrl = "https://api.connect-en-play.nl/images/${response.headers["Location"]}"
 
-                saveUrl(pictureUrl, userId, call)
+                saveUrl(pictureUrl, userId.toString(), call)
             }
 
             else -> {
