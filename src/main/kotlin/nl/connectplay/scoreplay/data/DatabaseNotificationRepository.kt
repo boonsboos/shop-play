@@ -5,12 +5,30 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import nl.connectplay.scoreplay.abstraction.data.NotificationRepository
 import nl.connectplay.scoreplay.models.dto.notifications.NewNotificationDto
 import nl.connectplay.scoreplay.models.dto.notifications.NotificationDto
+import nl.connectplay.scoreplay.models.events.*
 import java.util.*
 
 class DatabaseNotificationRepository(private val database: Database) : NotificationRepository {
+
+    private val jsonSerializer: Json = Json {
+        serializersModule = SerializersModule {
+            polymorphic(BaseEvent::class) {
+                polymorphic(SingleTargetEvent::class) {
+                    subclass(FriendRequestEvent::class)
+                    subclass(FriendRequestReplyEvent::class)
+                }
+                polymorphic(BroadcastEvent::class) {
+                    subclass(HighscoreEvent::class)
+                }
+            }
+        }
+    }
 
     val insertNotificationSql = """
         INSERT INTO notifications (user_id, content)
@@ -22,7 +40,7 @@ class DatabaseNotificationRepository(private val database: Database) : Notificat
             database.connection?.use { connection ->
                 val statement = connection.prepareStatement(insertNotificationSql).apply {
                     setInt(1, notification.userId)
-                    setString(2, Json.encodeToString(notification.notification))
+                    setString(2, jsonSerializer.encodeToString(notification.notification))
                 }
 
                 val result = statement.execute()
