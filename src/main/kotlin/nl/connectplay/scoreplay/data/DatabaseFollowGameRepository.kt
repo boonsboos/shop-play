@@ -78,6 +78,27 @@ class DatabaseFollowGameRepository(private val database: Database) : FollowGameR
         }
     }
 
+    val isFollowingSql = """
+        SELECT *
+        FROM game_followers
+        WHERE user_id = ? AND game_id = ?;
+    """.trimIndent()
+
+    override suspend fun isFollowing(userId: Int, gameId: Int): Boolean = coroutineScope {
+        async {
+            database.connection?.use { connection ->
+                val statement = connection.prepareStatement(isFollowingSql)
+                statement.apply {
+                    setInt(1, userId)
+                    setInt(2, gameId)
+                }
+
+                val resultSet = statement.executeQuery()
+                resultSet.next() // true if there is a row, false if there are none
+            }
+        }.await() ?: false
+    }
+
     override suspend fun followGame(userId: Int, gameId: Int) {
         database.connection?.use { connection -> // use automatically close resources or cleanup after completion
             val sql = """

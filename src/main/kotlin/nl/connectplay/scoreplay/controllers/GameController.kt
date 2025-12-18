@@ -20,7 +20,7 @@ import nl.connectplay.scoreplay.abstraction.services.CdnService
 import nl.connectplay.scoreplay.abstraction.services.PictureService
 import nl.connectplay.scoreplay.models.Game
 import nl.connectplay.scoreplay.models.dto.game.CreateGameDto
-import nl.connectplay.scoreplay.models.dto.game.GameDto
+import nl.connectplay.scoreplay.models.dto.game.GameDetailDto
 import nl.connectplay.scoreplay.models.dto.game.UpdateGameDto
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
@@ -270,11 +270,19 @@ class GameController(
         val gameId = call.parameters["gameId"]?.toIntOrNull()
             ?: return call.respond(HttpStatusCode.BadRequest, "Invalid game id")
 
+        val userId = call.getUserIdFromJWT()
+
         try {
             val game = gameRepository.getGameByIdAsync(gameId) ?: return call.respond(HttpStatusCode.NotFound)
 
             val pictures = gamePictureRepository.getGamePictureUrls(gameId)
-            return call.respond<GameDto>(status = HttpStatusCode.OK, message = game.withPictures(pictures))
+            val following = followGameRepository.isFollowing(userId, gameId)
+            return call.respond<GameDetailDto>(
+                status = HttpStatusCode.OK,
+                message = game
+                    .withPictures(pictures)
+                    .withFollowing(following)
+            )
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while fetching game", e)
             return call.respond(HttpStatusCode.InternalServerError)

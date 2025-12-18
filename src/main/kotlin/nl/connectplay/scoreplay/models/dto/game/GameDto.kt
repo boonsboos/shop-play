@@ -16,4 +16,20 @@ data class GameDto(
     val minAge: Int? = null,
     val releaseDate: LocalDate? = null,
     val pictures: List<String> = listOf(),
-)
+) {
+    fun withFollowing(isFollowing: Boolean) =
+        GameDetailDto(
+            id = id,
+            scoringMethodId = scoringMethodId,
+            name = name,
+            description = description,
+            publisher = publisher,
+            minPlayers = minPlayers,
+            maxPlayers = maxPlayers,
+            duration = duration,
+            minAge = minAge,
+            releaseDate = releaseDate,
+            pictures = pictures,
+            following = isFollowing
+        )
+}
