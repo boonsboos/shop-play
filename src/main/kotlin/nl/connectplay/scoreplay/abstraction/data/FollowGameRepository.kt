@@ -9,4 +9,5 @@ interface FollowGameRepository {
     suspend fun unfollowGame(userId: Int, gameId: Int)
     suspend fun getFollowers(gameId: Int, offset: Int, limit: Int?): List<UserDto>
     suspend fun getAllFollowerUserIdsAsync(gameId: Int): List<Int>
+    suspend fun isFollowing(userId: Int, gameId: Int): Boolean
 }
