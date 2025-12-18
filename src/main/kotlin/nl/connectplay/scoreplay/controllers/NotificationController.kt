@@ -1,23 +1,44 @@
 package nl.connectplay.scoreplay.controllers
 
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.response.respond
+import io.ktor.http.*
+import io.ktor.server.application.*
+import io.ktor.server.response.*
 import io.ktor.server.sse.*
 import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import nl.connectplay.scoreplay.abstraction.data.NotificationRepository
 import nl.connectplay.scoreplay.abstraction.services.EventQueueManagerService
+import nl.connectplay.scoreplay.models.events.*
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
 import nl.connectplay.scoreplay.utilities.getUserIdFromJWT
 import org.slf4j.LoggerFactory
 import java.sql.SQLException
-import java.util.UUID
+import java.util.*
 
-class NotificationController(private val notificationRepository: NotificationRepository, private val queueManagerService: EventQueueManagerService) {
+class NotificationController(
+    private val notificationRepository: NotificationRepository,
+    private val queueManagerService: EventQueueManagerService
+) {
 
     private val logger = LoggerFactory.getLogger(NotificationController::class.java)
+
+    private val jsonSerializer: Json = Json {
+        serializersModule = SerializersModule {
+            polymorphic(BaseEvent::class) {
+                polymorphic(SingleTargetEvent::class) {
+                    subclass(FriendRequestEvent::class)
+                    subclass(FriendRequestReplyEvent::class)
+                }
+                polymorphic(BroadcastEvent::class) {
+                    subclass(HighscoreEvent::class)
+                }
+            }
+        }
+    }
 
     suspend fun handleSseSession(session: ServerSSESession) {
         val userId = session.call.getUserIdFromJWT()
@@ -30,7 +51,7 @@ class NotificationController(private val notificationRepository: NotificationRep
             for (event in eventQueue) {
                 logger.info("Sending event ${event.javaClass.simpleName} to user $userId")
                 // manually convert the event to json
-                session.send(Json.encodeToString(event))
+                session.send(jsonSerializer.encodeToString(event))
             }
         } catch (e: ClosedWriteChannelException) {
             logger.error("SSE connection with user $userId was closed, cleaning up")
@@ -45,8 +66,7 @@ class NotificationController(private val notificationRepository: NotificationRep
     suspend fun handleGetNotificationById(call: ApplicationCall) {
         val userIdParam = call.getUserIdFromJWT()
 
-        val notificationIdParam = call.parameters["notificationId"] ?:
-        return call.respond(HttpStatusCode.NotFound)
+        val notificationIdParam = call.parameters["notificationId"] ?: return call.respond(HttpStatusCode.NotFound)
 
         val notificationId = UUID.fromString(notificationIdParam)
 
