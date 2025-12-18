@@ -1,5 +1,6 @@
 package nl.connectplay.scoreplay.models.events
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -8,4 +9,5 @@ import kotlinx.serialization.Serializable
  * @param friendId the user initiating the friend request
  */
 @Serializable
+@SerialName("friendRequest")
 class FriendRequestEvent(val friendId: Int) : SingleTargetEvent()

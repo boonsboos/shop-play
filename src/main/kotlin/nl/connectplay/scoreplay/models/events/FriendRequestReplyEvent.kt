@@ -1,5 +1,6 @@
 package nl.connectplay.scoreplay.models.events
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -9,4 +10,5 @@ import kotlinx.serialization.Serializable
  * @param accepts if the user accepted the friend request or not
  */
 @Serializable
+@SerialName("friendRequestReply")
 class FriendRequestReplyEvent(val userId: Int, val accepts: Boolean) : SingleTargetEvent()
