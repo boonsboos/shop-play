@@ -403,23 +403,19 @@ class UserController(
     }
 
     suspend fun handleDeleteUserAsync(call: ApplicationCall) {
-        val userId = call.parameters["id"]?.toIntOrNull()
-            ?: return call.respond(HttpStatusCode.BadRequest, "User ID is not a number")
-
+        val userId = call.getUserIdFromJWT()
         try {
-            val isDeleted =
-                userRepository.deleteUser(userId) // call the repository to start fun deleteUser and return boolean
+            val isDeleted = userRepository.deleteUser(userId)
 
             if (!isDeleted) {
                 return call.respond(
                     HttpStatusCode.NotFound,
                     "User not found"
-                ) // 404 code, return wil stop the action, so it will not continue
+                )
             }
 
             call.respond(HttpStatusCode.OK, "Account deleted successfully")
-
-        } catch (e: SQLException) { // SQLException catch any SQL-related errors
+        } catch (e: SQLException) {
             call.application.environment.log.error("DB error while deleting user with id $userId", e)
             call.respond(HttpStatusCode.InternalServerError)
         }
