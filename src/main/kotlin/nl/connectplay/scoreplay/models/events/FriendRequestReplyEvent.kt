@@ -11,4 +11,4 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @SerialName("friendRequestReply")
-class FriendRequestReplyEvent(val userId: Int, val accepts: Boolean) : SingleTargetEvent()
+class FriendRequestReplyEvent(val respondingUserId: Int, val accepts: Boolean) : SingleTargetEvent()
