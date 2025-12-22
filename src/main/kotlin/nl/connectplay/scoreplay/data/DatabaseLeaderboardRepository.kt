@@ -6,9 +6,7 @@ import nl.connectplay.scoreplay.abstraction.data.LeaderboardRepository
 import nl.connectplay.scoreplay.models.dto.leaderboard.LeaderboardEntryDto
 
 class DatabaseLeaderboardRepository(private val database: Database) : LeaderboardRepository {
-    override suspend fun getTopScoresForGame(gameId: Int): List<LeaderboardEntryDto> = coroutineScope {
-        database.connection?.use { connection ->
-            val sql = """
+    private val getLeaderboardScoresForGame = """
                 SELECT COALESCE(session_players.guest_name, users.user_name) AS playersName,
                     scores.score,
                     scores.achieved_on,
@@ -23,10 +21,12 @@ class DatabaseLeaderboardRepository(private val database: Database) : Leaderboar
                 WHERE scores.game_id = ?
                 AND sessions.session_visibility IN (2, 3)
                 ORDER BY scores.score DESC, scores.achieved_on ASC
-                LIMIT 100              
+                LIMIT 100
             """.trimIndent()
 
-            val stmt = connection.prepareStatement(sql)
+    override suspend fun getTopScoresForGame(gameId: Int): List<LeaderboardEntryDto> = coroutineScope {
+        database.connection?.use { connection ->
+            val stmt = connection.prepareStatement(getLeaderboardScoresForGame)
             stmt.setInt(1, gameId)
 
             // gives a object of the results

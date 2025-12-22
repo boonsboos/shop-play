@@ -9,12 +9,12 @@ import io.ktor.server.request.*
 /**
  * Gets default limit of 25 if the query parameter is not provided
  */
-fun ApplicationRequest.getLimitQueryParameter(default: Int = 25): Int = this.queryParameters["limit"]?.toInt() ?: default
+fun ApplicationRequest.getLimitQueryParameter(default: Int = 25): Int = this.queryParameters["limit"]?.toIntOrNull() ?: default
 
 /**
  * Gets default offset of 0 if the query parameter is not provided
  */
-fun ApplicationRequest.getOffsetQueryParameter(default: Int = 0): Int = this.queryParameters["offset"]?.toInt() ?: default
+fun ApplicationRequest.getOffsetQueryParameter(default: Int = 0): Int = this.queryParameters["offset"]?.toIntOrNull() ?: default
 
 /**
  * Gets the query string

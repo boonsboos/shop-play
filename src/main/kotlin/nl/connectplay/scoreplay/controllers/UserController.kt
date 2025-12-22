@@ -8,7 +8,10 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.util.logging.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
+import nl.connectplay.scoreplay.abstraction.data.LeaderboardRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.CdnService
 import nl.connectplay.scoreplay.abstraction.services.FriendService
@@ -37,7 +40,8 @@ class UserController(
     private val userAccountService: UserAccountService,
     private val followGameRepository: FollowGameRepository,
     private val pictureService: PictureService,
-    private val cdnService: CdnService
+    private val cdnService: CdnService,
+    private val leaderboardRepository: LeaderboardRepository,
 ) {
 
     private val logger = LoggerFactory.getLogger(UserController::class.java)
@@ -424,13 +428,23 @@ class UserController(
     suspend fun handleFollowedGamesAsync(call: ApplicationCall) {
         val userId = call.parameters["id"]?.toIntOrNull()
             ?: return call.respond(HttpStatusCode.BadRequest, "User ID is not a number")
-        val offset = call.request.queryParameters["offset"]?.toIntOrNull() ?: 0
-        val limit = call.request.queryParameters["limit"]?.toIntOrNull() ?: 10
+        val offset = call.request.getOffsetQueryParameter()
+        val limit = call.request.getLimitQueryParameter(10)
 
         try {
             val followedGames = followGameRepository.getFollowedGames(userId, offset, limit)
+            if (!call.request.queryParameters.contains("withPodium")) { // no query param
+                return call.respond(HttpStatusCode.OK, followedGames)
+            }
 
-            call.respond(HttpStatusCode.OK, followedGames)
+            // populate podium
+            val scoredGames = followedGames.asFlow().map { followedGame ->
+                val scores = leaderboardRepository.getTopScoresForGame(followedGame.id).take(3)
+
+                followedGame.withPodium(scores)
+            }
+
+            call.respond(HttpStatusCode.OK, scoredGames)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while following games", e)
             call.respond(HttpStatusCode.InternalServerError)
