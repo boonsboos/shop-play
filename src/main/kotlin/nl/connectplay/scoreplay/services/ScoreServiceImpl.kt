@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.toKotlinLocalDateTime
+import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.data.LeaderboardRepository
 import nl.connectplay.scoreplay.abstraction.data.ScoreRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
@@ -28,6 +29,7 @@ class ScoreServiceImpl(
     private val scoreRepository: ScoreRepository,
     private val sessionRepository: SessionRepository,
     private val leaderboardRepository: LeaderboardRepository,
+    private val gameRepository: GameRepository,
     private val eventRouter: EventRoutingService
 ) : ScoreService {
     override suspend fun bulkUploadScoresAsync(
@@ -84,6 +86,9 @@ class ScoreServiceImpl(
         playerScores: Map<SessionPlayer, Score>,
         session: SessionDto
     ) {
+        val game = this.gameRepository.getGameByIdAsync(session.game.id)
+            ?: throw IllegalStateException("Game ${session.game.id} was deleted while the session was submitting scores")
+
         for ((player, score) in playerScores) {
             for ((index, leaderboardScore) in leaderboardScores.withIndex()) {
                 // not this high a score if less than or equal
@@ -102,7 +107,7 @@ class ScoreServiceImpl(
                 // we route the event, because this is a high score
                 eventRouter.routeEventAsync(
                     HighscoreEvent(
-                        gameId = session.game.id,
+                        game = game.withPictures(listOf()),
                         score = ScoreDto(
                             score.scoreId,
                             score.score,

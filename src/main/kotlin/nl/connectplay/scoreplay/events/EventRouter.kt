@@ -66,5 +66,5 @@ class EventRouter(
         }
 
     private suspend fun getRelevantUserIdsForHighscoreEvent(event: HighscoreEvent): Set<Int> =
-        followGameRepository.getAllFollowerUserIdsAsync(event.gameId).toSet()
+        followGameRepository.getAllFollowerUserIdsAsync(event.game.id).toSet()
 }
