@@ -5,6 +5,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import nl.connectplay.scoreplay.abstraction.data.FriendRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
@@ -14,8 +15,11 @@ import nl.connectplay.scoreplay.models.dto.friend.FriendRequestListResponse
 import nl.connectplay.scoreplay.models.dto.friend.UserFriendDto
 import nl.connectplay.scoreplay.models.events.FriendRequestEvent
 import nl.connectplay.scoreplay.models.events.FriendRequestReplyEvent
+import org.slf4j.LoggerFactory
 
 class FriendServiceImpl(private val friendRepository: FriendRepository, private val userRepository: UserRepository, private val eventRouter: EventRoutingService) : FriendService {
+
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     /**
      * Checks if users are already friends
@@ -65,14 +69,35 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
         return FriendshipStatus.PENDING
     }
 
-    private suspend fun sendFriendRequestEventAsync(friendRequestTargetId: Int, userId: Int) =
-        eventRouter.routeEventAsync(friendRequestTargetId, FriendRequestEvent(userId))
+    private suspend fun sendFriendRequestEventAsync(friendRequestTargetId: Int, userId: Int) = coroutineScope {
+        launch {
+            val user = userRepository.getUserByIdAsync(userId)
 
-    private suspend fun sendFriendRequestResponseEventAsync(friendRequestSenderId: Int, friendRequestReceiverId: Int, accepts: Boolean) =
-        eventRouter.routeEventAsync(
-            friendRequestSenderId,
-            FriendRequestReplyEvent(friendRequestReceiverId, accepts)
-        )
+            if (user == null) {
+                logger.warn("User $userId was null when we tried to send a friend request event.")
+                return@launch
+            }
+
+            eventRouter.routeEventAsync(friendRequestTargetId, FriendRequestEvent(user.toUserDto()))
+        }
+    }
+
+    private suspend fun sendFriendRequestResponseEventAsync(friendRequestSenderId: Int, friendRequestReceiverId: Int, accepts: Boolean) = coroutineScope {
+        launch {
+            val user = userRepository.getUserByIdAsync(friendRequestReceiverId)
+
+            if (user == null) {
+                logger.warn("User $friendRequestReceiverId was null when we tried to send a friend request response event.")
+                return@launch
+            }
+
+            eventRouter.routeEventAsync(
+                friendRequestSenderId,
+                FriendRequestReplyEvent(user.toUserDto(), accepts)
+            )
+        }
+    }
+
 
     /**
      * Removes a user as friend
