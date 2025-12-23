@@ -49,6 +49,9 @@ class ScoreServiceImpl(
             throw UnfinishedSessionException(userId, sessionId)
         }
 
+        // NOTE: it might be good to add a lock on this method to prevent race conditions.
+        // Sadly, on the JVM it's up to the JVM vendor whether a lock maintains a queue of those next in line to enter or not.
+
         // take a snapshot of the top 3 before uploading
         // this list is already sorted by score and date
         val leaderboardScores = leaderboardRepository.getTopScoresForGame(session.game.id)
@@ -89,37 +92,51 @@ class ScoreServiceImpl(
         val game = this.gameRepository.getGameByIdAsync(session.game.id)
             ?: throw IllegalStateException("Game ${session.game.id} was deleted while the session was submitting scores")
 
+        val top3: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
+
+        // determine new top 3 with a sliding window technique
         for ((player, score) in playerScores) {
-            for ((index, leaderboardScore) in leaderboardScores.withIndex()) {
+            for (leaderboardScore in leaderboardScores) {
                 // not this high a score if less than or equal
                 if (leaderboardScore.score >= score.score) continue
 
-                // anonymise the player that set the score if applicable
-                val processedPlayer = when (session.visibility) {
-                    SessionVisibility.PUBLIC -> player.toDto()
-                    SessionVisibility.ANONYMISED -> SessionPlayerDto(player.userId, "Anonymous")
-                    else -> throw IllegalStateException(
-                        "Broadcasting a highscore event from a session with non-public visibility is not allowed. " +
-                                "(Session: ${session.sessionId})"
-                    )
+                // store the score in the new top 3
+                top3.addFirst(player to score)
+                if (top3.size > 3) { // if we have more than 3 scores now, remove the last one
+                    top3.removeLast()
                 }
-
-                // we route the event, because this is a high score
-                eventRouter.routeEventAsync(
-                    HighscoreEvent(
-                        game = game.withPictures(listOf()),
-                        score = ScoreDto(
-                            score.scoreId,
-                            score.score,
-                            score.turn,
-                            score.achievedOn.toKotlinLocalDateTime(),
-                            processedPlayer
-                        ),
-                        podium = index + 1 // index starts from 0
-                    )
-                )
-                break
             }
+        }
+
+        // broadcast the event, if any
+        for ((index, pair) in top3.withIndex()) {
+            val player = pair.first
+            val score = pair.second
+
+            // anonymise the player that set the score if applicable
+            val processedPlayer = when (session.visibility) {
+                SessionVisibility.PUBLIC -> player.toDto()
+                SessionVisibility.ANONYMISED -> SessionPlayerDto(player.userId, "Anonymous")
+                else -> throw IllegalStateException(
+                    "Broadcasting a highscore event from a session with non-public visibility is not allowed. " +
+                            "(Session: ${session.sessionId})"
+                )
+            }
+
+            // we route the event, because this is a high score
+            eventRouter.routeEventAsync(
+                HighscoreEvent(
+                    game = game.withPictures(listOf()),
+                    score = ScoreDto(
+                        score.scoreId,
+                        score.score,
+                        score.turn,
+                        score.achievedOn.toKotlinLocalDateTime(),
+                        processedPlayer
+                    ),
+                    podium = index + 1 // index starts from 0
+                )
+            )
         }
     }
 
