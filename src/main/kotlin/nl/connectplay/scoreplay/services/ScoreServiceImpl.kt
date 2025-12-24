@@ -13,6 +13,7 @@ import nl.connectplay.scoreplay.abstraction.services.ScoreService
 import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.exceptions.UnfinishedSessionException
+import nl.connectplay.scoreplay.models.Game
 import nl.connectplay.scoreplay.models.Score
 import nl.connectplay.scoreplay.models.SessionPlayer
 import nl.connectplay.scoreplay.models.SessionVisibility
@@ -48,6 +49,9 @@ class ScoreServiceImpl(
         if (session.endTime == null) {
             throw UnfinishedSessionException(userId, sessionId)
         }
+
+        // NOTE: it might be good to add a lock on this method to prevent race conditions.
+        // Sadly, on the JVM it's up to the JVM vendor whether a lock maintains a queue of those next in line to enter or not.
 
         // take a snapshot of the top 3 before uploading
         // this list is already sorted by score and date
@@ -89,37 +93,79 @@ class ScoreServiceImpl(
         val game = this.gameRepository.getGameByIdAsync(session.game.id)
             ?: throw IllegalStateException("Game ${session.game.id} was deleted while the session was submitting scores")
 
+        val leaderboardContenders = determineLeaderboardContenders(playerScores, leaderboardScores)
+
+        // merge with existing scores, marking existing scores on the leaderboard with null
+        val pendingAndExistingScores: MutableList<Pair<SessionPlayer?, Double>> = mutableListOf()
+        pendingAndExistingScores.addAll(leaderboardContenders.map { (p, s) -> p to s.score })
+        pendingAndExistingScores.addAll(leaderboardScores.map { null to it.score })
+
+        // sort highest to lowest on score
+        pendingAndExistingScores.sortByDescending { it.second }
+
+        processHighscoreEvents(
+            pendingAndExistingScores.take(3), // get top 3
+            leaderboardContenders.toMap(), // make it easier to look up the score by player instead
+            session,
+            game
+        )
+    }
+
+    private fun determineLeaderboardContenders(
+        playerScores: Map<SessionPlayer, Score>,
+        leaderboardScores: List<LeaderboardEntryDto>
+    ): MutableList<Pair<SessionPlayer, Score>> {
+        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
+
+        // determine scores that could make it into the top
         for ((player, score) in playerScores) {
-            for ((index, leaderboardScore) in leaderboardScores.withIndex()) {
-                // not this high a score if less than or equal
+            for (leaderboardScore in leaderboardScores) {
+                // not that high a score if less than or equal
                 if (leaderboardScore.score >= score.score) continue
 
-                // anonymise the player that set the score if applicable
-                val processedPlayer = when (session.visibility) {
-                    SessionVisibility.PUBLIC -> player.toDto()
-                    SessionVisibility.ANONYMISED -> SessionPlayerDto(player.userId, "Anonymous")
-                    else -> throw IllegalStateException(
-                        "Broadcasting a highscore event from a session with non-public visibility is not allowed. " +
-                                "(Session: ${session.sessionId})"
-                    )
-                }
-
-                // we route the event, because this is a high score
-                eventRouter.routeEventAsync(
-                    HighscoreEvent(
-                        game = game.withPictures(listOf()),
-                        score = ScoreDto(
-                            score.scoreId,
-                            score.score,
-                            score.turn,
-                            score.achievedOn.toKotlinLocalDateTime(),
-                            processedPlayer
-                        ),
-                        podium = index + 1 // index starts from 0
-                    )
-                )
-                break
+                leaderboardContenders.add(player to score)
             }
+        }
+        return leaderboardContenders
+    }
+
+    private suspend fun processHighscoreEvents(
+        pendingAndExistingScores: List<Pair<SessionPlayer?, Double>>,
+        pendingTopScores: Map<SessionPlayer, Score>,
+        session: SessionDto,
+        game: Game
+    ) {
+        // take the top 3 of these, and broadcast the event, if any
+        for ((index, pair) in pendingAndExistingScores.withIndex()) {
+            val player = pair.first
+                ?: continue // these are not new scores as noted above
+            val score = pendingTopScores[player]
+                ?: throw IllegalStateException("SessionPlayer ${player.sessionPlayerId} was somehow lost while getting their score")
+
+            // anonymise the player that set the score if applicable
+            val processedPlayer = when (session.visibility) {
+                SessionVisibility.PUBLIC -> player.toDto()
+                SessionVisibility.ANONYMISED -> SessionPlayerDto(player.userId, "Anonymous")
+                else -> throw IllegalStateException(
+                    "Broadcasting a highscore event from a session with non-public visibility is not allowed. " +
+                            "(Session: ${session.sessionId})"
+                )
+            }
+
+            // we route the event, because this is a high score
+            eventRouter.routeEventAsync(
+                HighscoreEvent(
+                    game = game.withPictures(listOf()),
+                    score = ScoreDto(
+                        score.scoreId,
+                        score.score,
+                        score.turn,
+                        score.achievedOn.toKotlinLocalDateTime(),
+                        processedPlayer
+                    ),
+                    podium = index + 1 // index starts from 0
+                )
+            )
         }
     }
 
