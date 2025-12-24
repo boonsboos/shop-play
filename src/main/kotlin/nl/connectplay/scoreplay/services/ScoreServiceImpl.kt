@@ -13,6 +13,7 @@ import nl.connectplay.scoreplay.abstraction.services.ScoreService
 import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.exceptions.UnfinishedSessionException
+import nl.connectplay.scoreplay.models.Game
 import nl.connectplay.scoreplay.models.Score
 import nl.connectplay.scoreplay.models.SessionPlayer
 import nl.connectplay.scoreplay.models.SessionVisibility
@@ -92,25 +93,34 @@ class ScoreServiceImpl(
         val game = this.gameRepository.getGameByIdAsync(session.game.id)
             ?: throw IllegalStateException("Game ${session.game.id} was deleted while the session was submitting scores")
 
-        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
+        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = determineLeaderboardContenders(playerScores, leaderboardScores)
 
-        // determine new top 3 with a sliding window technique
-        for ((player, score) in playerScores) {
-            for (leaderboardScore in leaderboardScores) {
-                // not this high a score if less than or equal
-                if (leaderboardScore.score >= score.score) continue
+        // merge with existing scores, marking existing scores on the leaderboard with null
+        val mergedScores: MutableList<Pair<SessionPlayer?, Double>> = mutableListOf()
+        mergedScores.addAll(leaderboardContenders.map{ (p, s) -> p to s.score })
+        mergedScores.addAll(leaderboardScores.map { null to it.score })
 
-                leaderboardContenders.add(player to score)
-            }
-        }
+        // sort highest to lowest
+        mergedScores.sortByDescending { it.second }
 
-        // sort by score (highest first)
-        leaderboardContenders.sortByDescending { it.second.score }
+        // make it easier to look up the score by player instead
+        val newTopScores = leaderboardContenders.toMap()
 
+        processHighscoreEvents(mergedScores, newTopScores, session, game)
+    }
+
+    private suspend fun processHighscoreEvents(
+        mergedScores: MutableList<Pair<SessionPlayer?, Double>>,
+        pendingTopScores: Map<SessionPlayer, Score>,
+        session: SessionDto,
+        game: Game
+    ) {
         // take the top 3 of these, and broadcast the event, if any
-        for ((index, pair) in leaderboardContenders.take(3).withIndex()) {
+        for ((index, pair) in mergedScores.take(3).withIndex()) {
             val player = pair.first
-            val score = pair.second
+                ?: continue // these are not new scores
+            val score = pendingTopScores[player]
+                ?: throw IllegalStateException("SessionPlayer ${player.sessionPlayerId} was somehow lost while getting their score")
 
             // anonymise the player that set the score if applicable
             val processedPlayer = when (session.visibility) {
@@ -137,6 +147,24 @@ class ScoreServiceImpl(
                 )
             )
         }
+    }
+
+    private fun determineLeaderboardContenders(
+        playerScores: Map<SessionPlayer, Score>,
+        leaderboardScores: List<LeaderboardEntryDto>
+    ): MutableList<Pair<SessionPlayer, Score>> {
+        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
+
+        // determine scores that could make it into the top
+        for ((player, score) in playerScores) {
+            for (leaderboardScore in leaderboardScores) {
+                // not that high a score if less than or equal
+                if (leaderboardScore.score >= score.score) continue
+
+                leaderboardContenders.add(player to score)
+            }
+        }
+        return leaderboardContenders
     }
 
     private suspend fun uploadScoreAsync(session: SessionDto, score: CreateScoreDto): Pair<SessionPlayer, Score> {
