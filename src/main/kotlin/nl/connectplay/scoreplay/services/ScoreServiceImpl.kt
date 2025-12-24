@@ -92,7 +92,7 @@ class ScoreServiceImpl(
         val game = this.gameRepository.getGameByIdAsync(session.game.id)
             ?: throw IllegalStateException("Game ${session.game.id} was deleted while the session was submitting scores")
 
-        val top3: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
+        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
 
         // determine new top 3 with a sliding window technique
         for ((player, score) in playerScores) {
@@ -100,16 +100,15 @@ class ScoreServiceImpl(
                 // not this high a score if less than or equal
                 if (leaderboardScore.score >= score.score) continue
 
-                // store the score in the new top 3
-                top3.addFirst(player to score)
-                if (top3.size > 3) { // if we have more than 3 scores now, remove the last one
-                    top3.removeLast()
-                }
+                leaderboardContenders.add(player to score)
             }
         }
 
-        // broadcast the event, if any
-        for ((index, pair) in top3.withIndex()) {
+        // sort by score (highest first)
+        leaderboardContenders.sortByDescending { it.second.score }
+
+        // take the top 3 of these, and broadcast the event, if any
+        for ((index, pair) in leaderboardContenders.take(3).withIndex()) {
             val player = pair.first
             val score = pair.second
 
