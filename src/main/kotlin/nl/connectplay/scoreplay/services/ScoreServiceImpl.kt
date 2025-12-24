@@ -100,13 +100,15 @@ class ScoreServiceImpl(
         pendingAndExistingScores.addAll(leaderboardContenders.map { (p, s) -> p to s.score })
         pendingAndExistingScores.addAll(leaderboardScores.map { null to it.score })
 
-        // sort highest to lowest
+        // sort highest to lowest on score
         pendingAndExistingScores.sortByDescending { it.second }
 
-        // make it easier to look up the score by player instead
-        val newTopScores = leaderboardContenders.toMap()
-
-        processHighscoreEvents(pendingAndExistingScores, newTopScores, session, game)
+        processHighscoreEvents(
+            pendingAndExistingScores.take(3), // get top 3
+            leaderboardContenders.toMap(), // make it easier to look up the score by player instead
+            session,
+            game
+        )
     }
 
     private fun determineLeaderboardContenders(
@@ -128,13 +130,13 @@ class ScoreServiceImpl(
     }
 
     private suspend fun processHighscoreEvents(
-        pendingAndExistingScores: MutableList<Pair<SessionPlayer?, Double>>,
+        pendingAndExistingScores: List<Pair<SessionPlayer?, Double>>,
         pendingTopScores: Map<SessionPlayer, Score>,
         session: SessionDto,
         game: Game
     ) {
         // take the top 3 of these, and broadcast the event, if any
-        for ((index, pair) in pendingAndExistingScores.take(3).withIndex()) {
+        for ((index, pair) in pendingAndExistingScores.withIndex()) {
             val player = pair.first
                 ?: continue // these are not new scores as noted above
             val score = pendingTopScores[player]
