@@ -93,32 +93,50 @@ class ScoreServiceImpl(
         val game = this.gameRepository.getGameByIdAsync(session.game.id)
             ?: throw IllegalStateException("Game ${session.game.id} was deleted while the session was submitting scores")
 
-        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = determineLeaderboardContenders(playerScores, leaderboardScores)
+        val leaderboardContenders = determineLeaderboardContenders(playerScores, leaderboardScores)
 
         // merge with existing scores, marking existing scores on the leaderboard with null
-        val mergedScores: MutableList<Pair<SessionPlayer?, Double>> = mutableListOf()
-        mergedScores.addAll(leaderboardContenders.map{ (p, s) -> p to s.score })
-        mergedScores.addAll(leaderboardScores.map { null to it.score })
+        val pendingAndExistingScores: MutableList<Pair<SessionPlayer?, Double>> = mutableListOf()
+        pendingAndExistingScores.addAll(leaderboardContenders.map { (p, s) -> p to s.score })
+        pendingAndExistingScores.addAll(leaderboardScores.map { null to it.score })
 
         // sort highest to lowest
-        mergedScores.sortByDescending { it.second }
+        pendingAndExistingScores.sortByDescending { it.second }
 
         // make it easier to look up the score by player instead
         val newTopScores = leaderboardContenders.toMap()
 
-        processHighscoreEvents(mergedScores, newTopScores, session, game)
+        processHighscoreEvents(pendingAndExistingScores, newTopScores, session, game)
+    }
+
+    private fun determineLeaderboardContenders(
+        playerScores: Map<SessionPlayer, Score>,
+        leaderboardScores: List<LeaderboardEntryDto>
+    ): MutableList<Pair<SessionPlayer, Score>> {
+        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
+
+        // determine scores that could make it into the top
+        for ((player, score) in playerScores) {
+            for (leaderboardScore in leaderboardScores) {
+                // not that high a score if less than or equal
+                if (leaderboardScore.score >= score.score) continue
+
+                leaderboardContenders.add(player to score)
+            }
+        }
+        return leaderboardContenders
     }
 
     private suspend fun processHighscoreEvents(
-        mergedScores: MutableList<Pair<SessionPlayer?, Double>>,
+        pendingAndExistingScores: MutableList<Pair<SessionPlayer?, Double>>,
         pendingTopScores: Map<SessionPlayer, Score>,
         session: SessionDto,
         game: Game
     ) {
         // take the top 3 of these, and broadcast the event, if any
-        for ((index, pair) in mergedScores.take(3).withIndex()) {
+        for ((index, pair) in pendingAndExistingScores.take(3).withIndex()) {
             val player = pair.first
-                ?: continue // these are not new scores
+                ?: continue // these are not new scores as noted above
             val score = pendingTopScores[player]
                 ?: throw IllegalStateException("SessionPlayer ${player.sessionPlayerId} was somehow lost while getting their score")
 
@@ -147,24 +165,6 @@ class ScoreServiceImpl(
                 )
             )
         }
-    }
-
-    private fun determineLeaderboardContenders(
-        playerScores: Map<SessionPlayer, Score>,
-        leaderboardScores: List<LeaderboardEntryDto>
-    ): MutableList<Pair<SessionPlayer, Score>> {
-        val leaderboardContenders: MutableList<Pair<SessionPlayer, Score>> = mutableListOf()
-
-        // determine scores that could make it into the top
-        for ((player, score) in playerScores) {
-            for (leaderboardScore in leaderboardScores) {
-                // not that high a score if less than or equal
-                if (leaderboardScore.score >= score.score) continue
-
-                leaderboardContenders.add(player to score)
-            }
-        }
-        return leaderboardContenders
     }
 
     private suspend fun uploadScoreAsync(session: SessionDto, score: CreateScoreDto): Pair<SessionPlayer, Score> {
