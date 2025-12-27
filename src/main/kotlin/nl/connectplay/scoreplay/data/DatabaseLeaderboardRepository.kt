@@ -8,7 +8,7 @@ import nl.connectplay.scoreplay.models.dto.leaderboard.LeaderboardEntryDto
 class DatabaseLeaderboardRepository(private val database: Database) : LeaderboardRepository {
     private val getLeaderboardScoresForGame = """
                 SELECT COALESCE(session_players.guest_name, users.user_name) AS playersName,
-                    scores.score,
+                    MAX(scores.score) AS points,
                     scores.achieved_on,
                     sessions.session_visibility,
                     sessions.host_user_id,
@@ -20,7 +20,8 @@ class DatabaseLeaderboardRepository(private val database: Database) : Leaderboar
                 LEFT JOIN users ON session_players.user_id = users.user_id
                 WHERE scores.game_id = ?
                 AND sessions.session_visibility IN (2, 3)
-                ORDER BY scores.score DESC, scores.achieved_on ASC
+                GROUP BY scores.session_player_id
+                ORDER BY points DESC, scores.achieved_on ASC
                 LIMIT 100
             """.trimIndent()
 
@@ -36,7 +37,7 @@ class DatabaseLeaderboardRepository(private val database: Database) : Leaderboar
             while (resultSet.next()) {
                 // these fields are the base for the leaderboardentety
                 val playerName = resultSet.getString("playersName")
-                val score = resultSet.getDouble("score")
+                val score = resultSet.getDouble("points")
                 val achievedOn = resultSet.getObject("achieved_on", java.time.LocalDateTime::class.java)
 
                 // these fields are used to check if de playersname is visable ore not
