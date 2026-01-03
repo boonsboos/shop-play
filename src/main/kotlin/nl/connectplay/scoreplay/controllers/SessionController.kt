@@ -203,4 +203,39 @@ class SessionController(
             return call.respond(HttpStatusCode.InternalServerError, "Could not delete session")
         }
     }
+
+    suspend fun handleCreatePlayersAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
+        val sessionId = UUID.fromString(
+            call.parameters["sessionId"]
+                ?: return call.respond(HttpStatusCode.BadRequest, "Invalid session id")
+        )
+         val body: SessionPlayerDto = call.receiveNullable<SessionPlayerDto>()
+        ?: return call.respond(HttpStatusCode.BadRequest, "Invalid request body")
+
+        try {
+            // Permission check: only host can add players
+            val session = repository.getSessionByIdAsync(sessionId)
+                ?: return call.respond(HttpStatusCode.NotFound, "Session not found")
+
+            if (session.hostId != userId) {
+                return call.respond(HttpStatusCode.Forbidden, "You are not the host")
+            }
+
+            val created = repository.createSessionPlayerAsync(body)
+            ?: return call.respond(HttpStatusCode.InternalServerError, "Could not create session player")
+
+            // Return the created player (or return created.id if you prefer)
+            call.respond(HttpStatusCode.Created, created)
+        } catch (e: SQLIntegrityConstraintViolationException) {
+            call.application.environment.log.warn("Duplicate session player insert", e)
+            call.respond(HttpStatusCode.Conflict, "Session player already exists")
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while creating session player", e)
+            call.respond(HttpStatusCode.InternalServerError)
+        } catch (e: Exception) {
+            call.application.environment.log.error("Unexpected error while creating session player", e)
+            call.respond(HttpStatusCode.InternalServerError, "Could not create session player")
+        }
+    }
 }
