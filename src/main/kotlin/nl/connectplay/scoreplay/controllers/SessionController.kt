@@ -13,6 +13,7 @@ import nl.connectplay.scoreplay.exceptions.UnauthorizedException
 import nl.connectplay.scoreplay.models.dto.picture.UploadPictureDto
 import nl.connectplay.scoreplay.models.dto.session.CreateSessionDto
 import nl.connectplay.scoreplay.models.dto.session.UpdateSessionDto
+import nl.connectplay.scoreplay.models.dto.score.SessionPlayerDto
 import nl.connectplay.scoreplay.utilities.getLimitQueryParameter
 import nl.connectplay.scoreplay.utilities.getOffsetQueryParameter
 import nl.connectplay.scoreplay.utilities.getUUIDOrNull
