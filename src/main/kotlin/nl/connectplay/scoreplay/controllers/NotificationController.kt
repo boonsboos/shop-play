@@ -57,6 +57,8 @@ class NotificationController(
             logger.error("SSE connection with user $userId was closed, cleaning up")
         } catch (e: Exception) {
             logger.error("SSE connection with user $userId errored", e)
+        } finally {
+            session.close()
         }
     }
 
