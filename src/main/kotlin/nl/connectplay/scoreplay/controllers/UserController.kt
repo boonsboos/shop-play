@@ -11,6 +11,7 @@ import io.ktor.util.logging.*
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
+import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.abstraction.data.LeaderboardRepository
 import nl.connectplay.scoreplay.abstraction.data.UserRepository
 import nl.connectplay.scoreplay.abstraction.services.CdnService
@@ -42,6 +43,7 @@ class UserController(
     private val pictureService: PictureService,
     private val cdnService: CdnService,
     private val leaderboardRepository: LeaderboardRepository,
+    private val gameRepository: GameRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(UserController::class.java)
@@ -446,9 +448,21 @@ class UserController(
 
             call.respond(HttpStatusCode.OK, scoredGames)
         } catch (e: SQLException) {
-            call.application.environment.log.error("DB error while following games", e)
+            call.application.environment.log.error("DB error while getting followed games", e)
             call.respond(HttpStatusCode.InternalServerError)
+        }
+    }
 
+    suspend fun handleRecentGamesAsync(call: ApplicationCall) {
+        val userId = call.getUserIdFromJWT()
+
+        try {
+            val games = gameRepository.getRecentGamesForUser(userId)
+
+            call.respond(HttpStatusCode.OK, games.toList())
+        } catch (e: SQLException) {
+            call.application.environment.log.error("DB error while getting recent games", e)
+            call.respond(HttpStatusCode.InternalServerError)
         }
     }
 }
