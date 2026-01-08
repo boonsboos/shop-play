@@ -38,14 +38,14 @@ class DatabaseSessionRepository(private val database: Database) : SessionReposit
      * @return the ID of the newly created session
      * @throws SQLException if data incorrect
      */
-    override suspend fun createSessionAsync(createDto: CreateSessionDto): UUID? {
+    override suspend fun createSessionAsync(userId: Int, createDto: CreateSessionDto): UUID? {
         return coroutineScope {
             async {
                 database.connection?.use { connection ->
                     val statement = connection.prepareStatement(createSessionQuery)
 
                     statement.setInt(1, createDto.gameId)
-                    statement.setInt(2, createDto.userId)
+                    statement.setInt(2, userId)
                     statement.setInt(3, createDto.visibility.toInt())
 
                     val resultSet = statement.executeQuery()

@@ -13,7 +13,7 @@ fun Route.postScoresRoute() {
 
     authenticate(UserIdJWTAuthenticatorName) {
         post("/sessions/{id}/scores") {
-            scoreController.handleCreateAsync(call)
+            scoreController.handleUploadScoresAsync(call)
         }
     }
 }
