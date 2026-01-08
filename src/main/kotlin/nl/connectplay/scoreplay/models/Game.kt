@@ -3,6 +3,7 @@ package nl.connectplay.scoreplay.models
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import nl.connectplay.scoreplay.models.dto.game.GameDto
+import nl.connectplay.scoreplay.models.dto.game.RecentGameDto
 
 /**
  * This model represents a game entity from the database.
@@ -34,5 +35,20 @@ data class Game(
             minAge = minAge,
             releaseDate = releaseDate,
             pictures = pictures
+        )
+
+    fun withLastPlayed(lastPlayed: LocalDate): RecentGameDto =
+        RecentGameDto(
+            id = id,
+            scoringMethodId = scoringMethodId,
+            name = name,
+            description = description,
+            publisher = publisher,
+            minPlayers = minPlayers,
+            maxPlayers = maxPlayers,
+            duration = duration,
+            minAge = minAge,
+            releaseDate = releaseDate,
+            lastPlayed = lastPlayed
         )
 }

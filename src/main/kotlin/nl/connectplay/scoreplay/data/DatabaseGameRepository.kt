@@ -7,6 +7,7 @@ import kotlinx.datetime.toKotlinLocalDate
 import nl.connectplay.scoreplay.abstraction.data.GameRepository
 import nl.connectplay.scoreplay.models.Game
 import nl.connectplay.scoreplay.models.dto.game.CreateGameDto
+import nl.connectplay.scoreplay.models.dto.game.RecentGameDto
 import nl.connectplay.scoreplay.models.dto.game.UpdateGameDto
 import java.sql.Date
 import java.sql.Statement
@@ -190,6 +191,54 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
 
                 game
             }
+        }.await()
+    }
+
+    private val getRecentGamesForUserSql = """
+        SELECT `games`.`game_id`, `name`, `scoring_method_id`, `description`, `publisher`, `minimum_player_count`, `maximum_player_count`, `duration`, `minimum_age`, `release_date`, `achieved_on`
+        FROM `games`
+        JOIN `scores` ON `games`.`game_id` = `scores`.`game_id`
+        JOIN `session_players` ON `session_players`.`session_player_id` = `scores`.`session_player_id`
+        WHERE `session_players`.`user_id` = ?
+        GROUP BY `games`.`game_id`
+        HAVING MAX(`achieved_on`)
+        ORDER BY `scores`.`achieved_on` DESC
+        LIMIT 5;
+    """.trimIndent()
+
+    override suspend fun getRecentGamesForUser(userId: Int): List<RecentGameDto> = coroutineScope{
+        val list = mutableListOf<RecentGameDto>()
+        async {
+            database.connection?.use { conn ->
+                val statement = conn.prepareStatement(getRecentGamesForUserSql)
+
+                statement.apply {
+                    setInt(1, userId)
+                }
+
+                val resultSet = statement.executeQuery()
+
+                while (resultSet.next()) {
+                    list.add(
+                        Game(
+                            id = resultSet.getInt("game_id"),
+                            name = resultSet.getString("name"),
+                            scoringMethodId = resultSet.getInt("scoring_method_id"),
+                            description = resultSet.getString("description"),
+                            publisher = resultSet.getString("publisher"),
+                            // getInt() returns 0 if value is SQL NULL, so we need to make sure it's mapped back to null
+                            minPlayers = resultSet.getInt("minimum_player_count").let { if (it > 0) it else null },
+                            maxPlayers = resultSet.getInt("maximum_player_count").let { if (it > 0) it else null },
+                            duration = resultSet.getInt("duration").let { if (it > 0) it else null },
+                            minAge = resultSet.getInt("minimum_age").let { if (it > 0) it else null },
+                            releaseDate = resultSet.getDate("release_date")?.toLocalDate()?.toKotlinLocalDate(),
+                        ).withLastPlayed(
+                            resultSet.getDate("achieved_on").toLocalDate().toKotlinLocalDate()
+                        )
+                    )
+                }
+            }
+            list
         }.await()
     }
 }

@@ -32,6 +32,10 @@ fun Route.usersRoute() {
             get("/friendrequests") {
                 userController.handleGetFriendRequestsForUserAsync(call)
             }
+
+            get("/recent") {
+                userController.handleRecentGamesAsync(call)
+            }
         }
     }
 }

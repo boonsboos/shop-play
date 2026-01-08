@@ -4,7 +4,6 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.openapi.*
 import io.ktor.server.routing.*
 import io.ktor.server.sse.*
 import nl.connectplay.scoreplay.routes.registerApplicationRoutes
@@ -41,11 +40,6 @@ fun Application.module() {
     }
 
     configureAuthentication()
-
-    // Show API documentation on this path
-    routing {
-        openAPI(path = "openapi")
-    }
 
     routing {
         registerApplicationRoutes()
