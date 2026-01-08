@@ -1,7 +1,7 @@
-package nl.connectplay.scoreplay.models.dto.game;
+package nl.connectplay.scoreplay.models.dto.game
 
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.Serializable;
+import kotlinx.serialization.Serializable
 
 @Serializable
 data class RecentGameDto(
@@ -10,10 +10,10 @@ data class RecentGameDto(
         val name: String,
         val description: String,
         val publisher: String,
-        var minPlayers: Int?,
-        var maxPlayers: Int?,
-        var duration: Int?,
-        var minAge: Int?,
-        var releaseDate: LocalDate?,
-        var lastPlayed: LocalDate
+        val minPlayers: Int?,
+        val maxPlayers: Int?,
+        val duration: Int?,
+        val minAge: Int?,
+        val releaseDate: LocalDate?,
+        val lastPlayed: LocalDate
 )

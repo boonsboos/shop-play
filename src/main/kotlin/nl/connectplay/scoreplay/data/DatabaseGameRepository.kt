@@ -195,13 +195,15 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
     }
 
     private val getRecentGamesForUserSql = """
-        SELECT `game_id`, `name`, `scoring_method_id`, `description`, `publisher`, `minimum_player_count`, `maximum_player_count`, `duration`, `minimum_age`, `release_date`, `achieved_on`
+        SELECT `games`.`game_id`, `name`, `scoring_method_id`, `description`, `publisher`, `minimum_player_count`, `maximum_player_count`, `duration`, `minimum_age`, `release_date`, `achieved_on`
         FROM `games`
-        JOIN `scores` ON `games.game_id` = `scores.game_id`
-        JOIN `session_players` ON `session_players.session_player_id` = `scores.session_player_id`
-        WHERE `session_players.user_id` = ? AND `session_players.guest_name` <> NULL
-        ORDER BY `scores.achieved_on` DESC
-        LIMIT 5
+        JOIN `scores` ON `games`.`game_id` = `scores`.`game_id`
+        JOIN `session_players` ON `session_players`.`session_player_id` = `scores`.`session_player_id`
+        WHERE `session_players`.`user_id` = ?
+        GROUP BY `games`.`game_id`
+        HAVING MAX(`achieved_on`)
+        ORDER BY `scores`.`achieved_on` DESC
+        LIMIT 5;
     """.trimIndent()
 
     override suspend fun getRecentGamesForUser(userId: Int): List<RecentGameDto> = coroutineScope{
@@ -212,7 +214,6 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
 
                 statement.apply {
                     setInt(1, userId)
-                    setInt(2, userId)
                 }
 
                 val resultSet = statement.executeQuery()
@@ -237,7 +238,7 @@ class DatabaseGameRepository(private val database: Database) : GameRepository {
                     )
                 }
             }
-            list.toList()
+            list
         }.await()
     }
 }

@@ -459,7 +459,7 @@ class UserController(
         try {
             val games = gameRepository.getRecentGamesForUser(userId)
 
-            call.respond(HttpStatusCode.OK, games.toList())
+            call.respond(HttpStatusCode.OK, games)
         } catch (e: SQLException) {
             call.application.environment.log.error("DB error while getting recent games", e)
             call.respond(HttpStatusCode.InternalServerError)
