@@ -58,9 +58,6 @@ class NotificationController(
         } catch (e: Exception) {
             logger.error("SSE connection with user $userId errored", e)
         }
-
-        logger.info("Stopping SSE session with user $userId, removing queue")
-        queueManagerService.removeQueue(userId)
     }
 
     suspend fun handleGetNotificationById(call: ApplicationCall) {
