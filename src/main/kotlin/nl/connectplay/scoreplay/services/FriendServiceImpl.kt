@@ -121,7 +121,7 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
         // the user who requests the friendship created an entry,
         // so we need to remove it with their ID as key
         friendRepository.deleteFriendAsync(requesterUserId, userId)
-        sendFriendRequestResponseEventAsync(userId, requesterUserId, false)
+        sendFriendRequestResponseEventAsync(requesterUserId, userId, false)
     }
 
     /**
@@ -132,7 +132,7 @@ class FriendServiceImpl(private val friendRepository: FriendRepository, private 
      */
     override suspend fun acceptFriendAsync(userId: Int, requesterUserId: Int) {
         friendRepository.addFriendAsync(userId, requesterUserId)
-        sendFriendRequestResponseEventAsync(userId, requesterUserId, true)
+        sendFriendRequestResponseEventAsync( requesterUserId, userId, true)
     }
 
     /**
