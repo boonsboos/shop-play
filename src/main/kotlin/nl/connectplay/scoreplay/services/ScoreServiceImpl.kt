@@ -10,9 +10,9 @@ import nl.connectplay.scoreplay.abstraction.data.ScoreRepository
 import nl.connectplay.scoreplay.abstraction.data.SessionRepository
 import nl.connectplay.scoreplay.abstraction.services.EventRoutingService
 import nl.connectplay.scoreplay.abstraction.services.ScoreService
+import nl.connectplay.scoreplay.exceptions.FinishedSessionException
 import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.exceptions.UnfinishedSessionException
 import nl.connectplay.scoreplay.models.Game
 import nl.connectplay.scoreplay.models.Score
 import nl.connectplay.scoreplay.models.SessionPlayer
@@ -46,8 +46,8 @@ class ScoreServiceImpl(
             throw UnauthorizedException("You are not the host")
         }
 
-        if (session.endTime == null) {
-            throw UnfinishedSessionException(userId, sessionId)
+        if (session.endTime != null) {
+            throw FinishedSessionException(userId, sessionId)
         }
 
         // NOTE: it might be good to add a lock on this method to prevent race conditions.

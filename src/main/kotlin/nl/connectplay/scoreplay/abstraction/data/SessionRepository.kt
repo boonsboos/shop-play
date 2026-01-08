@@ -15,10 +15,11 @@ interface SessionRepository {
 
     /**
      * Creates a new session for a user
+     * @param userId the user starting the session
      * @param createDto the required data for making a new session
      * @return the ID of the newly created session
      */
-    suspend fun createSessionAsync(createDto: CreateSessionDto): UUID?
+    suspend fun createSessionAsync(userId: Int, createDto: CreateSessionDto): UUID?
     suspend fun getSessionByIdAsync(sessionId: UUID): SessionDto?
     suspend fun getSessionsAsync(userId: Int): List<SessionDto>
     suspend fun updateSessionAsync(sessionId: UUID, userId: Int, updateSession: UpdateSessionDto): Boolean

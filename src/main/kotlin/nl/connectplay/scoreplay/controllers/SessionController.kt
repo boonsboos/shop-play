@@ -38,9 +38,11 @@ class SessionController(
                 "Invalid request body"
             )
 
+        val userId = call.getUserIdFromJWT()
+
         try {
             val uuid: UUID =
-                repository.createSessionAsync(body) ?: return call.respond(HttpStatusCode.InternalServerError)
+                repository.createSessionAsync(userId, body) ?: return call.respond(HttpStatusCode.InternalServerError)
 
             call.respond(HttpStatusCode.Created, uuid.toString())
         } catch (e: SQLException) {

@@ -5,9 +5,9 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import nl.connectplay.scoreplay.abstraction.services.ScoreService
+import nl.connectplay.scoreplay.exceptions.FinishedSessionException
 import nl.connectplay.scoreplay.exceptions.NotFoundException
 import nl.connectplay.scoreplay.exceptions.UnauthorizedException
-import nl.connectplay.scoreplay.exceptions.UnfinishedSessionException
 import nl.connectplay.scoreplay.models.dto.score.CreateScoreDto
 import nl.connectplay.scoreplay.models.dto.score.UpdateScoreDto
 import nl.connectplay.scoreplay.utilities.getUUIDOrNull
@@ -62,7 +62,7 @@ class ScoreController(private val scoreService: ScoreService) {
         }
     }
 
-    suspend fun handleCreateAsync(call: ApplicationCall) {
+    suspend fun handleUploadScoresAsync(call: ApplicationCall) {
         val userId = call.getUserIdFromJWT()
         val sessionId = call.getUUIDOrNull("id")
             ?: return call.respond(HttpStatusCode.BadRequest, "Bad session id")
@@ -74,9 +74,9 @@ class ScoreController(private val scoreService: ScoreService) {
             val scores = scoreService.bulkUploadScoresAsync(sessionId, userId, newScores)
 
             call.respond(HttpStatusCode.Created, scores)
-        } catch (e: UnfinishedSessionException) {
+        } catch (e: FinishedSessionException) {
             logger.error(e.message)
-            call.respond(HttpStatusCode.Forbidden, "Session not yet finished")
+            call.respond(HttpStatusCode.Forbidden, "Session already finished")
         } catch (e: UnauthorizedException) {
             logger.error("User $userId tried to upload scores to session $sessionId, but they are not the host of the session")
             call.respond(HttpStatusCode.Forbidden, "${e.message}") // "You are not the host"
