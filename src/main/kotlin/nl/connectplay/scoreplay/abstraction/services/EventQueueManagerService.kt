@@ -1,7 +1,7 @@
 package nl.connectplay.scoreplay.abstraction.services
 
 import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import nl.connectplay.scoreplay.models.events.BaseEvent
 
 interface EventQueueManagerService {
@@ -23,5 +23,5 @@ interface EventQueueManagerService {
      * Provision the event queue for the user.
      * @param userId the id of the user to provision a queue for
      */
-    fun provisionQueue(userId: Int): Flow<BaseEvent>
+    fun provisionQueue(userId: Int): SharedFlow<BaseEvent>
 }
