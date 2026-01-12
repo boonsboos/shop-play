@@ -49,7 +49,7 @@ class EventRouter(
     private fun routeToConnectedUsers(connectedRelevantUsers: Set<Int>, event: BaseEvent) {
         for (userId in connectedRelevantUsers) {
             if (!eventQueueManager.enqueueEvent(userId, event)) {
-                logger.error("Failed to send event ${event.javaClass.simpleName} to connected user $userId. Queue has likely been closed")
+                logger.error("Failed to send event ${event.javaClass.simpleName} to user $userId since they are offline.")
             }
         }
     }
