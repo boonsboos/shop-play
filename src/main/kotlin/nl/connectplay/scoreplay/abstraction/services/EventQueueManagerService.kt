@@ -1,7 +1,7 @@
 package nl.connectplay.scoreplay.abstraction.services
 
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.flow.Flow
 import nl.connectplay.scoreplay.models.events.BaseEvent
 
 interface EventQueueManagerService {
@@ -17,18 +17,11 @@ interface EventQueueManagerService {
      * @param event the event to send to the connect user
      * @return [ChannelResult]
      */
-    fun enqueueEvent(userId: Int, event: BaseEvent): ChannelResult<Unit>?
+    fun enqueueEvent(userId: Int, event: BaseEvent): Boolean
 
     /**
      * Provision the event queue for the user.
      * @param userId the id of the user to provision a queue for
      */
-    fun provisionQueue(userId: Int): Channel<BaseEvent>
-
-    /**
-     * Removes and closes a queue. Use when a user disconnects.
-     * @param userId the ID of the user to close the queue for
-     * @return true if closing was successful, false if user does not have a queue open
-     */
-    fun removeQueue(userId: Int): Boolean
+    fun provisionQueue(userId: Int): Flow<BaseEvent>
 }
