@@ -48,13 +48,13 @@ class NotificationController(
 
         // continuously try to send events
         try {
-            for (event in eventQueue) {
+            eventQueue.collect { event ->
                 logger.info("Sending event ${event.javaClass.simpleName} to user $userId")
-                // manually convert the event to json
+                // manually convert the event to JSON
                 session.send(jsonSerializer.encodeToString(event))
             }
-        } catch (e: ClosedWriteChannelException) {
-            logger.error("SSE connection with user $userId was closed, cleaning up")
+        } catch (_: ClosedWriteChannelException) {
+            logger.error("SSE connection with user $userId was closed")
         } catch (e: Exception) {
             logger.error("SSE connection with user $userId errored", e)
         } finally {

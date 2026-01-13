@@ -1,6 +1,5 @@
 package nl.connectplay.scoreplay.events
 
-import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import nl.connectplay.scoreplay.abstraction.data.FollowGameRepository
@@ -49,8 +48,8 @@ class EventRouter(
 
     private fun routeToConnectedUsers(connectedRelevantUsers: Set<Int>, event: BaseEvent) {
         for (userId in connectedRelevantUsers) {
-            eventQueueManager.enqueueEvent(userId, event)?.onFailure {
-                logger.error("Failed to send event ${event.javaClass.simpleName} to connected user $userId. Queue has likely been closed")
+            if (!eventQueueManager.enqueueEvent(userId, event)) {
+                logger.error("Failed to send event ${event.javaClass.simpleName} to user $userId since they are offline.")
             }
         }
     }
